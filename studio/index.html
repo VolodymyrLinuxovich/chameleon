@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chameleon Studio</title>
+<style>
+:root{
+  --paper:#F4F1EC; --card:#FFFFFF; --ink:#1E1A22; --muted:#5F5866; --line:#E2DCD3;
+  --accent:#C2461F; --accent-ink:#FFFFFF; --stage:#2A2530; --ok:#1F7A4D; --warn:#A4501A; --focus:#2457D6;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#16131A; --card:#211D26; --ink:#F2EEF5; --muted:#B4ABBC; --line:#352F3C;
+    --accent:#F0703F; --accent-ink:#1B0E08; --stage:#0E0C10; --ok:#5BD69A; --warn:#F2A46B; --focus:#8AB0FF;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#16131A; --card:#211D26; --ink:#F2EEF5; --muted:#B4ABBC; --line:#352F3C;
+  --accent:#F0703F; --accent-ink:#1B0E08; --stage:#0E0C10; --ok:#5BD69A; --warn:#F2A46B; --focus:#8AB0FF;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+header{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;padding:20px 28px 12px;border-bottom:1px solid var(--line)}
+header h1{margin:0;font-size:22px;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted)}
+.wrap{display:grid;grid-template-columns:320px 1fr;gap:0;min-height:calc(100vh - 64px)}
+aside{border-right:1px solid var(--line);padding:20px 22px;display:flex;flex-direction:column;gap:22px}
+main{padding:22px 28px;min-width:0}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px}
+.samples{display:flex;flex-direction:column;gap:8px}
+.sample{display:flex;gap:10px;align-items:flex-start;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer}
+.sample[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.sample b{display:block;font-size:14px}
+.sample small{color:var(--muted)}
+.upload{display:block;margin-top:8px;font-size:14px;color:var(--muted)}
+.upload input{display:block;margin-top:4px;max-width:100%}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);cursor:pointer;font-size:13px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip small{opacity:.7;margin-left:4px}
+.custom{display:flex;gap:6px;margin-top:10px;align-items:center}
+.custom input{width:78px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.btn{padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--card);cursor:pointer}
+.primary{width:100%;padding:13px 16px;border:0;border-radius:11px;background:var(--accent);color:var(--accent-ink);font-weight:650;font-size:16px;cursor:pointer}
+.primary:disabled{opacity:.55;cursor:progress}
+label.toggle{display:flex;gap:10px;align-items:flex-start;font-size:14px}
+label.toggle small{display:block;color:var(--muted)}
+.hint{color:var(--muted);font-size:13px;margin:6px 0 0}
+.banner{padding:12px 14px;border-radius:10px;margin-bottom:16px;border:1px solid}
+.banner.err{border-color:var(--warn);color:var(--warn)}
+.empty{display:grid;place-items:center;text-align:center;min-height:50vh;color:var(--muted)}
+.empty h3{color:var(--ink);font-size:20px;margin:0 0 6px}
+.origin{display:flex;gap:18px;align-items:center;margin-bottom:22px;flex-wrap:wrap}
+.origin img{max-height:180px;max-width:260px;border-radius:8px;background:var(--stage)}
+.origin .meta b{font-size:17px;display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+.card .top{display:flex;justify-content:space-between;gap:8px;padding:10px 14px;align-items:baseline}
+.card .top b{font-size:14px}
+.card .top small{color:var(--muted)}
+.stage{background:var(--stage);display:grid;place-items:center;padding:14px;min-height:230px;position:relative}
+.stage img{max-width:100%;max-height:300px;display:block;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.stage .tag{position:absolute;left:10px;top:10px;font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;letter-spacing:.04em}
+.card .bot{display:flex;gap:8px;padding:10px 14px;align-items:center;flex-wrap:wrap}
+.pill{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.pill.ok{color:var(--ok);border-color:currentColor}
+.pill.warn{color:var(--warn);border-color:currentColor}
+.spacer{flex:1}
+.skeleton{background:linear-gradient(90deg,var(--line),transparent,var(--line));background-size:200% 100%;animation:sh 1.2s infinite;min-height:300px;border-radius:var(--r)}
+@keyframes sh{to{background-position:-200% 0}}
+@media (prefers-reduced-motion: reduce){.skeleton{animation:none}}
+dialog{width:min(1200px,96vw);max-height:94vh;border:1px solid var(--line);border-radius:16px;padding:0;background:var(--paper);color:var(--ink)}
+dialog::backdrop{background:rgba(10,8,12,.6)}
+.dlg{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);grid-template-rows:100%;height:min(92vh,940px)}
+.dlg .left{background:var(--stage);padding:18px;overflow:hidden;display:flex;flex-direction:column;gap:12px;min-height:0}
+.dlg .right{padding:18px 20px;overflow:auto}
+.seg{display:inline-flex;border:1px solid #555;border-radius:9px;overflow:hidden}
+.seg button{padding:6px 12px;border:0;background:transparent;color:#ddd;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#fff;color:#111}
+.viewer{position:relative;display:grid;place-items:center;flex:1;min-height:0}
+.viewer .box{position:relative;max-width:100%}
+.viewer img{display:block;max-width:100%;max-height:calc(94vh - 110px);object-fit:contain}
+.viewer svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.lefttools{display:flex;gap:12px;align-items:center;color:#ddd;flex-wrap:wrap}
+.dlg h3{margin:0 0 4px;font-size:19px}
+.section{margin-top:18px}
+.cand{display:grid;grid-template-columns:1fr 90px auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.cand.sel b{color:var(--accent)}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.parts{display:grid;grid-template-columns:110px 1fr 40px;gap:6px 10px;font-size:13px;align-items:center}
+.role{display:grid;grid-template-columns:14px 92px 1fr;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line)}
+.sw{width:12px;height:12px;border-radius:3px;margin-top:4px}
+.role code{font-size:12px;color:var(--muted)}
+.x{position:absolute;right:14px;top:12px;z-index:2}
+@media (max-width:860px){
+  .wrap{grid-template-columns:1fr}
+  aside{border-right:0;border-bottom:1px solid var(--line);padding:16px}
+  main{padding:16px}
+  header{padding:16px}
+  .dlg{grid-template-columns:1fr;grid-template-rows:auto;height:auto}
+  .grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Chameleon Studio</h1>
+  <p>One design, every canvas. Rearranged, not stretched.</p>
+</header>
+<div class="wrap">
+  <aside aria-label="Settings">
+    <section>
+      <h2 id="h-design">1 · Design</h2>
+      <div class="samples" id="samples" role="group" aria-labelledby="h-design"></div>
+      <label class="upload">Or upload a task or design JSON
+        <input type="file" id="file" accept="application/json,.json">
+      </label>
+      <p class="hint" id="filehint"></p>
+    </section>
+    <section>
+      <h2 id="h-canvas">2 · Canvases</h2>
+      <div class="chips" id="chips" role="group" aria-labelledby="h-canvas"></div>
+      <div class="custom">
+        <label class="sr" for="cw" style="position:absolute;left:-9999px">Custom width</label>
+        <input id="cw" type="number" min="16" max="8000" placeholder="width" inputmode="numeric">
+        <span aria-hidden="true">×</span>
+        <label for="ch" style="position:absolute;left:-9999px">Custom height</label>
+        <input id="ch" type="number" min="16" max="8000" placeholder="height" inputmode="numeric">
+        <button class="btn" id="addc" type="button">Add</button>
+      </div>
+      <p class="hint" id="chiphint"></p>
+    </section>
+    <section>
+      <h2>3 · Options</h2>
+      <label class="toggle"><input type="checkbox" id="hide" checked>
+        <span>Let low-priority elements drop away when they can't be read
+          <small>Only on very short canvases, never the headline, logo, product or CTA. Every element id is still returned.</small></span>
+      </label>
+    </section>
+    <button class="primary" id="go" type="button">Adapt design</button>
+  </aside>
+  <main id="main" aria-live="polite">
+    <div class="empty"><div><h3>Pick a design and some canvases</h3><p>Then press <b>Adapt design</b>. Everything runs locally with the official renderer.</p></div></div>
+  </main>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <button class="btn x" id="dlg-close" type="button" aria-label="Close">Close</button>
+  <div class="dlg">
+    <div class="left">
+      <div class="lefttools">
+        <div class="seg" role="group" aria-label="View">
+          <button type="button" data-v="result" aria-pressed="true">Chameleon</button>
+          <button type="button" data-v="stretch" aria-pressed="false">Naive stretch</button>
+          <button type="button" data-v="original" aria-pressed="false">Original</button>
+        </div>
+        <label><input type="checkbox" id="boxes"> Show what the engine saw</label>
+      </div>
+      <div class="viewer"><div class="box"><img id="dimg" alt=""><svg id="dsvg" aria-hidden="true"></svg></div></div>
+    </div>
+    <div class="right" id="dright"></div>
+  </div>
+</dialog>
+
+<script>
+const ROLE_COLORS = {headline:"#F2B441",logo:"#6FB8FF",cta:"#FF7A59",hero:"#7ED67E",body:"#E8E8E8",
+  badges:"#C59BFF",badge:"#C59BFF",tag:"#FF9AD5",sticker:"#FF5C8A",fineprint:"#A8A8A8",image:"#5ED6CF",
+  unavailable:"#888",decoration:"#776F80",background:"#444"};
+const DEFAULT_FORMATS = ["ig_story","ig_post","yt_thumb","li_banner","leaderboard","skyscraper"];
+const S = {meta:null, sample:null, upload:null, selected:new Set(DEFAULT_FORMATS), custom:[], data:null, open:null};
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+async function api(path, body){
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  const j = await r.json().catch(() => ({error:"The server sent an unreadable response."}));
+  if(!r.ok) throw new Error(j.error || `Request failed (${r.status})`);
+  return j;
+}
+
+function renderSamples(){
+  const el = $("#samples"); el.innerHTML = "";
+  for(const s of S.meta.samples){
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "sample"; b.setAttribute("aria-pressed", S.sample === s.key && !S.upload);
+    b.innerHTML = `<span><b>${esc(s.label)}</b><small>${s.canvas.width}×${s.canvas.height} · ${s.elements} elements${s.target ? ` · task target ${s.target.width}×${s.target.height}` : ""}</small></span>`;
+    b.onclick = () => { S.sample = s.key; S.upload = null; $("#file").value = ""; $("#filehint").textContent = ""; renderSamples(); renderChips(); };
+    el.appendChild(b);
+  }
+}
+
+function currentTaskTarget(){
+  if(S.upload) return S.upload.target || null;
+  const s = S.meta.samples.find(x => x.key === S.sample); return s && s.target;
+}
+
+function renderChips(){
+  const el = $("#chips"); el.innerHTML = "";
+  const t = currentTaskTarget();
+  const list = [...(t ? [{key:"task", name:"Task target", width:t.width, height:t.height}] : []), ...S.meta.formats, ...S.custom];
+  if(t && !S._taskSeen){ S.selected.add("task"); S._taskSeen = true; }
+  for(const f of list){
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.setAttribute("aria-pressed", S.selected.has(f.key));
+    b.innerHTML = `${esc(f.name)}<small>${f.width}×${f.height}</small>`;
+    b.onclick = () => { S.selected.has(f.key) ? S.selected.delete(f.key) : S.selected.add(f.key); renderChips(); };
+    el.appendChild(b);
+  }
+  $("#chiphint").textContent = `${[...S.selected].filter(k => list.some(f => f.key === k)).length} selected`;
+  S._list = list;
+}
+
+$("#addc").onclick = () => {
+  const w = +$("#cw").value, h = +$("#ch").value;
+  if(!(w >= 16 && w <= 8000 && h >= 16 && h <= 8000)){ $("#chiphint").textContent = "Custom sizes must be 16 to 8000 px per side."; return; }
+  const key = `c${w}x${h}`;
+  if(!S.custom.some(c => c.key === key)) S.custom.push({key, name:"Custom", width:w, height:h});
+  S.selected.add(key); renderChips();
+};
+
+$("#file").onchange = async e => {
+  const f = e.target.files[0]; if(!f) return;
+  try{
+    if(f.size > 5e6) throw new Error("File is larger than 5 MB.");
+    const j = JSON.parse(await f.text());
+    const src = j.source || j;
+    if(!src.canvas || !Array.isArray(src.elements)) throw new Error("Expected a design with 'canvas' and 'elements', or a task with 'source'.");
+    S.upload = {design: src, target: j.target_canvas || null, name: f.name};
+    $("#filehint").textContent = `Loaded ${f.name}: ${src.canvas.width}×${src.canvas.height}, ${src.elements.length} elements.`;
+    S._taskSeen = false; renderSamples(); renderChips();
+  }catch(err){ S.upload = null; $("#filehint").textContent = `Couldn't use that file: ${err.message}`; }
+};
+
+$("#go").onclick = run;
+async function run(){
+  const targets = S._list.filter(f => S.selected.has(f.key)).map(f => ({name:f.name, width:f.width, height:f.height}));
+  const main = $("#main");
+  if(!targets.length){ main.innerHTML = `<div class="banner err" role="alert">Pick at least one canvas size.</div>`; return; }
+  $("#go").disabled = true; $("#go").textContent = "Adapting…";
+  main.innerHTML = `<div class="grid">${targets.map(() => `<div class="skeleton" aria-hidden="true"></div>`).join("")}</div>`;
+  try{
+    const body = {targets, allow_hide: $("#hide").checked};
+    if(S.upload) body.design = S.upload.design; else body.sample = S.sample;
+    S.data = await api("/api/adapt", body);
+    S.data.results.forEach(r => r.sel = r.report.chosen);
+    renderResults();
+  }catch(err){
+    main.innerHTML = `<div class="banner err" role="alert">${esc(err.message)}</div>`;
+  }finally{ $("#go").disabled = false; $("#go").textContent = "Adapt design"; }
+}
+
+const img = b64 => b64 ? `data:image/png;base64,${b64}` : "";
+
+function renderResults(){
+  const d = S.data, src = d.source;
+  const totalMs = d.results.reduce((a, r) => a + r.report.ms, 0);
+  $("#main").innerHTML = `
+    ${d.renderer ? "" : `<div class="banner err">Official renderer not available, so previews are missing. Install requirements.txt.</div>`}
+    <div class="origin">
+      <img src="${img(d.source_png)}" alt="Original design">
+      <div class="meta"><b>Original · ${src.canvas.width}×${src.canvas.height}</b>
+        <span style="color:var(--muted)">${src.elements.length} elements → ${d.results.length} canvases, engine time ${totalMs.toFixed(0)} ms total</span></div>
+    </div>
+    <div class="grid">${d.results.map((r, i) => card(r, i)).join("")}</div>`;
+  document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => openDetail(+b.dataset.open));
+  document.querySelectorAll("[data-cmp]").forEach(b => {
+    const i = +b.dataset.cmp, im = document.getElementById(`im${i}`), tag = document.getElementById(`tg${i}`);
+    const show = on => { const r = S.data.results[i]; im.src = img(on ? r.stretch_png : r.png); tag.textContent = on ? "NAIVE STRETCH" : "CHAMELEON"; b.setAttribute("aria-pressed", on); };
+    b.onpointerdown = () => show(true); b.onpointerup = b.onpointerleave = () => show(false);
+    b.onkeydown = e => { if(e.key === " " || e.key === "Enter"){ e.preventDefault(); show(true); } };
+    b.onkeyup = () => show(false);
+  });
+}
+
+function card(r, i){
+  const cand = r.report.candidates.find(c => c.name === r.sel);
+  const hidden = Object.keys(cand.hidden).length;
+  return `<article class="card">
+    <div class="top"><b>${esc(r.name)}</b><small>${r.width}×${r.height}</small></div>
+    <div class="stage"><span class="tag" id="tg${i}">CHAMELEON</span><img id="im${i}" src="${img(r.png)}" alt="${esc(r.name)} result"></div>
+    <div class="bot">
+      <span class="pill">${esc(r.sel)}</span>
+      ${cand.problems.length ? `<span class="pill warn">${cand.problems.length} rule issue(s)</span>` : `<span class="pill ok">rules pass</span>`}
+      ${hidden ? `<span class="pill">${hidden} dropped</span>` : ""}
+      <span class="spacer"></span>
+      <button class="btn" type="button" data-cmp="${i}" aria-pressed="false">Hold: stretch</button>
+      <button class="btn" type="button" data-open="${i}">Why?</button>
+    </div></article>`;
+}
+
+let view = "result";
+function openDetail(i){
+  S.open = i; view = "result";
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === view));
+  drawDetail(); $("#dlg").showModal();
+}
+$("#dlg-close").onclick = () => $("#dlg").close();
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
+  view = b.dataset.v; document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x === b)); drawStage();
+});
+$("#boxes").onchange = drawStage;
+
+function drawStage(){
+  const r = S.data.results[S.open];
+  const cand = r.report.candidates.find(c => c.name === r.sel);
+  const design = view === "original" ? S.data.source : view === "stretch" ? null : cand.design;
+  $("#dimg").src = img(view === "original" ? S.data.source_png : view === "stretch" ? r.stretch_png : r.png);
+  $("#dimg").alt = `${view} view of ${r.name}`;
+  const svg = $("#dsvg");
+  if(!$("#boxes").checked || !design){ svg.innerHTML = ""; return; }
+  const roles = {}; r.report.roles.forEach(ro => ro.elements.forEach(e => roles[e] = ro.role));
+  svg.setAttribute("viewBox", `0 0 ${design.canvas.width} ${design.canvas.height}`);
+  svg.setAttribute("preserveAspectRatio", "none");
+  const sw = Math.max(design.canvas.width, design.canvas.height) / 300;
+  svg.innerHTML = design.elements.filter(e => !["background"].includes(roles[e.id])).map(e => {
+    const c = ROLE_COLORS[roles[e.id]] || "#fff", hid = (e.opacity ?? 1) === 0;
+    const t = e.rotation ? ` transform="rotate(${e.rotation} ${e.x + e.width / 2} ${e.y + e.height / 2})"` : "";
+    return `<rect x="${e.x}" y="${e.y}" width="${e.width}" height="${e.height}" fill="${c}" fill-opacity="${hid ? 0 : .12}" stroke="${c}" stroke-width="${sw}" stroke-dasharray="${hid ? sw * 3 : 0}"${t}/>`;
+  }).join("");
+}
+
+function drawDetail(){
+  const r = S.data.results[S.open], rep = r.report;
+  const cand = rep.candidates.find(c => c.name === r.sel);
+  const hidden = Object.entries(cand.hidden);
+  const blocks = rep.roles.filter(x => x.role !== "background");
+  $("#dright").innerHTML = `
+    <h3 id="dlg-title">${esc(r.name)} · ${r.width}×${r.height}</h3>
+    <p style="margin:0;color:var(--muted)">${esc(cand.description)}</p>
+    <div class="section"><h2>Score breakdown (${cand.score.toFixed(3)})</h2>
+      <div class="parts">${Object.entries(cand.parts).map(([k, v]) => `<span>${k}</span><div class="bar" role="img" aria-label="${k} ${Math.round(v * 100)}%"><i style="width:${v * 100}%"></i></div><span>${Math.round(v * 100)}</span>`).join("")}</div>
+      <p class="hint">Our own measurable proxies for the brief's criteria, weighted ${Object.entries(rep.weights).map(([k, v]) => `${k} ${v}`).join(", ")}. Not Adobe's scorer.</p>
+    </div>
+    <div class="section"><h2>Layouts considered (${rep.candidates.length})</h2>
+      ${rep.candidates.map(c => `<div class="cand ${c.name === r.sel ? "sel" : ""}"><span><b>${esc(c.name)}</b>${c.name === rep.chosen ? " · engine's pick" : ""}${c.overflow ? " · overflows" : ""}</span>
+        <div class="bar" role="img" aria-label="score ${c.score.toFixed(3)}"><i style="width:${Math.max(0, c.score) * 100}%"></i></div>
+        ${c.name === r.sel ? `<span class="pill ok">showing</span>` : `<button class="btn" type="button" data-use="${esc(c.name)}">Use</button>`}</div>`).join("")}
+    </div>
+    <div class="section"><h2>What the engine saw</h2>
+      ${blocks.map(b => `<div class="role"><span class="sw" style="background:${ROLE_COLORS[b.role] || "#fff"}"></span><b>${esc(b.role)}</b><span>${esc(b.reason)}<br><code>${b.elements.map(esc).join(", ")}</code></span></div>`).join("")}
+      ${rep.notes.map(n => `<p class="hint">${esc(n)}</p>`).join("")}
+    </div>
+    ${hidden.length ? `<div class="section"><h2>Dropped (still in the JSON, opacity 0)</h2>${hidden.map(([id, why]) => `<div class="role"><span></span><code>${esc(id)}</code><span>${esc(why)}</span></div>`).join("")}</div>` : ""}
+    <div class="section"><h2>Hard-rule checks</h2>
+      ${cand.problems.length ? cand.problems.map(p => `<p class="hint" style="color:var(--warn)">${esc(p)}</p>`).join("") : `<p class="hint" style="color:var(--ok)">Same ids, nothing off-canvas, images in proportion, fonts and copy unchanged, text fits its box.</p>`}
+    </div>
+    <div class="section"><button class="btn" type="button" id="dl">Download this layout's JSON</button></div>`;
+  document.querySelectorAll("[data-use]").forEach(b => b.onclick = () => useCandidate(b.dataset.use, b));
+  $("#dl").onclick = () => {
+    const blob = new Blob([JSON.stringify(cand.design, null, 2)], {type:"application/json"});
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `chameleon_${r.width}x${r.height}_${r.sel}.json`; a.click();
+  };
+  drawStage();
+}
+
+async function useCandidate(name, btn){
+  const r = S.data.results[S.open];
+  const c = r.report.candidates.find(x => x.name === name);
+  btn.disabled = true; btn.textContent = "Rendering…";
+  try{
+    const {png} = await api("/api/render", {design: c.design});
+    r.png = png; r.sel = name; view = "result";
+    document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === "result"));
+    drawDetail(); renderResults();
+  }catch(err){ btn.disabled = false; btn.textContent = "Retry"; alert(err.message); }
+}
+
+(async () => {
+  try{
+    S.meta = await api("/api/meta");
+    S.sample = (S.meta.samples.find(s => s.key.includes("level3")) || S.meta.samples[0] || {}).key;
+    renderSamples(); renderChips();
+  }catch(err){ $("#main").innerHTML = `<div class="banner err" role="alert">Can't reach the Studio server: ${esc(err.message)}</div>`; }
+})();
+</script>
+</body>
+</html>
