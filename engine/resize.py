@@ -6,7 +6,10 @@ the Dockerfile) is plumbing so you can focus on exactly one function:
 `resize()`. See RULES.md and the design schema for the full contract.
 """
 
+import sys
 from typing import Any
+
+from engine.chameleon import adapt, safe_fit
 
 
 def resize(source: dict[str, Any], target_canvas: dict[str, Any]) -> dict[str, Any]:
@@ -43,14 +46,20 @@ def resize(source: dict[str, Any], target_canvas: dict[str, Any]) -> dict[str, A
     concern (see RULES.md) — spend your effort on quality, not speed.
     """
 
-    # ------------------------------------------------------------------
-    # Naive baseline so this file runs out of the box. This is a uniform
-    # stretch — literally the thing the brief tells you NOT to do ("a
-    # naive program stretches the picture; a good one moves the
-    # furniture"). It's here so `python -m engine.main` produces valid,
-    # schema-correct output on day one. Replace the body of this function;
-    # do not just tune these three lines.
-    # ------------------------------------------------------------------
+    # Structure-aware re-layout (see engine/chameleon.py and README):
+    # analyse roles -> build candidate layouts -> score -> keep the best.
+    # If anything unexpected goes wrong, fall back to a uniform
+    # contain-fit that is still valid, so one odd input never crashes a run.
+    try:
+        design, _report = adapt(source, target_canvas)
+        return design
+    except Exception as exc:  # pragma: no cover - defensive
+        print(f"    ! chameleon layout failed ({exc!r}); using safe fit", file=sys.stderr)
+        return safe_fit(source, target_canvas)
+
+
+def stretch(source: dict[str, Any], target_canvas: dict[str, Any]) -> dict[str, Any]:
+    """The starter's naive uniform stretch, kept only for side-by-side demos."""
     scale_x = target_canvas["width"] / source["canvas"]["width"]
     scale_y = target_canvas["height"] / source["canvas"]["height"]
 
