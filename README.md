@@ -66,7 +66,8 @@ source design ──► analyze ──► candidate layouts ──► score ─�
    - Banner heights (under 80 px tall) get extra care. Strips shrink pictures before the CTA and keep the logo at least 45% of the strip height. Small button labels may grow up to 1.3x to fill their box. As a last resort the product image may drop out so the message stays readable.
    - The scorer treats text under 5 px and images under 12 px as lost: they are in the JSON but nobody can see them.
    - **Dropping is a last resort.** A dropping layout can win only if no layout that keeps everything reaches readability 0.8. The report records this decision (`drop_rule`).
-   - After layout, decorations keep their distance to their nearest corner and shrink away from text. Stickers and tags go back to their original corner, or the nearest free one.
+   - In one-row layouts, consecutive text pieces (eyebrow, headline, date, subtitle) stack into one text cell at a shared scale, instead of sitting side by side in narrow columns.
+   - After layout, decorations keep their distance to their nearest corner and shrink away from text and buttons, with a small margin. An overlap that already existed in the source is kept as intentional layering. Stickers and tags go back to their original corner, or the nearest free one.
 4. **Score** (`engine/score.py`). Readability, hierarchy kept, use of space, scale consistency, collisions, completeness, reading-order fidelity, and balance. These are our proxies for the brief's §2.5 criteria. Weights are in `WEIGHTS`.
 5. **Finalize** (`engine/chameleon.py`). Clamp rotated bounds inside the canvas, re-fit any text whose box changed, and keep every id in source order. If anything throws, `resize()` falls back to a uniform contain-fit that is still valid (`safe_fit`).
 

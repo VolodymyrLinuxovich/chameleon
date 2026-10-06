@@ -82,10 +82,20 @@ def _hits(a: tuple[float, ...], b: tuple[float, ...]) -> bool:
 
 def _clear_text(a: Analysis, out: dict[str, dict[str, Any]], W: float, H: float) -> None:
     """Shrink decorations toward their corner so text never sits on them."""
-    texts = [_box(n) for n in out.values() if n.get("type") == "text"]
+    # Text plus button/badge shapes: a decoration may sit behind a picture
+    # (intentional layering) but never over copy or a call to action.
+    deco_ids = {el["id"] for b in a.decoration + a.background for el in b.elements}
+    guarded = [n for n in out.values() if n["id"] not in deco_ids and num(n.get("opacity"), 1) > 0
+               and (n.get("type") == "text" or (n.get("type") == "shape" and n.get("group_id")))]
+    src_els = {el["id"]: el for b in a.all_blocks() for el in b.elements}
+    pad = 0.02 * min(W, H)  # breathing room, so edges don't just touch
     for b in a.decoration:
         for el in b.elements:
             n = out[el["id"]]
+            # Overlaps that already existed in the source are intentional layering.
+            texts = [(x0 - pad, y0 - pad, x1 + pad, y1 + pad)
+                     for g in guarded if not _hits(_box(el), _box(src_els[g["id"]]))
+                     for x0, y0, x1, y1 in [_box(g)]]
             x0, y0, x1, y1 = _box(n)
             ax = 0.0 if (x0 + x1) / 2 < W / 2 else W   # corner it shrinks toward
             ay = 0.0 if (y0 + y1) / 2 < H / 2 else H

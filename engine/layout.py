@@ -289,9 +289,15 @@ def strip(ctx: Ctx, blocks: list[Block], box: Box, text_share: float) -> tuple[l
         cap_h = STRIP_H_CAP.get(b.role, 0.8) * box.h
         s = min(cap_h / b.h, max(ctx.s_cap, _readable_floor(b)))
         fits_[b.id] = size_rigid(b, s, math.inf, cap_h)
+    items: list[list[Block]] = []
+    for b in blocks:  # consecutive texts form one stacked cell
+        if b.is_text and items and items[-1][0].is_text:
+            items[-1].append(b)
+        else:
+            items.append([b])
     gap_min = max(4.0, 0.25 * ctx.margin)
     rigid_w = sum(fits_[b.id].w for b in rigid)
-    budget = box.w - gap_min * (len(blocks) - 1)
+    budget = box.w - gap_min * (len(items) - 1)
     max_rigid = budget * (1 - text_share) if texts else budget
     if rigid_w > max_rigid > 0:
         # Shrink pictures and marks first so the CTA label stays legible;
@@ -317,28 +323,85 @@ def strip(ctx: Ctx, blocks: list[Block], box: Box, text_share: float) -> tuple[l
                 fits_[b.id] = size_rigid(b, fits_[b.id].scale * min(1.0, k), math.inf, box.h)
             rigid_w = sum(fits_[b.id].w for b in rigid)
     text_budget = max(1.0, budget - rigid_w)
-    wsum = sum(TEXT_WEIGHT.get(b.role, 1.5) for b in texts) or 1.0
+    cells = [it for it in items if it[0].is_text]
+    wsum = sum(max(TEXT_WEIGHT.get(b.role, 1.5) for b in c) for c in cells) or 1.0
     overflow = False
-    for b in texts:
-        el = b.elements[0]
-        alloc = text_budget * TEXT_WEIGHT.get(b.role, 1.5) / wsum
-        font = fit_font(el, alloc, box.h, ctx.text_cap(el))
-        if font is None:
-            font, overflow = 1, True
-        _, widest, h = measure(el, font, alloc)
-        fits_[b.id] = Fit(b, min(alloc, widest + 2), h, font=font)
+    cell_fit: dict[int, Fit] = {}
+    for c in cells:
+        alloc = text_budget * max(TEXT_WEIGHT.get(b.role, 1.5) for b in c) / wsum
+        fs, ok = _text_cell(ctx, c, alloc, box.h)
+        overflow = overflow or not ok
+        w = max(f.w for f in fs)
+        h = sum(f.h for f in fs) + _cell_gap(fs) * (len(fs) - 1)
+        for f in fs:
+            fits_[f.block.id] = f
+        cell_fit[id(c)] = Fit(c[0], w, h)
 
-    ordered = [fits_[b.id] for b in blocks]
-    used = sum(f.w for f in ordered)
-    n = len(ordered)
+    row = [cell_fit[id(it)] if it[0].is_text else fits_[it[0].id] for it in items]
+    used = sum(f.w for f in row)
+    n = len(row)
     gap = (box.w - used) / (n - 1) if n > 1 else 0.0
     gap = max(gap_min, min(gap, 0.08 * ctx.W))
     total = used + gap * (n - 1)
     x = box.x + max(0.0, (box.w - total) / 2)
-    for f in ordered:
-        f.x, f.y = x, box.y + (box.h - f.h) / 2
+    ordered: list[Fit] = []
+    for it, f in zip(items, row):
+        y0 = box.y + (box.h - f.h) / 2
+        if it[0].is_text:
+            members = [fits_[b.id] for b in it]
+            left = all((b.text_el or {}).get("text_align", "left") == "left" for b in it)
+            g = _cell_gap(members)
+            for m in members:
+                m.x = x if left or len(it) == 1 else x + (f.w - m.w) / 2
+                m.y = y0
+                y0 += m.h + g
+            ordered += members
+        else:
+            f.x, f.y = x, y0
+            ordered.append(f)
         x += f.w + gap
     return ordered, overflow or total > box.w + 1
+
+
+def _cell_gap(fs: list[Fit]) -> float:
+    return 0.25 * min((f.font or 10) for f in fs) if len(fs) > 1 else 0.0
+
+
+def _text_cell(ctx: Ctx, blocks: list[Block], w: float, h: float) -> tuple[list[Fit], bool]:
+    """Stack text blocks in a w x h cell at one common scale (keeps their
+    relative sizes), each at the largest integer size that fits."""
+    def sized(s: float) -> list[Fit]:
+        out = []
+        for b in blocks:
+            el = b.elements[0]
+            font = max(1, min(ctx.text_cap(el), int(num(el.get("font_size"), 12) * s)))
+            _, widest, th = measure(el, font, w)
+            while widest > w + 0.5 and font > 1:
+                font -= 1
+                _, widest, th = measure(el, font, w)
+            out.append(Fit(b, min(w, widest + 2), th, font=font))
+        return out
+
+    def height(fs: list[Fit]) -> float:
+        return sum(f.h for f in fs) + _cell_gap(fs) * (len(fs) - 1)
+
+    if len(blocks) == 1:
+        el = blocks[0].elements[0]
+        font = fit_font(el, w, h, ctx.text_cap(el))
+        ok = font is not None
+        font = font or 1
+        _, widest, th = measure(el, font, w)
+        return [Fit(blocks[0], min(w, widest + 2), th, font=font)], ok
+    lo, hi = 1e-3, 4.0
+    if height(sized(lo)) > h:
+        return sized(lo), False
+    for _ in range(24):
+        mid = (lo + hi) / 2
+        if height(sized(mid)) <= h:
+            lo = mid
+        else:
+            hi = mid
+    return sized(lo), True
 
 
 # ----------------------------------------------------------------------------

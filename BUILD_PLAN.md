@@ -94,6 +94,8 @@ No LLM: the hard part is geometric and measurable, determinism makes it reproduc
 
 - Generalisation pass: wrote 4 designs with unseen structures (`samples/extra/`). Fixed body copy misread as fine print (fine print now also has to be legal-size relative to the canvas), bottom-corner logos not recognised, and left-aligned columns breaking apart in stacks and side regions.
 
+- Strip and decoration pass: consecutive texts in one-row layouts stack into one cell (fixes eyebrow, headline and date sitting in separate narrow columns). Decorations now also clear buttons, with a 2% margin, unless the overlap already existed in the source.
+
 ### Next highest-value tasks
 
 1. Run the Docker build and run once Docker is available.
