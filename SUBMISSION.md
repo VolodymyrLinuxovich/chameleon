@@ -1,5 +1,7 @@
 # Submission pack
 
+**Stage-one deadline: October 30, 2026.** Target submitting on October 29.
+
 ## Project description (paste-ready)
 
 Chameleon resizes a finished design for any canvas by rearranging it instead of stretching it. It reads the design the way a designer would. It finds the headline, the logo, the product, the call to action and the fine print from geometry alone. Then it builds several real layouts for the new shape and measures each one with the renderer's own font metrics. It keeps the layout that stays readable, keeps the hierarchy and avoids collisions. Images keep their proportions. Copy and fonts never change. Every element comes back. The engine is deterministic, runs offline in milliseconds, and explains every decision it makes.

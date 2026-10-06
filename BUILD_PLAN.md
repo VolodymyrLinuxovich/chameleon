@@ -98,6 +98,16 @@ No LLM: the hard part is geometric and measurable, determinism makes it reproduc
 
 - Stress pass: `tools/stress.py` runs 150 random realistic designs x 15 formats (2,250 runs) with 0 structural problems. Readability now also weighs the weakest of the headline and CTA, and text under 6px counts as lost. One-row layouts under 80px also try a variant that keeps the CTA label at 7px or more.
 
+### Schedule (stage-one deadline: 2026-10-30)
+
+| Dates | Task |
+|---|---|
+| Oct 6–10 | Docker build + `--network none` run verified; send organiser questions (SUBMISSION.md) |
+| Oct 11–19 | 2–3 real designs rebuilt as JSON and tested; fix what they expose |
+| Oct 20–25 | Apply organiser answers (e.g. `CHAMELEON_ALLOW_HIDE` default); final README pass |
+| Oct 26–28 | Code freeze: fresh clone, Docker run, tests, rebuild and redeploy the site |
+| Oct 29 | Submit (buffer day before the Oct 30 deadline) |
+
 ### Next highest-value tasks
 
 1. Run the Docker build and run once Docker is available.
