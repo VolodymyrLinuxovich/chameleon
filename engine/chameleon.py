@@ -16,6 +16,9 @@ from .score import WEIGHTS, score
 from .textfit import BACKEND, fits
 
 
+READABLE = 0.8
+
+
 def _allow_hide() -> bool:
     return os.environ.get("CHAMELEON_ALLOW_HIDE", "1") not in ("0", "false", "no")
 
@@ -167,7 +170,18 @@ def adapt(source: dict[str, Any], target_canvas: dict[str, Any],
         total, parts = score(a, out, set(lay.hidden), W, H, lay.overflow)
         scored.append((total, lay, out, parts))
     scored.sort(key=lambda t: -t[0])
-    best_total, best, best_out, _ = scored[0]
+    # Dropping content is a last resort: allowed only when no layout that
+    # keeps everything (missing assets aside) reaches good readability.
+    def drops(lay: Layout) -> bool:
+        return any("readable" in why for why in lay.hidden.values())
+    full = [t for t in scored if not drops(t[1])]
+    best_full_read = max((t[3]["readability"] for t in full), default=0.0)
+    may_drop = best_full_read < READABLE
+    eligible = scored if may_drop or not full else full
+    best_total, best, best_out, _ = eligible[0]
+    report["drop_rule"] = (f"best layout keeping everything reads at {best_full_read:.2f} "
+                           f"({'below' if may_drop else 'at or above'} {READABLE}), so dropping is "
+                           f"{'allowed' if may_drop else 'not needed'}")
 
     def design(out: dict[str, dict[str, Any]]) -> dict[str, Any]:
         return {"canvas": {"width": W, "height": H}, "elements": [out[i] for i in order]}
@@ -181,7 +195,7 @@ def adapt(source: dict[str, Any], target_canvas: dict[str, Any],
     report["candidates"] = [
         {"name": lay.name, "description": lay.description, "score": round(t, 4), "parts": parts,
          "hidden": lay.hidden, "overflow": lay.overflow, "design": design(out)}
-        for t, lay, out, parts in scored
+        for t, lay, out, parts in eligible + [x for x in scored if x not in eligible]
     ]
     report["chosen"] = best.name
     report["hidden"] = best.hidden

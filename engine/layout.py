@@ -10,7 +10,7 @@ size measured with the renderer's own glyph widths.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Callable
 
 from .analyze import Analysis, Block, num, rotated_aabb
@@ -57,6 +57,22 @@ class Ctx:
     W: float
     H: float
     allow_hide: bool
+    rigid_k: float = 1.0           # extra scale on rigid blocks (<1 = text first)
+    drop: tuple[str, ...] = ()     # roles left out of this variant
+
+    def dropped(self, b: Block) -> bool:
+        if b.role not in self.drop:
+            return False
+        # Short body lines are usually taglines or text CTAs: never dropped.
+        return b.role != "body" or len(str(b.elements[0].get("content", ""))) > 60
+
+    @property
+    def flow(self) -> list[Block]:
+        return [b for b in self.a.flow if not self.dropped(b)]
+
+    @property
+    def floating(self) -> list[Block]:
+        return [b for b in self.a.floating if not self.dropped(b)]
 
     @property
     def W0(self) -> float:
@@ -136,7 +152,7 @@ def size_text(b: Block, s: float, max_w: float, cap: int) -> Fit:
 def size_block(ctx: Ctx, b: Block, s: float, max_w: float) -> Fit:
     if b.is_text:
         return size_text(b, s, max_w, ctx.text_cap(b.elements[0]))
-    return size_rigid(b, s, max_w)
+    return size_rigid(b, s * ctx.rigid_k, max_w)
 
 
 def _anchor(ctx: Ctx, b: Block) -> str:
@@ -351,8 +367,8 @@ def _finish(ctx: Ctx, lay: Layout, floating: list[Block]) -> Layout:
 
 def strat_stack(ctx: Ctx) -> Layout:
     lay = Layout("stack", "Single column in the original reading order; top and bottom anchors kept.")
-    lay.fits, lay.overflow = stack(ctx, ctx.a.flow, _content_box(ctx))
-    return _finish(ctx, lay, ctx.a.floating)
+    lay.fits, lay.overflow = stack(ctx, ctx.flow, _content_box(ctx))
+    return _finish(ctx, lay, ctx.floating)
 
 
 def strat_proportional(ctx: Ctx) -> Layout:
@@ -374,7 +390,7 @@ def strat_proportional(ctx: Ctx) -> Layout:
 
 
 def strat_split(ctx: Ctx, hero_side: str, frac: float) -> Layout | None:
-    hero = next((b for b in ctx.a.flow if b.role == "hero"), None)
+    hero = next((b for b in ctx.flow if b.role == "hero"), None)
     if hero is None:
         return None
     lay = Layout(f"split-{hero_side}-{int(frac * 100)}",
@@ -382,22 +398,22 @@ def strat_split(ctx: Ctx, hero_side: str, frac: float) -> Layout | None:
     cb = _content_box(ctx)
     gap = ctx.margin
     hw = (cb.w - gap) * frac
-    hf = size_rigid(hero, 1.6 * ctx.s_cap, hw, cb.h)
+    hf = size_rigid(hero, 1.6 * ctx.s_cap * ctx.rigid_k, hw, cb.h)
     rest_w = cb.w - gap - hf.w
     if hero_side == "left":
         hf.x, rx = cb.x, cb.x + hf.w + gap
     else:
         hf.x, rx = cb.x + cb.w - hf.w, cb.x
     hf.y = cb.y + (cb.h - hf.h) / 2
-    rest = [b for b in ctx.a.flow if b is not hero]
+    rest = [b for b in ctx.flow if b is not hero]
     fs, lay.overflow = stack(ctx, rest, Box(rx, cb.y, rest_w, cb.h), h_align="center")
     lay.fits = [hf] + fs
-    return _finish(ctx, lay, ctx.a.floating)
+    return _finish(ctx, lay, ctx.floating)
 
 
 def strat_columns(ctx: Ctx) -> Layout | None:
     """hero | message | actions — for wide banners."""
-    flow = ctx.a.flow
+    flow = ctx.flow
     hero = next((b for b in flow if b.role == "hero"), None)
     actions = [b for b in flow if b.role in ("cta", "badge", "badges")]
     message = [b for b in flow if b is not hero and b not in actions]
@@ -409,7 +425,7 @@ def strat_columns(ctx: Ctx) -> Layout | None:
     x = cb.x
     fits_: list[Fit] = []
     if hero is not None:
-        hf = size_rigid(hero, 1.6 * ctx.s_cap, (cb.w - 2 * gap) * 0.3, cb.h)
+        hf = size_rigid(hero, 1.6 * ctx.s_cap * ctx.rigid_k, (cb.w - 2 * gap) * 0.3, cb.h)
         hf.x, hf.y = x, cb.y + (cb.h - hf.h) / 2
         fits_.append(hf)
         x += hf.w + gap
@@ -419,7 +435,7 @@ def strat_columns(ctx: Ctx) -> Layout | None:
     fa, o2 = stack(ctx, actions, Box(x + mw + gap, cb.y, rem - mw - gap, cb.h),
                    anchor_edges=False, h_align="center")
     lay.fits, lay.overflow = fits_ + fm + fa, o1 or o2
-    return _finish(ctx, lay, ctx.a.floating)
+    return _finish(ctx, lay, ctx.floating)
 
 
 def strat_strip(ctx: Ctx, drop: tuple[str, ...], text_share: float) -> Layout:
@@ -444,15 +460,45 @@ def strat_strip(ctx: Ctx, drop: tuple[str, ...], text_share: float) -> Layout:
     return _finish(ctx, lay, rest)
 
 
+def _variant(ctx: Ctx, lay: Layout | None) -> Layout | None:
+    """Label a layout built under a text-first / dropped-roles variant."""
+    if lay is None:
+        return None
+    if ctx.rigid_k < 1:
+        lay.name += "·text-first"
+        lay.description += f" Images and buttons sized at {int(ctx.rigid_k * 100)}% to give text room."
+    if ctx.drop:
+        lay.name += "·no-" + "-".join(ctx.drop)
+        lay.description += f" {', '.join(ctx.drop)} dropped: unreadable at this size."
+        for b in ctx.a.flow + ctx.a.floating:
+            if ctx.dropped(b):
+                for el in b.elements:
+                    lay.hidden[el["id"]] = f"{b.role} would be unreadable on a {ctx.W:.0f}x{ctx.H:.0f} canvas"
+    return lay
+
+
 def candidates(ctx: Ctx) -> list[Layout]:
     r = ctx.W / ctx.H
-    out: list[Layout | None] = [strat_stack(ctx), strat_proportional(ctx)]
-    if r >= 1.15:
-        for side in ("left", "right"):
-            for frac in (0.4, 0.5):
-                out.append(strat_split(ctx, side, frac))
-    if r >= 2.2:
-        out.append(strat_columns(ctx))
+    out: list[Layout | None] = [strat_proportional(ctx)]
+    variants = [ctx]
+    if min(ctx.W, ctx.H) < 640:  # small canvas: try giving text priority
+        variants.append(replace(ctx, rigid_k=0.65))
+        if ctx.allow_hide:
+            roles = {b.role for b in ctx.a.flow}
+            acc: list[str] = []
+            long_body = any(b.role == "body" and len(str(b.elements[0].get("content", ""))) > 60 for b in ctx.a.flow)
+            for d in ("fineprint", "body", "badges"):
+                if d in roles and (d != "body" or long_body):
+                    acc.append(d)
+                    variants.append(replace(ctx, drop=tuple(acc)))
+    for i, v in enumerate(variants):
+        out.append(_variant(v, strat_stack(v)))
+        if r >= 1.15:
+            for side in ("left", "right"):
+                for frac in ((0.4, 0.5) if i == 0 else (0.4,)):
+                    out.append(_variant(v, strat_split(v, side, frac)))
+        if r >= 2.2:
+            out.append(_variant(v, strat_columns(v)))
     if r >= 3.0:
         roles = {b.role for b in ctx.a.flow + ctx.a.floating}
         drops: list[tuple[str, ...]] = [()]

@@ -74,7 +74,7 @@ No LLM: the hard part is geometric and measurable, determinism makes it reproduc
 
 - [x] Brief + starter read, `CHALLENGE_NOTES.md` written
 - [x] Engine: analyse / measure / layout / score / explain (`engine/`)
-- [x] Tests: 110 passing (hard rules × samples × 19 sizes, 40 random designs, malformed input, no-hide mode)
+- [x] Tests: 113 passing (hard rules × samples × 19 sizes, 40 random designs, malformed input, no-hide mode)
 - [x] Batch evaluator + contact sheets (`tools/evaluate.py`, copies in `docs/`)
 - [x] Studio UI (`studio/`), checked in headless Chromium
 - [x] README, `SUBMISSION.md` (description, demo script, criteria map, checklist)
@@ -87,6 +87,8 @@ No LLM: the hard part is geometric and measurable, determinism makes it reproduc
 - Added a "fidelity" score term (reading order and corner anchors) so ties go to the more faithful layout.
 - Decorations shrink toward their corner when they would sit under text.
 - Finding: the renderer ignores `opacity` on text, so hidden text also gets a transparent colour.
+
+- Optimisation pass: small canvases get text-first and drop-long-copy variants, but only when no full layout reaches readability 0.8. Mean proxy score went from 0.936 to 0.940, with the gains on Level 3 small formats (billboard 0.84 → 0.92, half page 0.81 → 0.84). Slowest resize went from 32 ms to 80 ms.
 
 ### Next highest-value tasks
 

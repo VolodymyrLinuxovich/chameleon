@@ -148,3 +148,24 @@ def test_safe_fit_is_valid():
     t = load("input/chameleon_sample_level3_advanced.json")
     out = safe_fit(t["source"], {"width": 728, "height": 90})
     assert [p for p in check(t["source"], out) if "overflows" not in p] == []
+
+
+def test_short_text_cta_is_never_dropped():
+    t = load("input/chameleon_sample_level1_warmup.json")
+    for w, h in [(300, 250), (160, 600), (320, 50)]:
+        design, rep = adapt(t["source"], {"width": w, "height": h})
+        assert "cta" not in rep["hidden"], (w, h)
+
+
+def test_no_drops_when_full_design_is_readable():
+    t = load("input/chameleon_sample_level3_advanced.json")
+    design, rep = adapt(t["source"], {"width": 1584, "height": 396})
+    assert not [i for i, why in rep["hidden"].items() if "readable" in why]
+
+
+def test_small_canvas_drops_long_copy_to_keep_headline_readable():
+    t = load("input/chameleon_sample_level3_advanced.json")
+    design, rep = adapt(t["source"], {"width": 300, "height": 600})
+    el = {e["id"]: e for e in design["elements"]}
+    assert "subhead" in rep["hidden"] and el["headline"]["font_size"] >= 10
+    assert el["cta_label"].get("opacity", 1) > 0 and el["product"].get("opacity", 1) > 0
