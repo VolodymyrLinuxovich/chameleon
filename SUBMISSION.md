@@ -33,7 +33,7 @@ The brief lists the qualities the scoring rewards (PDF §2.5), plus "speed and r
 | Looks intentional | Shared margins and gaps. Source reading order and top/bottom anchors kept. The headline keeps its lead. Consistent scale across blocks | hierarchy, consistency and fidelity terms in `engine/score.py` |
 | Holds up everywhere | Only generic rules, never keyed to a size or design. Tested on 3 samples plus 4 extra designs × 19 sizes, and 40 random designs, with malformed input | `tests/test_engine.py` (194 passing) |
 | JSON valid and honest | Same ids, required fields, schema validation, on-canvas boxes including rotated bounds | `tools/checks.py`; `main.py` self-check shows 0 warnings |
-| Speed and reliability | Deterministic, about 1–100 ms per resize, no model or network, a `safe_fit` fallback if anything throws | `python -m tools.evaluate` timing column |
+| Speed and reliability | Deterministic, about 1–230 ms per resize, no model or network, a `safe_fit` fallback if anything throws | `python -m tools.evaluate` timing column |
 | Finale: product thinking (§3.3) | Studio: many canvases at once, stretch comparison, role overlay, ranked alternatives you can pick, JSON download | `studio/` |
 
 ## Final checklist
@@ -42,7 +42,7 @@ The brief lists the qualities the scoring rewards (PDF §2.5), plus "speed and r
 
 - [x] `python -m engine.main` on the 3 official samples: 0 self-check warnings, real renders
 - [x] `python -m pytest -q`: 194 passed
-- [x] `python -m tools.evaluate`: 48 runs, 0 hard-rule problems, max about 100 ms; plus 64 runs on 4 extra designs, 0 problems
+- [x] `python -m tools.evaluate`: 48 runs, 0 hard-rule problems, max about 230 ms; plus 64 runs on 4 extra designs and 2,250 stress runs on 150 random designs, 0 problems
 - [x] Studio: adapt, hold-to-compare, explanation dialog, role overlay and candidate switching. Checked in headless Chromium with no console errors and no horizontal scroll at 390 px width
 - [x] Error paths: invalid JSON, a design without a canvas, no targets, out-of-range sizes
 

@@ -56,6 +56,13 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
         rs += wt * min(1.0, 0.85 * max(0.0, (f - 7) / 5) + 0.15 * min(1.0, f / 12))
         rw += wt
     readability = rs / rw if rw else 1.0
+    # A design reads only as well as its weakest key message: blend in the
+    # worst of the headline and the CTA label.
+    key = [e for b in visible if b.role in ("headline", "cta") for e in b.elements if e.get("type") == "text"]
+    if key:
+        worst = min(min(1.0, 0.85 * max(0.0, (num(out[e["id"]].get("font_size"), 1) - 7) / 5)
+                        + 0.15 * min(1.0, num(out[e["id"]].get("font_size"), 1) / 12)) for e in key)
+        readability = 0.6 * readability + 0.4 * worst
     # Text that no longer fits its own box will be cut off or overflow.
     bad_fit = sum(1 for el in texts if not fits(out[el["id"]], int(num(out[el["id"]].get("font_size"), 1)),
                                                  num(out[el["id"]].get("width")), num(out[el["id"]].get("height")) * 1.05))
@@ -132,12 +139,12 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
     collisions = max(0.0, 1 - 6 * ov / total)
 
     # Completeness: priority-weighted share of content still visible.
-    # Text drawn below 5px is present in the JSON but lost to the eye, so it
+    # Text drawn below 6px is present in the JSON but lost to the eye, so it
     # counts as missing here (otherwise 1px "kept" badges beat a clean drop).
     def legible(b) -> bool:
         if any(e.get("type") == "image" and num(out[e["id"]].get("height")) < 12 for e in b.elements):
             return False
-        return all(num(out[e["id"]].get("font_size"), 1) >= 5 for e in b.elements if e.get("type") == "text")
+        return all(num(out[e["id"]].get("font_size"), 1) >= 6 for e in b.elements if e.get("type") == "text")
     pr_all = sum(b.priority for b in content) or 1
     pr_hidden = sum(b.priority for b in content if b not in visible or not legible(b))
     completeness = 1 - pr_hidden / pr_all

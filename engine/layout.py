@@ -281,7 +281,8 @@ def _readable_floor(b: Block) -> float:
     return 0.0
 
 
-def strip(ctx: Ctx, blocks: list[Block], box: Box, text_share: float) -> tuple[list[Fit], bool]:
+def strip(ctx: Ctx, blocks: list[Block], box: Box, text_share: float,
+          cta_floor: bool = False) -> tuple[list[Fit], bool]:
     rigid = [b for b in blocks if not b.is_text]
     texts = [b for b in blocks if b.is_text]
     fits_: dict[str, Fit] = {}
@@ -320,7 +321,12 @@ def strip(ctx: Ctx, blocks: list[Block], box: Box, text_share: float) -> tuple[l
             rest_w = sum(fits_[b.id].w for b in rest)
             k = max(0.05, (max_rigid - logo_w) / rest_w) if rest_w else 1.0
             for b in rest:
-                fits_[b.id] = size_rigid(b, fits_[b.id].scale * min(1.0, k), math.inf, box.h)
+                sc = fits_[b.id].scale * min(1.0, k)
+                if b.role == "cta" and cta_floor:  # variant: keep the button label >= 7px
+                    sc = max(sc, min(fits_[b.id].scale, 7.0 / max(1.0, min(
+                        num(e.get("font_size"), 12) for e in b.elements if e.get("type") == "text") if any(
+                        e.get("type") == "text" for e in b.elements) else 1.0)))
+                fits_[b.id] = size_rigid(b, sc, math.inf, box.h)
             rigid_w = sum(fits_[b.id].w for b in rigid)
     text_budget = max(1.0, budget - rigid_w)
     cells = [it for it in items if it[0].is_text]
@@ -548,9 +554,9 @@ def strat_columns(ctx: Ctx) -> Layout | None:
     return _finish(ctx, lay, ctx.floating)
 
 
-def strat_strip(ctx: Ctx, drop: tuple[str, ...], text_share: float) -> Layout:
+def strat_strip(ctx: Ctx, drop: tuple[str, ...], text_share: float, cta_floor: bool = False) -> Layout:
     tag = "+".join(drop) if drop else "all"
-    lay = Layout(f"strip-{tag}-{int(text_share * 100)}",
+    lay = Layout(f"strip-{tag}-{int(text_share * 100)}" + ("·cta7" if cta_floor else ""),
                  "One row, left to right in the original reading order" +
                  (f"; {', '.join(drop)} dropped to keep the rest readable" if drop else "") + ".")
     blocks: list[Block] = []
@@ -565,7 +571,7 @@ def strat_strip(ctx: Ctx, drop: tuple[str, ...], text_share: float) -> Layout:
     blocks.sort(key=lambda b: (b.role in ("sticker", "tag"), b.role != "logo"))
     m = (max(2.0, 0.06 * ctx.H) if ctx.H < 80 else max(4.0, 0.12 * ctx.H)) if ctx.H < 200 else ctx.margin
     box = Box(m * 1.5, m, ctx.W - 3 * m, ctx.H - 2 * m)
-    lay.fits, lay.overflow = strip(ctx, blocks, box, text_share)
+    lay.fits, lay.overflow = strip(ctx, blocks, box, text_share, cta_floor)
     rest = [b for b in ctx.a.floating if b.role == "unavailable"]
     return _finish(ctx, lay, rest)
 
@@ -624,6 +630,8 @@ def candidates(ctx: Ctx) -> list[Layout]:
         for d in drops:
             for share in ((0.4, 0.47, 0.54, 0.61, 0.68) if ctx.H < 80 else (0.45, 0.6)):
                 out.append(strat_strip(ctx, d, share))
+                if ctx.H < 80:
+                    out.append(strat_strip(ctx, d, share, cta_floor=True))
     return [c for c in out if c is not None]
 
 

@@ -3,7 +3,7 @@
 Our entry for **Project CHAMELEON** (Adobe University Hackathon, North America 2026). The engine takes a design and a target canvas. It returns the same elements re-laid-out for the new shape: it reads the design's structure, tries several layouts, measures each with the official renderer's font metrics, and keeps the best one.
 
 - Deterministic Python. No model and no network, so it runs offline in the starter Docker image.
-- 1–100 ms per resize on a laptop.
+- 1–230 ms per resize on a laptop.
 - Only `engine/` changed in the stage-one path. `engine/main.py`, `renderer/` and the `Dockerfile` are the starter's, untouched.
 
 ![Stretch vs Chameleon, Level 3 sample across 16 formats](docs/sheet_level3_advanced.png)
@@ -30,6 +30,7 @@ pip install -r requirements-dev.txt
 python -m pytest -q                 # 194 tests
 python -m tools.evaluate --render   # every sample x 15 platform formats, contact sheets in output/eval/
 python -m tools.evaluate --input samples/extra   # 4 extra designs the engine was not tuned on
+python -m tools.stress --n 150      # 150 random realistic designs x 15 formats (2,250 runs)
 python -m studio.server             # demo UI at http://127.0.0.1:8765
 ```
 
@@ -83,7 +84,9 @@ source design ──► analyze ──► candidate layouts ──► score ─�
 - Font family and copy unchanged
 - Visible text fits its box at its font size
 
-The slowest run took about 100 ms.
+The slowest run took about 230 ms (the 320×50 banner tries the most variants).
+
+`python -m tools.stress --n 150` generates 150 random but realistic designs: varied headline lengths, left or centred text, logo top, bottom or corner, one or two images, badges, ribbons and decorations. It runs each through 15 formats, 2,250 resizes in all, with 0 structural problems. The weakest results are all 320×50 banners with very long headlines.
 
 `samples/extra/` holds four designs we wrote to test structures the official samples lack: a landscape web hero with left-aligned copy, an editorial page with two images and a bottom logo, a text-only event poster on a solid shape, and a sale post with text overlapping the product. They gave 64 more runs with 0 hard-rule problems. They also exposed three bugs, now fixed: body copy misread as fine print, a bottom-corner logo not recognised, and left-aligned columns breaking apart. The scores we print are our own proxy, **not** Adobe's scorer.
 

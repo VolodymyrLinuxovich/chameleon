@@ -96,6 +96,8 @@ No LLM: the hard part is geometric and measurable, determinism makes it reproduc
 
 - Strip and decoration pass: consecutive texts in one-row layouts stack into one cell (fixes eyebrow, headline and date sitting in separate narrow columns). Decorations now also clear buttons, with a 2% margin, unless the overlap already existed in the source.
 
+- Stress pass: `tools/stress.py` runs 150 random realistic designs x 15 formats (2,250 runs) with 0 structural problems. Readability now also weighs the weakest of the headline and CTA, and text under 6px counts as lost. One-row layouts under 80px also try a variant that keeps the CTA label at 7px or more.
+
 ### Next highest-value tasks
 
 1. Run the Docker build and run once Docker is available.
