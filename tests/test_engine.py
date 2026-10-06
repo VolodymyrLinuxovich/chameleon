@@ -10,7 +10,7 @@ from engine.score import _aabb, _ov
 from tools.checks import check
 from tools.formats import FORMATS
 
-TASKS = sorted(Path("input").glob("*.json"))
+TASKS = sorted(Path("input").glob("*.json")) + sorted(Path("samples/extra").glob("*.json"))
 TARGETS = [(f["width"], f["height"]) for f in FORMATS] + [(1600, 400), (728, 90), (1, 1), (5000, 200)]
 
 

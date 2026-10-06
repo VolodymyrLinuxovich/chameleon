@@ -3,7 +3,7 @@
 Our entry for **Project CHAMELEON** (Adobe University Hackathon, North America 2026). The engine takes a design and a target canvas. It returns the same elements re-laid-out for the new shape: it reads the design's structure, tries several layouts, measures each with the official renderer's font metrics, and keeps the best one.
 
 - Deterministic Python. No model and no network, so it runs offline in the starter Docker image.
-- 1–85 ms per resize on a laptop.
+- 1–100 ms per resize on a laptop.
 - Only `engine/` changed in the stage-one path. `engine/main.py`, `renderer/` and the `Dockerfile` are the starter's, untouched.
 
 ![Stretch vs Chameleon, Level 3 sample across 16 formats](docs/sheet_level3_advanced.png)
@@ -27,8 +27,9 @@ Extras (not part of the scored engine):
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest -q                 # 114 tests
+python -m pytest -q                 # 194 tests
 python -m tools.evaluate --render   # every sample x 15 platform formats, contact sheets in output/eval/
+python -m tools.evaluate --input samples/extra   # 4 extra designs the engine was not tuned on
 python -m studio.server             # demo UI at http://127.0.0.1:8765
 ```
 
@@ -81,10 +82,13 @@ source design ──► analyze ──► candidate layouts ──► score ─�
 - Font family and copy unchanged
 - Visible text fits its box at its font size
 
-The slowest run took 83 ms. The scores we print are our own proxy, **not** Adobe's scorer.
+The slowest run took about 100 ms.
+
+`samples/extra/` holds four designs we wrote to test structures the official samples lack: a landscape web hero with left-aligned copy, an editorial page with two images and a bottom logo, a text-only event poster on a solid shape, and a sale post with text overlapping the product. They gave 64 more runs with 0 hard-rule problems. They also exposed three bugs, now fixed: body copy misread as fine print, a bottom-corner logo not recognised, and left-aligned columns breaking apart. The scores we print are our own proxy, **not** Adobe's scorer.
 
 ## Limitations (honest list)
 
+- **Left-aligned columns** that share a left edge in the source keep sharing one after reflow, so text and its button stay lined up.
 - **Hiding on small canvases.** When no layout that keeps everything reads well, low-priority content may get `opacity: 0`: fine print, long body copy and badges, stickers on strips under 200 px tall, and the product image on banners under 80 px tall. Missing-asset images are always skipped ("skip it" is explicitly allowed for the Level 3 sample). The organisers haven't said whether hiding is acceptable for scoring, so `CHAMELEON_ALLOW_HIDE=0` turns it off and keeps everything visible.
 - **The official renderer ignores `opacity` on text** (we verified this). Hidden text therefore also gets a transparent colour alpha, or it would still draw. Only hidden elements are affected, but it is a change to `color`.
 - **Copy that is simply too long stays small.** Copy can't be rewritten in stage one. The Level 3 headline (140 characters) renders at 8 px on 320×50 and at 9 px on 728×90: readable, but small. Shortening copy is a finale idea we haven't built.

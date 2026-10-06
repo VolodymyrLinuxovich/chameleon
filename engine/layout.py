@@ -227,10 +227,39 @@ def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
         tot = sum(f.h for f in fs) + g * (n - 1)
         run(fs, box.y + (box.h - tot) / 2, g)
 
+    # Blocks that shared a left edge in the source keep sharing one: the
+    # column is placed as a unit (centred if it was centred) instead of each
+    # block snapping to a different anchor.
+    col = _left_column(ctx, fs)
+    if col:
+        x0s = [f.block.bbox[0] for f in col]
+        src_l, src_r = min(x0s), max(f.block.bbox[2] for f in col)
+        col_w = max(f.w for f in col)
+        centred = (h_align == "center" or abs((src_l + src_r) / 2 - ctx.W0 / 2) < 0.12 * ctx.W0
+                   or col_w >= 0.6 * box.w)
+        cx = box.x + ((box.w - col_w) / 2 if centred else 0.0)
     for f in fs:
+        if col and f in col:
+            f.x = cx
+            continue
         al = h_align or _anchor(ctx, f.block)
         f.x = box.x + {"left": 0.0, "center": (box.w - f.w) / 2, "right": box.w - f.w}[al]
     return fs, overflow
+
+
+def _left_column(ctx: Ctx, fs: list[Fit]) -> list[Fit]:
+    """Fits whose source blocks are left-aligned on a common edge."""
+    def is_left(f: Fit) -> bool:
+        if f.block.is_text:  # left-aligned text: judge by its left edge
+            return (f.block.text_el or {}).get("text_align", "left") == "left" and f.block.bbox[0] < 0.35 * ctx.W0
+        return f.block.center[0] < 0.5 * ctx.W0
+    cands = [f for f in fs if is_left(f)]
+    if len(cands) < 2:
+        return []
+    edge = sorted(f.block.bbox[0] for f in cands)[len(cands) // 2]
+    col = [f for f in cands if abs(f.block.bbox[0] - edge) <= 0.03 * ctx.W0]
+    texts = [f for f in col if f.block.is_text and (f.block.text_el or {}).get("text_align", "left") == "left"]
+    return col if len(col) >= 2 and texts else []
 
 
 # ----------------------------------------------------------------------------

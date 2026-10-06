@@ -89,7 +89,7 @@ def _clear_text(a: Analysis, out: dict[str, dict[str, Any]], W: float, H: float)
             x0, y0, x1, y1 = _box(n)
             ax = 0.0 if (x0 + x1) / 2 < W / 2 else W   # corner it shrinks toward
             ay = 0.0 if (y0 + y1) / 2 < H / 2 else H
-            for k in (0.85, 0.7, 0.55, 0.4):
+            for k in (0.85, 0.7, 0.55, 0.4, 0.3, 0.22):
                 if not any(_hits(_box(n), t) for t in texts):
                     break
                 n.update(x=ax + (x0 - ax) * k, y=ay + (y0 - ay) * k,

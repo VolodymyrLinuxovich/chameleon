@@ -210,7 +210,7 @@ def analyze(source: dict[str, Any]) -> Analysis:
             b.role, b.reason = "image", f"unknown type '{t}', kept rigid"
             flow.append(b)
 
-    _assign_text_roles([b for b in flow if b.role == "text"], H0, notes)
+    _assign_text_roles([b for b in flow if b.role == "text"], H0, notes, min(W0, H0))
     _assign_image_roles([b for b in flow if b.role == "img"], W0, H0, canvas_area)
     _assign_action_roles([b for b in flow if b.role == "badge"])
 
@@ -238,7 +238,7 @@ def _text_weight(el: dict[str, Any]) -> float:
     return num(el.get("font_size"), 1) * (1.12 if str(el.get("font_weight")) == "bold" else 1.0)
 
 
-def _assign_text_roles(blocks: list[Block], H0: float, notes: list[str]) -> None:
+def _assign_text_roles(blocks: list[Block], H0: float, notes: list[str], short_side: float = 1080.0) -> None:
     if not blocks:
         return
     ranked = sorted(blocks, key=lambda b: (_text_weight(b.elements[0]), b.w * b.h), reverse=True)
@@ -250,7 +250,8 @@ def _assign_text_roles(blocks: list[Block], H0: float, notes: list[str]) -> None
         fs = num(el.get("font_size"), 1)
         ratio = fs / max(1.0, top_size)
         near_edge = b.center[1] > 0.88 * H0 or b.center[1] < 0.06 * H0
-        if ratio <= 0.25 or (ratio <= 0.35 and (near_edge or len(str(el.get("content", ""))) > 80)):
+        tiny = fs <= 0.016 * short_side  # legal-size type relative to the canvas
+        if ratio <= 0.2 or (ratio <= 0.35 and tiny and (near_edge or len(str(el.get("content", ""))) > 80)):
             b.role, b.reason = "fineprint", f"{fs:.0f}px is {ratio:.0%} of the headline size"
         else:
             b.role, b.reason = "body", f"{fs:.0f}px supporting text"
@@ -264,7 +265,7 @@ def _assign_image_roles(blocks: list[Block], W0: float, H0: float, canvas_area: 
         aspect = b.w / b.h
         frac = b.w * b.h / canvas_area
         top = b.center[1] < 0.3 * H0
-        if aspect >= 1.6 and frac <= 0.12 and (top or b is not largest):
+        if aspect >= 1.6 and frac <= 0.12 and (top or b is not largest or frac < 0.04):
             b.role, b.reason = "logo", f"wide ({aspect:.1f}:1), small, {'near the top' if top else 'secondary'}"
         elif b is largest and frac >= 0.04:
             b.role, b.reason = "hero", f"largest image ({frac:.0%} of the canvas)"
