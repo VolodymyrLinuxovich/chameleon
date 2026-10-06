@@ -32,7 +32,10 @@ python -m tools.evaluate --render   # every sample x 15 platform formats, contac
 python -m tools.evaluate --input samples/extra   # 4 extra designs the engine was not tuned on
 python -m tools.stress --n 150      # 150 random realistic designs x 15 formats (2,250 runs)
 python -m studio.server             # demo UI at http://127.0.0.1:8765
+python -m tools.build_site          # rebuild the landing page (site/index.html) from current renders
 ```
+
+Landing page: **https://chameleon-resize.vercel.app** (static, built from `site/template.html` by `tools/build_site.py`, deployed with `cd site && vercel deploy --prod`).
 
 ## Supported input
 

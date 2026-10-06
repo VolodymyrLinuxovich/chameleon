@@ -1,0 +1,289 @@
+<title>Chameleon Resize Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one quiet column of white space; the only loud thing is the hero artboard that morphs between canvas shapes. */
+:root{
+  --bg:#FAFAF8; --fg:#121413; --muted:#6B716E; --faint:#E6E8E6; --accent:#0C7458; --stage:#111413;
+  --sans:"Geist", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --mono:"Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --ease:cubic-bezier(.65,0,.25,1);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#0D0F0E; --fg:#EDEFEE; --muted:#8E9592; --faint:#202423; --accent:#44C99F; --stage:#050606; color-scheme:dark; }
+}
+:root[data-theme="dark"]{ --bg:#0D0F0E; --fg:#EDEFEE; --muted:#8E9592; --faint:#202423; --accent:#44C99F; --stage:#050606; color-scheme:dark; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 var(--sans);padding-inline:clamp(16px,5vw,64px);padding-block:0 56px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+h1,h2{font-weight:600;letter-spacing:-.035em;line-height:1.02;margin:0;text-wrap:balance}
+.mono{font-family:var(--mono);font-size:.78rem;color:var(--muted);letter-spacing:.01em}
+.label{font-family:var(--mono);font-size:.74rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+
+header{display:flex;justify-content:space-between;align-items:center;padding-block:24px}
+.brand{font-weight:600;letter-spacing:-.02em;display:flex;gap:9px;align-items:center}
+.brand span{width:12px;height:12px;border:1.5px solid var(--fg);border-radius:2px;display:inline-block;animation:breathe 6s var(--ease) infinite}
+@keyframes breathe{0%,100%{width:12px;height:12px}33%{width:16px;height:9px}66%{width:9px;height:16px}}
+header a{color:var(--muted);text-decoration:none;font-size:.9rem}
+header a:hover{color:var(--fg)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(32px,5vw,72px);align-items:center;padding-block:clamp(40px,9vw,120px) clamp(48px,8vw,104px)}
+.hero h1{font-size:clamp(2.6rem,5.4vw,4.6rem)}
+.hero h1 .w{display:inline-block;animation:rise .9s var(--ease) both}
+.hero h1 .w:nth-child(2){animation-delay:.08s}.hero h1 .w:nth-child(3){animation-delay:.16s}.hero h1 .w:nth-child(4){animation-delay:.24s}
+.hero h1 .a{color:var(--accent)}
+.hero p{color:var(--muted);font-size:1.12rem;max-width:36ch;margin:22px 0 0;animation:rise .9s .32s var(--ease) both}
+.hero .meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:28px;animation:rise .9s .4s var(--ease) both}
+@keyframes rise{from{opacity:.15;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.board{position:relative;height:clamp(300px,40vw,460px);display:grid;place-items:center}
+.art{position:relative;width:300px;height:375px;transition:width .9s var(--ease),height .9s var(--ease);box-shadow:0 30px 60px -30px rgba(0,0,0,.45);border-radius:3px;overflow:hidden;background:var(--stage)}
+.art img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;transition:opacity .5s ease}
+.art img.off{opacity:0}
+.ticks{position:absolute;inset:auto 0 -6px 0;display:flex;justify-content:space-between;align-items:center}
+.dim{font-family:var(--mono);font-size:.78rem;color:var(--fg);font-variant-numeric:tabular-nums}
+.fmt{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+
+section{padding-block:clamp(56px,9vw,112px);border-top:1px solid var(--faint)}
+section h2{font-size:clamp(1.9rem,3.8vw,3rem);max-width:18ch}
+section .sub{color:var(--muted);max-width:52ch;margin:14px 0 0;font-size:1.05rem}
+
+/* compare */
+.cmp{margin-top:40px}
+.pick{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:baseline}
+.seg{display:flex;gap:4px;flex-wrap:wrap}
+.seg button{font:inherit;font-size:.88rem;background:none;border:0;color:var(--muted);padding:6px 10px;border-radius:6px;cursor:pointer;transition:color .2s,background .2s}
+.seg button:hover{color:var(--fg)}
+.seg button[aria-pressed="true"]{color:var(--fg);background:var(--faint)}
+.seg.f button{font-family:var(--mono);font-size:.76rem}
+.stage{margin-top:16px;background:var(--stage);border-radius:12px;padding:clamp(18px,4vw,48px);display:grid;grid-template-columns:minmax(0,1fr);place-items:center;min-height:clamp(260px,34vw,420px)}
+.frame{position:relative;max-width:100%;min-width:0;line-height:0;cursor:ew-resize;touch-action:pan-y}
+.frame img{display:block;max-width:100%;max-height:360px;width:auto;height:auto;user-select:none;-webkit-user-drag:none}
+.frame .over{position:absolute;inset:0;clip-path:inset(0 0 0 var(--cut,50%))}
+.frame .over img{width:100%;height:100%;max-height:none}
+.bar{position:absolute;top:-10px;bottom:-10px;left:var(--cut,50%);width:1px;background:#fff;pointer-events:none}
+.bar::after{content:"";position:absolute;top:50%;left:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+.cap{display:flex;justify-content:space-between;margin-top:12px}
+.cap span:last-child{color:var(--accent)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(20px,3vw,40px);margin:48px 0 0;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;min-width:0}
+.steps li::before{content:counter(s,decimal-leading-zero);display:block;font-family:var(--mono);font-size:.74rem;color:var(--accent);margin-bottom:12px}
+.steps b{display:block;font-weight:600;font-size:1.05rem;margin-bottom:6px;letter-spacing:-.01em}
+.steps p{margin:0;color:var(--muted);font-size:.95rem}
+
+/* numbers */
+.nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(20px,3vw,40px);margin-top:48px}
+.nums div{min-width:0}
+.nums b{display:block;font-size:clamp(2.2rem,4.6vw,3.4rem);font-weight:600;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1}
+.nums span{display:block;color:var(--muted);font-size:.92rem;margin-top:10px;max-width:24ch}
+.limits{margin-top:48px;color:var(--muted);font-size:.92rem;max-width:70ch}
+.limits b{color:var(--fg);font-weight:500}
+
+pre{margin:40px 0 0;background:var(--stage);color:#E3E7E5;border-radius:12px;padding:22px 24px;overflow-x:auto;font:400 .86rem/1.8 var(--mono);position:relative}
+pre .c{color:#6F7A76}
+.copy{position:absolute;top:12px;right:12px;font:inherit;font-size:.74rem;background:transparent;color:#B9C2BE;border:1px solid #2E3533;border-radius:6px;padding:3px 10px;cursor:pointer}
+footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--faint);padding-top:24px;color:var(--muted);font-size:.84rem}
+
+/* scroll reveal: visible by default; JS only pre-hides what starts below the fold */
+.rv{transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.rv.pre{opacity:0;transform:translateY(24px)}
+
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr}
+  .steps,.nums{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:520px){ .steps,.nums{grid-template-columns:1fr} header nav{display:none} }
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rv.pre{opacity:1;transform:none}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><span aria-hidden="true"></span>Chameleon</div>
+    <nav><a href="#run">Run it</a></nav>
+  </header>
+
+  <div class="hero">
+    <div>
+      <div class="label" style="margin-bottom:20px">Project CHAMELEON · resize engine</div>
+      <h1><span class="w">Same</span> <span class="w">design.</span><br><span class="w a">Every</span> <span class="w a">canvas.</span></h1>
+      <p>Chameleon rebuilds a finished design for any size. It moves the furniture instead of stretching the photo.</p>
+      <div class="meta"><span class="mono">no AI model</span><span class="mono">offline</span><span class="mono">deterministic</span></div>
+    </div>
+    <div class="board" aria-label="One design rebuilt for several canvas sizes">
+      <div class="art" id="art"><img id="a0" alt=""><img id="a1" class="off" alt=""></div>
+      <div class="ticks"><span class="dim" id="dim">1080 × 1350</span><span class="fmt" id="fmt">Original</span></div>
+    </div>
+  </div>
+
+  <section class="rv">
+    <div class="label">Stretch vs rebuild</div>
+    <h2>Drag to see the difference</h2>
+    <p class="sub">The left side is what a plain resize does. The right side is Chameleon: same elements, same copy, laid out again for the new shape.</p>
+    <div class="cmp">
+      <div class="pick">
+        <div class="seg" id="designs" role="group" aria-label="Design"></div>
+        <div class="seg f" id="formats" role="group" aria-label="Canvas size"></div>
+      </div>
+      <div class="stage">
+        <div class="frame" id="frame">
+          <img id="cs" alt="" draggable="false">
+          <div class="over"><img id="cr" alt="" draggable="false"></div>
+          <div class="bar" aria-hidden="true"></div>
+        </div>
+      </div>
+      <label class="sr" for="cut">Comparison position</label>
+      <input class="sr" id="cut" type="range" min="0" max="100" value="50">
+      <div class="cap mono"><span>Stretch</span><span id="dims"></span><span>Chameleon</span></div>
+    </div>
+  </section>
+
+  <section class="rv">
+    <div class="label">How it works</div>
+    <h2>Read the design. Rebuild it.</h2>
+    <ol class="steps">
+      <li class="rv"><b>Read the structure</b><p>The input has no labels. Size, position and grouping tell it which piece is the headline, logo, product and button.</p></li>
+      <li class="rv"><b>Try real layouts</b><p>A column, a side-by-side split, three columns or a single row, each in the original reading order.</p></li>
+      <li class="rv"><b>Measure and score</b><p>Text is measured with the official renderer's fonts. Each layout is scored on readability, hierarchy, collisions and space.</p></li>
+      <li class="rv"><b>Pick and explain</b><p>The best layout wins, and every decision is recorded so you can see why.</p></li>
+    </ol>
+  </section>
+
+  <section class="rv">
+    <div class="label">Evidence</div>
+    <h2>Tested on designs it never saw</h2>
+    <div class="nums">
+      <div><b data-n="2250">2,250</b><span>resizes of 150 random realistic designs</span></div>
+      <div><b data-n="0">0</b><span>structural rule problems in those runs</span></div>
+      <div><b data-n="194">194</b><span>automated tests passing</span></div>
+      <div><b data-n="15">15</b><span>platform formats, 1080×1920 down to 320×50</span></div>
+    </div>
+    <p class="limits"><b>Limits.</b> Very long copy stays small on tiny banners, because copy is never rewritten. On small canvases, unreadable low-priority pieces may be hidden, and a switch turns that off. Numbers are our own checks, not Adobe's scorer.</p>
+  </section>
+
+  <section class="rv" id="run">
+    <div class="label">Run it</div>
+    <h2>Three commands</h2>
+<pre><button class="copy" id="copy" type="button">Copy</button><span class="c"># Python 3.10+, inside the starter repo</span>
+pip install -r requirements.txt
+python -m engine.main      <span class="c"># resize every task in input/</span>
+python -m studio.server    <span class="c"># demo UI on http://127.0.0.1:8765</span></pre>
+  </section>
+
+  <footer>
+    <span>Independent student entry for the Project CHAMELEON challenge. Not affiliated with or endorsed by Adobe.</span>
+    <span class="mono">Renders by the official cr-renderer</span>
+  </footer>
+</div>
+
+<script>
+const DATA = __DATA__;
+const $ = id => document.getElementById(id);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* Hero: the artboard morphs through canvas shapes, showing the real result for each. */
+(() => {
+  const d = DATA.designs[0];
+  const seq = [{name:"Original", w:d.canvas.width, h:d.canvas.height, src:d.original}]
+    .concat(["ig_story","ig_post","yt_thumb","li_banner","leaderboard","skyscraper"].map(k => {
+      const f = DATA.formats.find(x => x.key === k); return {name:f.name, w:f.w, h:f.h, src:d.pairs[k].result};
+    }));
+  const art = $("art"), imgs = [$("a0"), $("a1")], board = art.parentElement;
+  let i = 0, front = 0, timer = null;
+  function fit(w, h){
+    const bw = board.clientWidth * .92, bh = board.clientHeight * .82;
+    const s = Math.min(bw / w, bh / h); return [Math.round(w * s), Math.round(h * s)];
+  }
+  function show(k, first){
+    const it = seq[k], [w, h] = fit(it.w, it.h);
+    art.style.width = w + "px"; art.style.height = h + "px";
+    $("dim").textContent = `${it.w} × ${it.h}`; $("fmt").textContent = it.name;
+    const back = imgs[1 - front]; back.src = it.src; back.alt = `${it.name}, ${it.w} by ${it.h}`;
+    if(first){ imgs[front].src = it.src; return; }
+    setTimeout(() => { back.classList.remove("off"); imgs[front].classList.add("off"); front = 1 - front; }, 380);
+  }
+  show(0, true);
+  const step = () => { i = (i + 1) % seq.length; show(i); };
+  const start = () => { if(!reduce && !timer) timer = setInterval(step, 2400); };
+  const stop = () => { clearInterval(timer); timer = null; };
+  board.addEventListener("mouseenter", stop); board.addEventListener("mouseleave", start);
+  addEventListener("resize", () => show(i, true));
+  start();
+})();
+
+/* Compare: drag anywhere on the image; keyboard via the range input. */
+(() => {
+  let cd = 0, cf = "li_banner";
+  const fkeys = ["ig_story","yt_thumb","li_banner","leaderboard","mobile_banner"];
+  const frame = $("frame"), cut = $("cut");
+  const set = v => { v = Math.max(0, Math.min(100, v)); frame.style.setProperty("--cut", v + "%"); cut.value = v; };
+  function draw(){
+    const d = DATA.designs[cd], f = DATA.formats.find(x => x.key === cf), p = d.pairs[cf];
+    $("cs").src = p.stretch; $("cr").src = p.result;
+    $("cs").alt = `${d.label} stretched to ${f.w} by ${f.h}`; $("cr").alt = `${d.label} rebuilt for ${f.w} by ${f.h}`;
+    $("dims").textContent = `${f.name} · ${f.w} × ${f.h}`;
+    document.querySelectorAll("#designs button").forEach((b, i) => b.setAttribute("aria-pressed", i === cd));
+    document.querySelectorAll("#formats button").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === cf));
+  }
+  DATA.designs.forEach((d, i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = d.label; b.onclick = () => { cd = i; draw(); }; $("designs").appendChild(b); });
+  fkeys.forEach(k => { const f = DATA.formats.find(x => x.key === k); const b = document.createElement("button"); b.type = "button"; b.dataset.k = k; b.textContent = `${f.w}×${f.h}`; b.title = f.name; b.onclick = () => { cf = k; draw(); }; $("formats").appendChild(b); });
+  let drag = false;
+  const at = e => { const r = frame.getBoundingClientRect(); set((e.clientX - r.left) / r.width * 100); };
+  frame.addEventListener("pointerdown", e => { drag = true; frame.setPointerCapture(e.pointerId); at(e); });
+  frame.addEventListener("pointermove", e => { if(drag) at(e); });
+  frame.addEventListener("pointerup", () => drag = false);
+  cut.addEventListener("input", e => set(+e.target.value));
+  draw(); set(50);
+  /* one-time sweep when it scrolls into view, to show it can be dragged */
+  if(!reduce && "IntersectionObserver" in window){
+    const io = new IntersectionObserver(es => es.forEach(en => {
+      if(!en.isIntersecting) return; io.disconnect();
+      const t0 = performance.now(), keys = [50, 18, 82, 50];
+      const tick = t => { const p = Math.min(1, (t - t0) / 1800), seg = Math.min(2, Math.floor(p * 3)), lp = p * 3 - seg;
+        const e = lp < .5 ? 2 * lp * lp : 1 - Math.pow(-2 * lp + 2, 2) / 2;
+        set(keys[seg] + (keys[seg + 1] - keys[seg]) * e); if(p < 1 && !drag) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    }), {threshold: .6});
+    io.observe(frame);
+  }
+})();
+
+/* Scroll reveals and counters: only for things that start below the fold. */
+(() => {
+  if(reduce || !("IntersectionObserver" in window)) return;
+  const below = el => el.getBoundingClientRect().top > innerHeight;
+  const els = [...document.querySelectorAll(".rv")].filter(below);
+  els.forEach(el => el.classList.add("pre"));
+  document.querySelectorAll(".steps li.rv").forEach((li, i) => li.style.transitionDelay = (i * 90) + "ms");
+  const io = new IntersectionObserver(es => es.forEach(en => {
+    if(!en.isIntersecting) return; en.target.classList.remove("pre"); io.unobserve(en.target);
+    en.target.querySelectorAll("[data-n]").forEach(b => {
+      const n = +b.dataset.n, t0 = performance.now();
+      const tick = t => { const p = Math.min(1, (t - t0) / 1200), e = 1 - Math.pow(1 - p, 3);
+        b.textContent = Math.round(n * e).toLocaleString("en-US"); if(p < 1) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    });
+  }), {threshold: .15});
+  els.forEach(el => io.observe(el));
+  /* jumps (anchor links, fast scrolls) can skip past a section: reveal anything already above the fold */
+  const sweep = () => els.forEach(el => { if(el.classList.contains("pre") && el.getBoundingClientRect().top < innerHeight) {
+    el.classList.remove("pre"); io.unobserve(el);
+    el.querySelectorAll("[data-n]").forEach(b => b.textContent = (+b.dataset.n).toLocaleString("en-US")); } });
+  addEventListener("scroll", () => requestAnimationFrame(sweep), {passive: true});
+})();
+
+$("copy").addEventListener("click", async () => {
+  const text = "pip install -r requirements.txt\npython -m engine.main\npython -m studio.server";
+  try { await navigator.clipboard.writeText(text); $("copy").textContent = "Copied"; }
+  catch { const r = document.createRange(); r.selectNodeContents($("copy").parentElement); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $("copy").textContent = "Selected"; }
+  setTimeout(() => $("copy").textContent = "Copy", 1600);
+});
+</script>
