@@ -3,7 +3,7 @@
 Our entry for **Project CHAMELEON** (Adobe University Hackathon, North America 2026). The engine takes a design and a target canvas. It returns the same elements re-laid-out for the new shape: it reads the design's structure, tries several layouts, measures each with the official renderer's font metrics, and keeps the best one.
 
 - Deterministic Python. No model and no network, so it runs offline in the starter Docker image.
-- 1–80 ms per resize on a laptop.
+- 1–85 ms per resize on a laptop.
 - Only `engine/` changed in the stage-one path. `engine/main.py`, `renderer/` and the `Dockerfile` are the starter's, untouched.
 
 ![Stretch vs Chameleon, Level 3 sample across 16 formats](docs/sheet_level3_advanced.png)
@@ -27,7 +27,7 @@ Extras (not part of the scored engine):
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest -q                 # 113 tests
+python -m pytest -q                 # 114 tests
 python -m tools.evaluate --render   # every sample x 15 platform formats, contact sheets in output/eval/
 python -m studio.server             # demo UI at http://127.0.0.1:8765
 ```
@@ -61,7 +61,9 @@ source design ──► analyze ──► candidate layouts ──► score ─�
    - `columns`: hero | message | actions, for wide banners.
    - `strip-*`: one row for leaderboards. Only on canvases under 200 px tall, variants may drop the lowest-priority blocks (see Limitations).
    - `proportional`: uniform contain-scale, which suits near-identical ratios.
-   - On canvases under 640 px on the short side, each strategy also runs as a *text-first* variant (images and buttons at 65%) and as variants that drop fine print, then long body copy, then badges. The headline, logo, product and CTA are never dropped, and neither is body text under 60 characters (usually a tagline or text CTA).
+   - On canvases under 640 px on the short side, each strategy also runs as a *text-first* variant (images and buttons at 65%) and as variants that drop fine print, then long body copy, then badges. The headline, logo and CTA are never dropped, and neither is body text under 60 characters (usually a tagline or text CTA).
+   - Banner heights (under 80 px tall) get extra care. Strips shrink pictures before the CTA and keep the logo at least 45% of the strip height. Small button labels may grow up to 1.3x to fill their box. As a last resort the product image may drop out so the message stays readable.
+   - The scorer treats text under 5 px and images under 12 px as lost: they are in the JSON but nobody can see them.
    - **Dropping is a last resort.** A dropping layout can win only if no layout that keeps everything reaches readability 0.8. The report records this decision (`drop_rule`).
    - After layout, decorations keep their distance to their nearest corner and shrink away from text. Stickers and tags go back to their original corner, or the nearest free one.
 4. **Score** (`engine/score.py`). Readability, hierarchy kept, use of space, scale consistency, collisions, completeness, reading-order fidelity, and balance. These are our proxies for the brief's §2.5 criteria. Weights are in `WEIGHTS`.
@@ -79,12 +81,13 @@ source design ──► analyze ──► candidate layouts ──► score ─�
 - Font family and copy unchanged
 - Visible text fits its box at its font size
 
-The slowest run took 80 ms. The scores we print are our own proxy, **not** Adobe's scorer.
+The slowest run took 83 ms. The scores we print are our own proxy, **not** Adobe's scorer.
 
 ## Limitations (honest list)
 
-- **Hiding on small canvases.** When no layout that keeps everything reads well, low-priority content (fine print, long body copy, badges, and stickers on strips under 200 px tall) may get `opacity: 0`. Missing-asset images are always skipped ("skip it" is explicitly allowed for the Level 3 sample). The organisers haven't said whether hiding is acceptable for scoring, so `CHAMELEON_ALLOW_HIDE=0` turns it off and keeps everything visible.
+- **Hiding on small canvases.** When no layout that keeps everything reads well, low-priority content may get `opacity: 0`: fine print, long body copy and badges, stickers on strips under 200 px tall, and the product image on banners under 80 px tall. Missing-asset images are always skipped ("skip it" is explicitly allowed for the Level 3 sample). The organisers haven't said whether hiding is acceptable for scoring, so `CHAMELEON_ALLOW_HIDE=0` turns it off and keeps everything visible.
 - **The official renderer ignores `opacity` on text** (we verified this). Hidden text therefore also gets a transparent colour alpha, or it would still draw. Only hidden elements are affected, but it is a change to `color`.
+- **Copy that is simply too long stays small.** Copy can't be rewritten in stage one. The Level 3 headline (140 characters) renders at 8 px on 320×50 and at 9 px on 728×90: readable, but small. Shortening copy is a finale idea we haven't built.
 - **Roles are heuristics.** Unusual designs can be misread, such as two equally large headlines or a logo at the bottom. Every candidate still obeys the hard rules, and scoring picks the least bad, but the result may be plainer than a designer's.
 - **Not done:** no copy rewriting or font-family changes (stage-one rules forbid them), no image cropping beyond `fit: cover` backgrounds, and no learned model.
 - **Docker is unverified here.** Docker wasn't installed on the development machine. We added no dependencies, and the starter Dockerfile is unchanged.

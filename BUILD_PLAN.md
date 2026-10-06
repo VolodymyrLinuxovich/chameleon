@@ -74,7 +74,7 @@ No LLM: the hard part is geometric and measurable, determinism makes it reproduc
 
 - [x] Brief + starter read, `CHALLENGE_NOTES.md` written
 - [x] Engine: analyse / measure / layout / score / explain (`engine/`)
-- [x] Tests: 113 passing (hard rules × samples × 19 sizes, 40 random designs, malformed input, no-hide mode)
+- [x] Tests: 114 passing (hard rules × samples × 19 sizes, 40 random designs, malformed input, no-hide mode)
 - [x] Batch evaluator + contact sheets (`tools/evaluate.py`, copies in `docs/`)
 - [x] Studio UI (`studio/`), checked in headless Chromium
 - [x] README, `SUBMISSION.md` (description, demo script, criteria map, checklist)
@@ -89,6 +89,8 @@ No LLM: the hard part is geometric and measurable, determinism makes it reproduc
 - Finding: the renderer ignores `opacity` on text, so hidden text also gets a transparent colour.
 
 - Optimisation pass: small canvases get text-first and drop-long-copy variants, but only when no full layout reaches readability 0.8. Mean proxy score went from 0.936 to 0.940, with the gains on Level 3 small formats (billboard 0.84 → 0.92, half page 0.81 → 0.84). Slowest resize went from 32 ms to 80 ms.
+
+- Banner-height pass (canvases under 80 px tall). The scorer counts text under 5 px and images under 12 px as lost, because they are present in the JSON but invisible. Readability now has a gradient below 7 px, and the hierarchy check includes button labels. Strips shrink pictures before the CTA, keep the logo at least 45% of the strip height, try finer text-share splits, and may drop the product as a last resort. Small button labels can grow up to 1.3x to fill their box. Level 3 at 320x50 went from a 4 px headline with 1 px badges to an 8 px headline, a visible logo and a CTA.
 
 ### Next highest-value tasks
 

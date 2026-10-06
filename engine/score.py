@@ -51,7 +51,9 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
     for el in texts:
         f = num(out[el["id"]].get("font_size"), 1)
         wt = block_of[el["id"]].priority + 10
-        rs += wt * max(0.0, min(1.0, (f - 7) / 5))
+        # Full credit from 12px, little below 7px, but still a gradient so a
+        # 9px headline beats a 4px one when nothing can be fully readable.
+        rs += wt * min(1.0, 0.85 * max(0.0, (f - 7) / 5) + 0.15 * min(1.0, f / 12))
         rw += wt
     readability = rs / rw if rw else 1.0
     # Text that no longer fits its own box will be cut off or overflow.
@@ -63,7 +65,9 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
     # Hierarchy: pairwise order of text sizes and image areas is preserved,
     # and the headline keeps its lead over the next-biggest text.
     pairs, kept = 0, 0
-    flow_text = [b.elements[0] for b in visible if b.is_text]
+    # All visible text, including button and badge labels: a CTA label that
+    # outgrows the headline breaks the hierarchy as much as a body line does.
+    flow_text = [e for b in visible for e in b.elements if e.get("type") == "text"]
     for i, p in enumerate(flow_text):
         for q in flow_text[i + 1:]:
             sp, sq = num(src[p["id"]].get("font_size")), num(src[q["id"]].get("font_size"))
@@ -128,8 +132,14 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
     collisions = max(0.0, 1 - 6 * ov / total)
 
     # Completeness: priority-weighted share of content still visible.
+    # Text drawn below 5px is present in the JSON but lost to the eye, so it
+    # counts as missing here (otherwise 1px "kept" badges beat a clean drop).
+    def legible(b) -> bool:
+        if any(e.get("type") == "image" and num(out[e["id"]].get("height")) < 12 for e in b.elements):
+            return False
+        return all(num(out[e["id"]].get("font_size"), 1) >= 5 for e in b.elements if e.get("type") == "text")
     pr_all = sum(b.priority for b in content) or 1
-    pr_hidden = sum(b.priority for b in content if b not in visible)
+    pr_hidden = sum(b.priority for b in content if b not in visible or not legible(b))
     completeness = 1 - pr_hidden / pr_all
 
     # Fidelity: content still reads in the original order (top-to-bottom

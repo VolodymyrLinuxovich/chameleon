@@ -265,17 +265,35 @@ def strip(ctx: Ctx, blocks: list[Block], box: Box, text_share: float) -> tuple[l
     budget = box.w - gap_min * (len(blocks) - 1)
     max_rigid = budget * (1 - text_share) if texts else budget
     if rigid_w > max_rigid > 0:
-        k = max_rigid / rigid_w
-        for b in rigid:
-            fits_[b.id] = size_rigid(b, fits_[b.id].scale * k, math.inf, box.h)
+        # Shrink pictures and marks first so the CTA label stays legible;
+        # only touch the CTA if that isn't enough.
+        keep = [b for b in rigid if b.role == "cta"]
+        flex = [b for b in rigid if b.role != "cta"]
+        keep_w = sum(fits_[b.id].w for b in keep)
+        flex_w = sum(fits_[b.id].w for b in flex)
+        k_flex = max(0.2, (max_rigid - keep_w) / flex_w) if flex_w else 1.0
+        for b in flex:
+            sc = fits_[b.id].scale * min(1.0, k_flex)
+            if b.role == "logo":  # the brand mark must stay recognisable
+                sc = max(sc, min(fits_[b.id].scale, 0.45 * box.h / b.h))
+            fits_[b.id] = size_rigid(b, sc, math.inf, box.h)
         rigid_w = sum(fits_[b.id].w for b in rigid)
+        if rigid_w > max_rigid:
+            logos = [b for b in rigid if b.role == "logo"]
+            rest = [b for b in rigid if b.role != "logo"]
+            logo_w = sum(fits_[b.id].w for b in logos)
+            rest_w = sum(fits_[b.id].w for b in rest)
+            k = max(0.05, (max_rigid - logo_w) / rest_w) if rest_w else 1.0
+            for b in rest:
+                fits_[b.id] = size_rigid(b, fits_[b.id].scale * min(1.0, k), math.inf, box.h)
+            rigid_w = sum(fits_[b.id].w for b in rigid)
     text_budget = max(1.0, budget - rigid_w)
     wsum = sum(TEXT_WEIGHT.get(b.role, 1.5) for b in texts) or 1.0
     overflow = False
     for b in texts:
         el = b.elements[0]
         alloc = text_budget * TEXT_WEIGHT.get(b.role, 1.5) / wsum
-        font = fit_font(el, alloc, box.h * 0.92, ctx.text_cap(el))
+        font = fit_font(el, alloc, box.h, ctx.text_cap(el))
         if font is None:
             font, overflow = 1, True
         _, widest, h = measure(el, font, alloc)
@@ -453,7 +471,7 @@ def strat_strip(ctx: Ctx, drop: tuple[str, ...], text_share: float) -> Layout:
             blocks.append(b)
     # Stickers and tags go last so the row ends with an accent, logo first.
     blocks.sort(key=lambda b: (b.role in ("sticker", "tag"), b.role != "logo"))
-    m = max(4.0, 0.12 * ctx.H) if ctx.H < 200 else ctx.margin
+    m = (max(2.0, 0.06 * ctx.H) if ctx.H < 80 else max(4.0, 0.12 * ctx.H)) if ctx.H < 200 else ctx.margin
     box = Box(m * 1.5, m, ctx.W - 3 * m, ctx.H - 2 * m)
     lay.fits, lay.overflow = strip(ctx, blocks, box, text_share)
     rest = [b for b in ctx.a.floating if b.role == "unavailable"]
@@ -503,13 +521,16 @@ def candidates(ctx: Ctx) -> list[Layout]:
         roles = {b.role for b in ctx.a.flow + ctx.a.floating}
         drops: list[tuple[str, ...]] = [()]
         if ctx.allow_hide and ctx.H < 200:  # only drop content when the canvas is truly tight
-            opts = [d for d in ("fineprint", "body", "badges", "badge", "tag", "sticker") if d in roles]
+            order = ("fineprint", "body", "badges", "badge", "tag", "sticker")
+            if ctx.H < 80:  # banner-ad heights: the product may give way to the message
+                order += ("hero",)
+            opts = [d for d in order if d in roles]
             acc: list[str] = []
             for d in opts:
                 acc.append(d)
                 drops.append(tuple(acc))
         for d in drops:
-            for share in (0.45, 0.6):
+            for share in ((0.4, 0.47, 0.54, 0.61, 0.68) if ctx.H < 80 else (0.45, 0.6)):
                 out.append(strat_strip(ctx, d, share))
     return [c for c in out if c is not None]
 
@@ -531,6 +552,9 @@ def emit_rigid(b: Block, x: float, y: float, s: float) -> list[dict[str, Any]]:
             fs = num(el.get("font_size"), 12)
             font = max(1, int(fs * s))
             src_fits = fits(el, int(fs), num(el.get("width")), num(el.get("height")))
+            if src_fits and fs * s < 10:
+                # Small labels may grow (up to 1.3x) to use their scaled box.
+                font = fit_font(n, w, h, max(1, int(fs * s * 1.3))) or font
             while src_fits and font > 1 and not fits(n, font, w, h):
                 font -= 1
             n["font_size"] = font

@@ -169,3 +169,13 @@ def test_small_canvas_drops_long_copy_to_keep_headline_readable():
     el = {e["id"]: e for e in design["elements"]}
     assert "subhead" in rep["hidden"] and el["headline"]["font_size"] >= 10
     assert el["cta_label"].get("opacity", 1) > 0 and el["product"].get("opacity", 1) > 0
+
+
+def test_mobile_banner_keeps_message_readable():
+    t = load("input/chameleon_sample_level3_advanced.json")
+    design, rep = adapt(t["source"], {"width": 320, "height": 50})
+    el = {e["id"]: e for e in design["elements"]}
+    assert el["headline"]["font_size"] >= 8
+    assert el["logo"]["height"] >= 15 and el["logo"].get("opacity", 1) > 0
+    assert el["cta_label"].get("opacity", 1) > 0
+    assert el["headline"]["font_size"] >= el["cta_label"]["font_size"]  # hierarchy kept

@@ -16,7 +16,7 @@ Chameleon resizes a finished design for any canvas by rearranging it instead of 
 
 **0:50 The technical differentiator.** Point at Layouts considered. "It tried a column, a split and three columns. It scored each one on readability, hierarchy, collisions and use of space, with text measured exactly the way the official renderer draws it. The winner is not a guess. If I prefer another layout, I click Use."
 
-**1:05 Trust.** Point at the Hard-rule checks line. "Every id is kept, nothing is off canvas, images keep their proportions, fonts and copy never change. 113 automated tests check this across 15 formats and 40 random designs. It runs offline in under 100 milliseconds."
+**1:05 Trust.** Point at the Hard-rule checks line. "Every id is kept, nothing is off canvas, images keep their proportions, fonts and copy never change. 114 automated tests check this across 15 formats and 40 random designs. It runs offline in under 100 milliseconds."
 
 **1:15 Close.** "Same design. Every canvas."
 
@@ -31,9 +31,9 @@ The brief lists the qualities the scoring rewards (PDF §2.5), plus "speed and r
 | Everything readable, nothing cut off | Text is measured with the renderer's own fonts and wrap. Integer sizes match the renderer. Readability is scored; unreadable low-priority items may drop away on tight canvases only | `engine/textfit.py`; overflow check in `tools/checks.py` |
 | On brand | Font family, copy, colours (except hidden text, see README), assets, z-order and groups are unchanged. Logo keeps its proportions | `tools/checks.py` field checks |
 | Looks intentional | Shared margins and gaps. Source reading order and top/bottom anchors kept. The headline keeps its lead. Consistent scale across blocks | hierarchy, consistency and fidelity terms in `engine/score.py` |
-| Holds up everywhere | Only generic rules, never keyed to a size or design. Tested on 3 samples × 19 sizes and 40 random designs, with malformed input | `tests/test_engine.py` (113 passing) |
+| Holds up everywhere | Only generic rules, never keyed to a size or design. Tested on 3 samples × 19 sizes and 40 random designs, with malformed input | `tests/test_engine.py` (114 passing) |
 | JSON valid and honest | Same ids, required fields, schema validation, on-canvas boxes including rotated bounds | `tools/checks.py`; `main.py` self-check shows 0 warnings |
-| Speed and reliability | Deterministic, about 1–80 ms per resize, no model or network, a `safe_fit` fallback if anything throws | `python -m tools.evaluate` timing column |
+| Speed and reliability | Deterministic, about 1–85 ms per resize, no model or network, a `safe_fit` fallback if anything throws | `python -m tools.evaluate` timing column |
 | Finale: product thinking (§3.3) | Studio: many canvases at once, stretch comparison, role overlay, ranked alternatives you can pick, JSON download | `studio/` |
 
 ## Final checklist
@@ -41,8 +41,8 @@ The brief lists the qualities the scoring rewards (PDF §2.5), plus "speed and r
 **Works and verified on this machine (macOS, Python 3.11 venv)**
 
 - [x] `python -m engine.main` on the 3 official samples: 0 self-check warnings, real renders
-- [x] `python -m pytest -q`: 113 passed
-- [x] `python -m tools.evaluate`: 48 runs, 0 hard-rule problems, max 80 ms
+- [x] `python -m pytest -q`: 114 passed
+- [x] `python -m tools.evaluate`: 48 runs, 0 hard-rule problems, max 83 ms
 - [x] Studio: adapt, hold-to-compare, explanation dialog, role overlay and candidate switching. Checked in headless Chromium with no console errors and no horizontal scroll at 390 px width
 - [x] Error paths: invalid JSON, a design without a canvas, no targets, out-of-range sizes
 
