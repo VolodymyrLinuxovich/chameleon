@@ -37,7 +37,7 @@ HEAD = ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="description" content="Chameleon rebuilds a finished design for any canvas size instead of stretching it.">\n')
 
 
-def enc(path: str | Path, maxw: int = 880, maxh: int = 880) -> str:
+def enc(path: str | Path, maxw: int = 1280, maxh: int = 1100) -> str:
     im = Image.open(path).convert("RGB")
     im.thumbnail((maxw, maxh), Image.LANCZOS)
     buf = io.BytesIO()
