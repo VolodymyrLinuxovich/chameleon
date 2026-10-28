@@ -3,147 +3,228 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: one quiet column of white space; the only loud thing is the hero artboard that morphs between canvas shapes. */
+/* A spec sheet for a layout engine: paper, ink, one blue accent, and dark stages that hold the renders. */
 :root{
-  --bg:#FAFAF8; --fg:#121413; --muted:#6B716E; --faint:#E6E8E6; --accent:#0C7458; --on-accent:#FFFFFF; --stage:#111413;
-  --sans:"Geist", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
-  --mono:"Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --paper:#F4F3EF; --ink:#0F0F0E; --ink-2:#4B4B47; --rule:#D5D3CB; --accent:#2B3FE0;
+  --stage:#0D0D0E; --stage-ink:#EDEDE8; --stage-2:#8D8D87; --stage-rule:#29292C; --stage-accent:#97A2FF;
+  --sans:"Geist","Helvetica Neue","Segoe UI",system-ui,sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace;
   --ease:cubic-bezier(.65,0,.25,1);
+  /* type scale */
+  --t-label:.72rem; --t-small:.875rem; --t-body:1rem; --t-lead:clamp(1.0625rem,1.4vw,1.25rem);
+  --t-h3:1.125rem; --t-h2:clamp(2rem,4.4vw,3.5rem); --t-h1:clamp(3.4rem,11vw,9.5rem); --t-num:clamp(3rem,6.4vw,5.25rem);
+  /* spacing */
+  --gutter:clamp(16px,4vw,48px); --sec:clamp(72px,10vw,144px); --gap:clamp(20px,2.6vw,36px);
+  color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){ --bg:#0D0F0E; --fg:#EDEFEE; --muted:#8E9592; --faint:#202423; --accent:#44C99F; --on-accent:#07140F; --stage:#050606; color-scheme:dark; }
+  :root:not([data-theme="light"]){ --paper:#0F0F0E; --ink:#EEEDE8; --ink-2:#A4A39D; --rule:#2B2B29; --accent:#97A2FF; --stage:#18181B; --stage-rule:#2C2C30; color-scheme:dark; }
 }
-:root[data-theme="dark"]{ --bg:#0D0F0E; --fg:#EDEFEE; --muted:#8E9592; --faint:#202423; --accent:#44C99F; --on-accent:#07140F; --stage:#050606; color-scheme:dark; }
-:root{scroll-behavior:smooth}
+:root[data-theme="dark"]{ --paper:#0F0F0E; --ink:#EEEDE8; --ink-2:#A4A39D; --rule:#2B2B29; --accent:#97A2FF; --stage:#18181B; --stage-rule:#2C2C30; color-scheme:dark; }
+
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 var(--sans);padding-inline:clamp(16px,5vw,64px);padding-block:0 56px;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1080px;margin:0 auto}
-:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
-h1,h2{font-weight:600;letter-spacing:-.035em;line-height:1.02;margin:0;text-wrap:balance}
-.mono{font-family:var(--mono);font-size:.78rem;color:var(--muted);letter-spacing:.01em}
-.label{font-family:var(--mono);font-size:.74rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 var(--t-body)/1.6 var(--sans);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:var(--gutter)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+h1,h2,h3{margin:0;font-weight:600;text-wrap:balance}
+p{margin:0}
+a{color:inherit}
+.label{font:500 var(--t-label)/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.mono{font-family:var(--mono);font-size:var(--t-label);letter-spacing:.02em}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:var(--gutter);top:-60px;background:var(--ink);color:var(--paper);padding:8px 14px;font-size:var(--t-small);z-index:9}
+.skip:focus{top:12px}
 
-header{display:flex;justify-content:space-between;align-items:center;padding-block:18px}
-.brand{font-weight:600;letter-spacing:-.02em;display:flex;gap:9px;align-items:center}
-.brand span{width:12px;height:12px;border:1.5px solid var(--fg);border-radius:2px;display:inline-block;animation:breathe 6s var(--ease) infinite}
-@keyframes breathe{0%,100%{width:12px;height:12px}33%{width:16px;height:9px}66%{width:9px;height:16px}}
-header a{color:var(--muted);text-decoration:none;font-size:.9rem}
-header a:hover{color:var(--fg)}
+/* header */
+header .in{display:flex;justify-content:space-between;align-items:center;height:68px;border-bottom:1px solid var(--rule)}
+.brand{font-weight:600;letter-spacing:-.02em;display:flex;gap:10px;align-items:center;text-decoration:none}
+.brand i{width:14px;height:14px;border:1.5px solid currentColor;display:inline-block;animation:breathe 6s var(--ease) infinite}
+@keyframes breathe{0%,100%{width:14px;height:14px}33%{width:19px;height:10px}66%{width:10px;height:19px}}
+nav{display:flex;gap:clamp(14px,2.4vw,28px)}
+nav a{font:500 var(--t-label)/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);text-decoration:none;padding:8px 0}
+nav a:hover{color:var(--ink)}
 
-/* hero */
-.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:clamp(28px,4vw,56px);align-items:center;padding-block:clamp(16px,4vw,48px) clamp(36px,5vw,64px)}
-.hero h1{font-size:clamp(2.6rem,5.4vw,4.6rem)}
-.hero h1 .w{display:inline-block;animation:rise .9s var(--ease) both}
-.hero h1 .w:nth-child(2){animation-delay:.08s}.hero h1 .w:nth-child(3){animation-delay:.16s}.hero h1 .w:nth-child(4){animation-delay:.24s}
-.hero h1 .a{color:var(--accent)}
-.hero p{color:var(--muted);font-size:1.12rem;max-width:36ch;margin:22px 0 0;animation:rise .9s .32s var(--ease) both}
-.hero .meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:22px;animation:rise .9s .44s var(--ease) both}
-.cta{display:inline-flex;align-items:center;gap:10px;margin-top:28px;padding:12px 20px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:600;font-size:.98rem;text-decoration:none;animation:rise .9s .38s var(--ease) both;transition:transform .2s var(--ease),box-shadow .2s}
-.cta:hover{transform:translateY(-1px);box-shadow:0 8px 22px -10px var(--accent)}
+/* section heads: index in a narrow column, heading on a shared left edge */
+.head{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);column-gap:var(--gap);row-gap:16px;align-items:baseline}
+.head .label{padding-top:.5em}
+.head h2{font-size:var(--t-h2);line-height:1.02;letter-spacing:-.035em;max-width:20ch}
+.head .lead{grid-column:2;color:var(--ink-2);font-size:var(--t-lead);line-height:1.55;max-width:56ch}
+.label b{color:var(--accent);font-weight:500}
+section{padding-block:var(--sec);scroll-margin-top:8px}
+section + section{border-top:1px solid var(--rule)}
+
+/* 01 intro */
+.intro{padding-block:clamp(48px,8vw,112px) 0}
+.intro h1{font-size:var(--t-h1);line-height:.9;letter-spacing:-.055em;margin-top:clamp(20px,3vw,36px)}
+.intro h1 span{display:block}
+.intro h1 .a{color:var(--accent)}
+.intro .row{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);column-gap:var(--gap);margin-top:clamp(28px,4vw,48px);padding-top:24px;border-top:1px solid var(--ink)}
+.intro .row > div{grid-column:2;display:flex;justify-content:space-between;align-items:flex-start;gap:24px 40px;flex-wrap:wrap}
+.intro .row p{font-size:var(--t-lead);color:var(--ink-2);max-width:40ch;line-height:1.5}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.meta li{list-style:none;font:500 var(--t-label)/1 var(--mono);letter-spacing:.04em;color:var(--ink-2);border:1px solid var(--rule);padding:6px 9px}
+.meta{padding:0}
+.cta{display:inline-flex;align-items:center;gap:12px;padding:15px 22px;background:var(--ink);color:var(--paper);font-weight:500;text-decoration:none;white-space:nowrap;transition:background .2s}
+.cta:hover{background:var(--accent);color:#fff}
 .cta span{transition:transform .2s var(--ease)}
 .cta:hover span{transform:translateY(2px)}
-@keyframes rise{from{opacity:.15;transform:translateY(14px)}to{opacity:1;transform:none}}
 
-.board{position:relative;height:clamp(320px,42vw,520px);display:grid;place-items:center}
-.art{position:relative;width:300px;height:375px;transition:width .9s var(--ease),height .9s var(--ease);box-shadow:0 30px 60px -30px rgba(0,0,0,.45);border-radius:3px;overflow:hidden;background:var(--stage)}
+/* hero canvas band */
+.board{position:relative;margin-top:clamp(40px,6vw,72px);height:clamp(380px,52vw,640px);background:var(--stage);display:grid;place-items:center;overflow:hidden}
+.board::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--stage-rule) 1px,transparent 1px),linear-gradient(90deg,var(--stage-rule) 1px,transparent 1px);background-size:48px 48px;background-position:center;opacity:.55;pointer-events:none}
+.art{position:relative;width:300px;height:375px;transition:width .9s var(--ease),height .9s var(--ease);box-shadow:0 0 0 1px rgba(255,255,255,.08),0 40px 80px -40px #000;overflow:hidden;background:#000}
 .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;transition:opacity .5s ease}
 .art img.off{opacity:0}
-.ticks{position:absolute;left:50%;top:calc(50% + var(--ah,0px) / 2 + 10px);width:var(--aw,100%);transform:translateX(-50%);display:flex;justify-content:space-between;gap:12px;align-items:center;transition:width .9s var(--ease),top .9s var(--ease)}
-.dim{font-family:var(--mono);font-size:.78rem;color:var(--fg);font-variant-numeric:tabular-nums}
-.fmt{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.readout{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;gap:16px;padding:14px clamp(14px,2vw,22px);font:500 var(--t-label)/1 var(--mono);letter-spacing:.04em;color:var(--stage-2);border-top:1px solid var(--stage-rule);background:var(--stage)}
+.readout #dim{color:var(--stage-ink);font-variant-numeric:tabular-nums}
 
-section{padding-block:clamp(40px,6vw,80px);border-top:1px solid var(--faint);scroll-margin-top:12px}
-section h2{font-size:clamp(1.9rem,3.8vw,3rem);max-width:18ch}
-section .sub{color:var(--muted);max-width:52ch;margin:14px 0 0;font-size:1.05rem}
+/* 02 problem */
+.figs{margin-top:clamp(40px,5vw,64px);background:var(--stage);padding:clamp(20px,4vw,56px);display:grid;grid-template-columns:auto minmax(0,1fr);gap:clamp(20px,4vw,56px);align-items:center}
+.figs figure{margin:0;min-width:0}
+.figs img{display:block;max-width:100%;height:auto}
+.figs .o img{height:clamp(160px,22vw,300px);width:auto}
+.figs figcaption{display:flex;justify-content:space-between;gap:12px;margin-top:12px;font:500 var(--t-label)/1.4 var(--mono);letter-spacing:.04em;color:var(--stage-2)}
+.figs figcaption b{color:var(--stage-ink);font-weight:500}
+.figs .s figcaption b{color:#FF8A73}
 
-/* compare */
-.cmp{margin-top:28px}
-.pick{display:flex;justify-content:space-between;gap:16px 32px;flex-wrap:wrap;align-items:flex-start}
-.group{display:flex;flex-direction:column;gap:8px;min-width:0}
-.group .label{font-size:.7rem}
-.seg{display:flex;gap:6px;flex-wrap:wrap}
-.seg button{font:inherit;font-size:.88rem;background:transparent;border:1px solid var(--faint);color:var(--muted);padding:6px 12px;border-radius:999px;cursor:pointer;transition:color .2s,background .2s,border-color .2s}
-.seg button:hover{color:var(--fg);border-color:var(--muted)}
-.seg button[aria-pressed="true"]{color:var(--bg);background:var(--fg);border-color:var(--fg);font-weight:500}
-.seg.f button{font-family:var(--mono);font-size:.76rem}
-.stage{margin-top:16px;background:var(--stage);border-radius:12px;padding:clamp(10px,2vw,20px);display:grid;grid-template-columns:minmax(0,1fr);place-items:center;min-height:clamp(140px,20vw,240px)}
-.frame{position:relative;max-width:100%;min-width:0;line-height:0;cursor:ew-resize;touch-action:pan-y}
-.frame img{display:block;max-width:100%;max-height:min(62vh,520px);width:auto;height:auto;user-select:none;-webkit-user-drag:none}
+/* 03 solution: the dark band around the comparison */
+.dark{background:var(--stage);color:var(--stage-ink);--ink:var(--stage-ink);--ink-2:var(--stage-2);--rule:var(--stage-rule);--accent:var(--stage-accent)}
+section.dark{border-top:0}
+section.dark + section{border-top:0}
+.tools{margin-top:clamp(36px,5vw,56px);display:flex;justify-content:space-between;align-items:flex-end;gap:20px 40px;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--rule)}
+.group{display:flex;flex-direction:column;gap:10px;min-width:0}
+.seg{display:flex;flex-wrap:wrap;gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.seg button{font:500 var(--t-small)/1 var(--sans);background:var(--stage);border:0;color:var(--ink-2);padding:11px 14px;cursor:pointer;min-height:40px;transition:color .15s,background .15s}
+.seg button:hover{color:var(--ink);background:color-mix(in srgb,var(--stage) 88%,#fff)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--stage)}
+.seg.f button{font-family:var(--mono);font-size:var(--t-label);letter-spacing:.02em}
+.stage{margin-top:clamp(24px,3vw,40px);display:grid;place-items:center;min-height:clamp(200px,30vw,420px)}
+.frame{position:relative;max-width:100%;min-width:0;line-height:0;cursor:ew-resize;touch-action:pan-y;box-shadow:0 0 0 1px rgba(255,255,255,.1)}
+.stage:has(#cut:focus-visible) .frame{outline:2px solid var(--accent);outline-offset:6px}
+.frame img{display:block;max-width:100%;max-height:min(66vh,640px);width:auto;height:auto;user-select:none;-webkit-user-drag:none}
 .frame .over{position:absolute;inset:0;clip-path:inset(0 0 0 var(--cut,50%))}
 .frame .over img{width:100%;height:100%;max-height:none}
-.bar{position:absolute;top:-10px;bottom:-10px;left:var(--cut,50%);width:1px;background:#fff;pointer-events:none}
-.bar::after{content:"";position:absolute;top:50%;left:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.4)}
-.cap{display:flex;justify-content:space-between;gap:6px 16px;flex-wrap:wrap;margin-top:12px}
-.cap span:last-child{color:var(--accent)}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.bar{position:absolute;top:-14px;bottom:-14px;left:var(--cut,50%);width:2px;margin-left:-1px;background:#fff;pointer-events:none}
+.bar::after{content:"‹ ›";position:absolute;top:50%;left:50%;width:36px;height:36px;transform:translate(-50%,-50%);border-radius:50%;background:#fff;color:#0D0D0E;font:600 14px/36px var(--sans);text-align:center;letter-spacing:2px;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.cap{display:grid;grid-template-columns:1fr auto 1fr;gap:8px 16px;margin-top:22px;font:500 var(--t-label)/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.cap #dims{text-transform:none;letter-spacing:.02em;color:var(--ink);text-align:center}
+.cap .r{text-align:right;color:var(--accent)}
 
-/* steps */
-.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(20px,3vw,40px);margin:36px 0 0;padding:0;list-style:none;counter-reset:s}
-.steps li{counter-increment:s;min-width:0}
-.steps li::before{content:counter(s,decimal-leading-zero);display:block;font-family:var(--mono);font-size:.74rem;color:var(--accent);margin-bottom:12px}
-.steps b{display:block;font-weight:600;font-size:1.05rem;margin-bottom:6px;letter-spacing:-.01em}
-.steps p{margin:0;color:var(--muted);font-size:.95rem}
+/* 04 how */
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap);margin:clamp(40px,5vw,64px) 0 0;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;min-width:0;border-top:1px solid var(--ink);padding-top:18px}
+.steps li::before{content:counter(s,decimal-leading-zero);display:block;font:500 var(--t-label)/1 var(--mono);color:var(--accent);margin-bottom:28px}
+.steps h3{font-size:var(--t-h3);letter-spacing:-.015em;line-height:1.3;margin-bottom:10px}
+.steps p{color:var(--ink-2);font-size:var(--t-small);line-height:1.6;max-width:32ch}
 
-/* numbers */
-.nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(20px,3vw,40px);margin-top:36px}
-.nums div{min-width:0}
-.nums b{display:block;font-size:clamp(2.2rem,4.6vw,3.4rem);font-weight:600;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1}
-.nums span{display:block;color:var(--muted);font-size:.92rem;margin-top:10px;max-width:24ch}
-.limits{margin-top:36px;color:var(--muted);font-size:.92rem;max-width:70ch}
-.limits b{color:var(--fg);font-weight:500}
+/* 05 evidence */
+.nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:clamp(40px,5vw,64px);border-top:1px solid var(--ink);border-bottom:1px solid var(--rule)}
+.nums div{min-width:0;padding:28px var(--gap) 32px 0}
+.nums div + div{border-left:1px solid var(--rule);padding-left:var(--gap)}
+.nums b{display:block;font-size:var(--t-num);font-weight:600;letter-spacing:-.05em;font-variant-numeric:tabular-nums;line-height:.95}
+.nums span{display:block;color:var(--ink-2);font-size:var(--t-small);margin-top:14px;max-width:22ch;line-height:1.5}
+.limits{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);column-gap:var(--gap);margin-top:32px}
+.limits p{grid-column:2;color:var(--ink-2);font-size:var(--t-small);max-width:68ch}
+.limits b{color:var(--ink);font-weight:600}
 
-pre{margin:28px 0 0;background:var(--stage);color:#E3E7E5;border-radius:12px;padding:22px 24px;overflow-x:auto;font:400 .86rem/1.8 var(--mono);position:relative}
-pre .c{color:#6F7A76}
-.copy{position:absolute;top:12px;right:12px;font:inherit;font-size:.74rem;background:transparent;color:#B9C2BE;border:1px solid #2E3533;border-radius:6px;padding:3px 10px;cursor:pointer}
-footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--faint);padding-top:24px;color:var(--muted);font-size:.84rem}
+/* 06 run */
+.term{margin-top:clamp(40px,5vw,64px);background:var(--stage);color:var(--stage-ink)}
+.term-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 12px 10px 20px;border-bottom:1px solid var(--stage-rule);font:500 var(--t-label)/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--stage-2)}
+.copy{font:500 var(--t-label)/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;background:transparent;color:var(--stage-ink);border:1px solid var(--stage-rule);padding:9px 14px;cursor:pointer;min-height:36px}
+.copy:hover{border-color:var(--stage-2)}
+pre{margin:0;padding:clamp(20px,3vw,32px);overflow-x:auto;font:400 .9rem/1.9 var(--mono)}
+pre .c{color:#77776F}
+pre .p{color:var(--stage-accent);user-select:none}
 
-/* scroll reveal: visible by default; JS only pre-hides what starts below the fold */
+footer .in{display:flex;justify-content:space-between;gap:12px 32px;flex-wrap:wrap;padding-block:28px 40px;border-top:1px solid var(--ink);color:var(--ink-2);font-size:var(--t-small)}
+
+/* reveal: visible by default; JS pre-hides only what starts below the fold */
 .rv{transition:opacity .8s var(--ease),transform .8s var(--ease)}
-.rv.pre{opacity:0;transform:translateY(24px)}
+.rv.pre{opacity:0;transform:translateY(20px)}
 
-@media (max-width:860px){
-  .hero{grid-template-columns:1fr}
-  .steps,.nums{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:900px){
+  .head,.intro .row,.limits{grid-template-columns:1fr}
+  .head .lead,.intro .row > div,.limits p{grid-column:1}
+  .head .label{padding-top:0}
+  .steps{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:40px}
+  .nums{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .nums div:nth-child(3){border-left:0;padding-left:0}
+  .nums div:nth-child(n+3){border-top:1px solid var(--rule)}
 }
-@media (max-width:520px){
-  .steps,.nums{grid-template-columns:1fr}
-  .board{height:clamp(260px,78vw,400px)}
-  .pick{flex-direction:column;gap:16px}
-  .cap #dims{order:3;flex-basis:100%;text-align:center}
+@media (max-width:560px){
+  nav a:not(:last-child){display:none}
+  .figs{grid-template-columns:1fr;align-items:start}
+  .figs .o img{height:200px}
+  .steps{grid-template-columns:1fr}
+  .tools{flex-direction:column;align-items:stretch}
+  .seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .seg button{padding-inline:6px}
+  #designs button{font-size:.8rem}
+  .seg button:last-child:nth-child(3n+2){grid-column:span 2}
+  .cap{grid-template-columns:1fr 1fr}
+  .cap #dims{grid-column:1 / -1;grid-row:2}
+  .board{height:clamp(340px,96vw,440px)}
+  .cta{width:100%;justify-content:center}
 }
 @media (prefers-reduced-motion:reduce){
-  :root{scroll-behavior:auto}
+  html{scroll-behavior:auto}
   *,*::before,*::after{animation:none!important;transition:none!important}
   .rv.pre{opacity:1;transform:none}
 }
 </style>
 
-<div class="wrap">
-  <header>
-    <div class="brand"><span aria-hidden="true"></span>Chameleon</div>
-    <nav><a href="#run">Run it</a></nav>
-  </header>
+<a class="skip" href="#main">Skip to content</a>
+<header>
+  <div class="wrap"><div class="in">
+    <a class="brand" href="#top"><i aria-hidden="true"></i>Chameleon</a>
+    <nav aria-label="Sections"><a href="#problem">Problem</a><a href="#compare">Solution</a><a href="#how">How</a><a href="#run">Run it</a></nav>
+  </div></div>
+</header>
 
-  <div class="hero">
-    <div>
-      <div class="label" style="margin-bottom:20px">Project CHAMELEON · resize engine</div>
-      <h1><span class="w">Same</span> <span class="w">design.</span><br><span class="w a">Every</span> <span class="w a">canvas.</span></h1>
-      <p>Chameleon rebuilds a finished design for any size. It moves the furniture instead of stretching the photo.</p>
-      <a class="cta" href="#compare">Try the comparison <span aria-hidden="true">↓</span></a>
-      <div class="meta"><span class="mono">no AI model</span><span class="mono">offline</span><span class="mono">deterministic</span></div>
-    </div>
-    <div class="board" aria-label="One design rebuilt for several canvas sizes">
-      <div class="art" id="art"><img id="a0" alt=""><img id="a1" class="off" alt=""></div>
-      <div class="ticks"><span class="dim" id="dim">1080 × 1350</span><span class="fmt" id="fmt">Original</span></div>
+<main id="main">
+  <div class="intro" id="top">
+    <div class="wrap">
+      <div class="label">Project CHAMELEON · resize engine</div>
+      <h1><span>Same design.</span><span class="a">Every canvas.</span></h1>
+      <div class="row">
+        <div>
+          <div>
+            <p>Chameleon rebuilds a finished design for any size. It moves the furniture instead of stretching the photo.</p>
+            <ul class="meta"><li>no AI model</li><li>offline</li><li>deterministic</li></ul>
+          </div>
+          <a class="cta" href="#compare">Try the comparison <span aria-hidden="true">↓</span></a>
+        </div>
+      </div>
+      <div class="board" role="img" aria-label="One design rebuilt for several canvas sizes, cycling through formats">
+        <div class="art" id="art"><img id="a0" alt=""><img id="a1" class="off" alt=""></div>
+        <div class="readout" aria-hidden="true"><span id="dim">1080 × 1350</span><span id="fmt">Original</span></div>
+      </div>
     </div>
   </div>
 
-  <section class="rv" id="compare">
-    <div class="label">Stretch vs rebuild</div>
-    <h2>Drag to see the difference</h2>
-    <p class="sub">The left side is what a plain resize does. The right side is Chameleon: same elements, same copy, laid out again for the new shape.</p>
-    <div class="cmp">
-      <div class="pick">
+  <section class="rv" id="problem">
+    <div class="wrap">
+      <div class="head">
+        <div class="label"><b>02</b> · The problem</div>
+        <h2>Stretching a design breaks it</h2>
+        <p class="lead">A plain resize scales every element to the new shape. Type distorts, the logo and button get squashed, and the layout no longer reads.</p>
+      </div>
+      <div class="figs">
+        <figure class="o"><img id="po" alt=""><figcaption><b>Original</b><span id="pod"></span></figcaption></figure>
+        <figure class="s"><img id="ps" alt=""><figcaption><b>Stretched</b><span id="psd"></span></figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="dark rv" id="compare">
+    <div class="wrap">
+      <div class="head">
+        <div class="label"><b>03</b> · Our solution</div>
+        <h2>Chameleon rebuilds it for the new canvas</h2>
+        <p class="lead">Drag across the image. The left side is what a plain resize does. The right side is Chameleon: same elements, same copy, laid out again for the new shape.</p>
+      </div>
+      <div class="tools">
         <div class="group">
           <span class="label" id="lbl-design">Design</span>
           <div class="seg" id="designs" role="group" aria-labelledby="lbl-design"></div>
@@ -159,50 +240,66 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border
           <div class="over"><img id="cr" alt="" draggable="false"></div>
           <div class="bar" aria-hidden="true"></div>
         </div>
+        <label class="sr" for="cut">Comparison position: stretch on the left, Chameleon on the right</label>
+        <input class="sr" id="cut" type="range" min="0" max="100" value="50">
       </div>
-      <label class="sr" for="cut">Comparison position</label>
-      <input class="sr" id="cut" type="range" min="0" max="100" value="50">
-      <div class="cap mono"><span>Stretch</span><span id="dims"></span><span>Chameleon</span></div>
+      <div class="cap"><span>← Stretch</span><span id="dims"></span><span class="r">Chameleon →</span></div>
     </div>
   </section>
 
-  <section class="rv">
-    <div class="label">How it works</div>
-    <h2>Read the design. Rebuild it.</h2>
-    <ol class="steps">
-      <li class="rv"><b>Read the structure</b><p>The input has no labels. Size, position and grouping tell it which piece is the headline, logo, product and button.</p></li>
-      <li class="rv"><b>Try real layouts</b><p>A column, a side-by-side split, three columns or a single row, each in the original reading order.</p></li>
-      <li class="rv"><b>Measure and score</b><p>Text is measured with the official renderer's fonts. Each layout is scored on readability, hierarchy, collisions and space.</p></li>
-      <li class="rv"><b>Pick and explain</b><p>The best layout wins, and every decision is recorded so you can see why.</p></li>
-    </ol>
+  <section class="rv" id="how">
+    <div class="wrap">
+      <div class="head">
+        <div class="label"><b>04</b> · How it works</div>
+        <h2>Read the design. Rebuild it.</h2>
+      </div>
+      <ol class="steps">
+        <li class="rv"><h3>Read the structure</h3><p>The input has no labels. Size, position and grouping tell it which piece is the headline, logo, product and button.</p></li>
+        <li class="rv"><h3>Try real layouts</h3><p>A column, a side-by-side split, three columns or a single row, each in the original reading order.</p></li>
+        <li class="rv"><h3>Measure and score</h3><p>Text is measured with the official renderer's fonts. Each layout is scored on readability, hierarchy, collisions and space.</p></li>
+        <li class="rv"><h3>Pick and explain</h3><p>The best layout wins, and every decision is recorded so you can see why.</p></li>
+      </ol>
+    </div>
   </section>
 
-  <section class="rv">
-    <div class="label">Evidence</div>
-    <h2>Tested on designs it never saw</h2>
-    <div class="nums">
-      <div><b data-n="2250">2,250</b><span>resizes of 150 random realistic designs</span></div>
-      <div><b data-n="0">0</b><span>structural rule problems in those runs</span></div>
-      <div><b data-n="194">194</b><span>automated tests passing</span></div>
-      <div><b data-n="15">15</b><span>platform formats, 1080×1920 down to 320×50</span></div>
+  <section class="rv" id="evidence">
+    <div class="wrap">
+      <div class="head">
+        <div class="label"><b>05</b> · Evidence</div>
+        <h2>Tested on designs it never saw</h2>
+      </div>
+      <div class="nums">
+        <div><b data-n="2250">2,250</b><span>resizes of 150 random realistic designs</span></div>
+        <div><b data-n="0">0</b><span>structural rule problems in those runs</span></div>
+        <div><b data-n="194">194</b><span>automated tests passing</span></div>
+        <div><b data-n="15">15</b><span>platform formats, 1080×1920 down to 320×50</span></div>
+      </div>
+      <div class="limits"><p><b>Limits.</b> Every element stays visible and copy is never rewritten, so very long copy stays small on tiny banners. Numbers are our own checks, not Adobe's scorer.</p></div>
     </div>
-    <p class="limits"><b>Limits.</b> Very long copy stays small on tiny banners, because copy is never rewritten. On small canvases, unreadable low-priority pieces may be hidden, and a switch turns that off. Numbers are our own checks, not Adobe's scorer.</p>
   </section>
 
   <section class="rv" id="run">
-    <div class="label">Run it</div>
-    <h2>Three commands</h2>
-<pre><button class="copy" id="copy" type="button">Copy</button><span class="c"># Python 3.10+, inside the starter repo</span>
-pip install -r requirements.txt
-python -m engine.main      <span class="c"># resize every task in input/</span>
-python -m studio.server    <span class="c"># demo UI on http://127.0.0.1:8765</span></pre>
+    <div class="wrap">
+      <div class="head">
+        <div class="label"><b>06</b> · Run it</div>
+        <h2>Three commands</h2>
+      </div>
+      <div class="term">
+        <div class="term-bar"><span>Python 3.10+, inside the starter repo</span><button class="copy" id="copy" type="button">Copy</button></div>
+<pre id="cmd"><span class="p">$ </span>pip install -r requirements.txt
+<span class="p">$ </span>python -m engine.main      <span class="c"># resize every task in input/</span>
+<span class="p">$ </span>python -m studio.server    <span class="c"># demo UI on http://127.0.0.1:8765</span></pre>
+      </div>
+    </div>
   </section>
+</main>
 
-  <footer>
+<footer>
+  <div class="wrap"><div class="in">
     <span>Independent student entry for the Project CHAMELEON challenge. Not affiliated with or endorsed by Adobe.</span>
     <span class="mono">Renders by the official cr-renderer</span>
-  </footer>
-</div>
+  </div></div>
+</footer>
 
 <script>
 const DATA = __DATA__;
@@ -219,15 +316,15 @@ const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const art = $("art"), imgs = [$("a0"), $("a1")], board = art.parentElement;
   let i = 0, front = 0, timer = null;
   function fit(w, h){
-    const bw = board.clientWidth * .96, bh = board.clientHeight * .86 - 28;
+    const bw = board.clientWidth * .9, bh = board.clientHeight - 44 - 64;
     const s = Math.min(bw / w, bh / h); return [Math.round(w * s), Math.round(h * s)];
   }
   function show(k, first){
     const it = seq[k], [w, h] = fit(it.w, it.h);
     art.style.width = w + "px"; art.style.height = h + "px";
-    board.style.setProperty("--aw", Math.max(w, 180) + "px"); board.style.setProperty("--ah", h + "px");
+    art.style.marginBottom = "44px";
     $("dim").textContent = `${it.w} × ${it.h}`; $("fmt").textContent = it.name;
-    const back = imgs[1 - front]; back.src = it.src; back.alt = `${it.name}, ${it.w} by ${it.h}`;
+    const back = imgs[1 - front]; back.src = it.src; back.alt = "";
     if(first){ imgs[front].src = it.src; return; }
     setTimeout(() => { back.classList.remove("off"); imgs[front].classList.add("off"); front = 1 - front; }, 380);
   }
@@ -238,6 +335,14 @@ const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   board.addEventListener("mouseenter", stop); board.addEventListener("mouseleave", start);
   addEventListener("resize", () => show(i, true));
   start();
+})();
+
+/* Problem: the original next to its plain stretch to a wide banner. */
+(() => {
+  const d = DATA.designs[0], f = DATA.formats.find(x => x.key === "li_banner");
+  $("po").src = d.original; $("po").alt = `${d.label} original design, ${d.canvas.width} by ${d.canvas.height}`;
+  $("ps").src = d.pairs.li_banner.stretch; $("ps").alt = `The same design stretched to ${f.w} by ${f.h}`;
+  $("pod").textContent = `${d.canvas.width} × ${d.canvas.height}`; $("psd").textContent = `${f.w} × ${f.h}`;
 })();
 
 /* Compare: drag anywhere on the image; keyboard via the range input. */
@@ -254,8 +359,8 @@ const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     document.querySelectorAll("#designs button").forEach((b, i) => b.setAttribute("aria-pressed", i === cd));
     document.querySelectorAll("#formats button").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === cf));
   }
-  DATA.designs.forEach((d, i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = d.label; b.onclick = () => { cd = i; draw(); }; $("designs").appendChild(b); });
-  fkeys.forEach(k => { const f = DATA.formats.find(x => x.key === k); const b = document.createElement("button"); b.type = "button"; b.dataset.k = k; b.textContent = `${f.w}×${f.h}`; b.title = f.name; b.onclick = () => { cf = k; draw(); }; $("formats").appendChild(b); });
+  DATA.designs.forEach((d, i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = d.label; b.title = d.desc; b.onclick = () => { cd = i; draw(); }; $("designs").appendChild(b); });
+  fkeys.forEach(k => { const f = DATA.formats.find(x => x.key === k); const b = document.createElement("button"); b.type = "button"; b.dataset.k = k; b.textContent = `${f.w}×${f.h}`; b.title = f.name; b.setAttribute("aria-label", `${f.name}, ${f.w} by ${f.h}`); b.onclick = () => { cf = k; draw(); }; $("formats").appendChild(b); });
   let drag = false;
   const at = e => { const r = frame.getBoundingClientRect(); set((e.clientX - r.left) / r.width * 100); };
   frame.addEventListener("pointerdown", e => { drag = true; frame.setPointerCapture(e.pointerId); at(e); });
@@ -299,20 +404,18 @@ const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     el.classList.remove("pre"); io.unobserve(el);
     el.querySelectorAll("[data-n]").forEach(b => b.textContent = (+b.dataset.n).toLocaleString("en-US")); } });
   addEventListener("scroll", () => requestAnimationFrame(sweep), {passive: true});
+  /* anchor jumps: finish the reveal instantly so the browser lands on the section's final position */
+  document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener("click", () => {
+    const t = document.querySelector(a.getAttribute("href")); if(!t) return;
+    [t, ...t.querySelectorAll(".rv")].forEach(el => { el.style.transition = "none"; el.classList.remove("pre"); });
+    void t.offsetHeight; [t, ...t.querySelectorAll(".rv")].forEach(el => el.style.transition = "");
+  }));
 })();
-
-document.querySelector("a.cta").addEventListener("click", () => {
-  /* finish the reveal instantly so the browser scrolls to the section's final position */
-  const t = document.getElementById("compare"), els = [t, ...t.querySelectorAll(".rv")];
-  els.forEach(el => { el.style.transition = "none"; el.classList.remove("pre"); });
-  void t.offsetHeight;
-  els.forEach(el => el.style.transition = "");
-});
 
 $("copy").addEventListener("click", async () => {
   const text = "pip install -r requirements.txt\npython -m engine.main\npython -m studio.server";
   try { await navigator.clipboard.writeText(text); $("copy").textContent = "Copied"; }
-  catch { const r = document.createRange(); r.selectNodeContents($("copy").parentElement); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $("copy").textContent = "Selected"; }
+  catch { const r = document.createRange(); r.selectNodeContents($("cmd")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $("copy").textContent = "Selected"; }
   setTimeout(() => $("copy").textContent = "Copy", 1600);
 });
 </script>
