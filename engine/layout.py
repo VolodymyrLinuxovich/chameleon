@@ -59,6 +59,13 @@ class Ctx:
     allow_hide: bool
     rigid_k: float = 1.0           # extra scale on rigid blocks (<1 = text first)
     drop: tuple[str, ...] = ()     # roles left out of this variant
+    shrink: tuple[str, ...] = ()   # roles drawn at half scale (still visible)
+
+    def shrunk(self, b: Block) -> bool:
+        if b.role not in self.shrink:
+            return False
+        # Short body lines are usually taglines: they keep full size.
+        return b.role != "body" or len(str(b.elements[0].get("content", ""))) > 60
 
     def dropped(self, b: Block) -> bool:
         if b.role not in self.drop:
@@ -150,6 +157,8 @@ def size_text(b: Block, s: float, max_w: float, cap: int) -> Fit:
 
 
 def size_block(ctx: Ctx, b: Block, s: float, max_w: float) -> Fit:
+    if ctx.shrunk(b):
+        s *= 0.5
     if b.is_text:
         return size_text(b, s, max_w, ctx.text_cap(b.elements[0]))
     return size_rigid(b, s * ctx.rigid_k, max_w)
@@ -192,7 +201,8 @@ def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
                 else:
                     hi = mid
             fs, total, gap = attempt(lo)
-    elif anchor_edges and total < 0.7 * box.h and ctx.W / ctx.H < 0.75 * ctx.W0 / ctx.H0:
+    elif total < 0.7 * box.h and ((anchor_edges and ctx.W / ctx.H < 0.75 * ctx.W0 / ctx.H0)
+                                  or ctx.H < 200):
         # Tall, narrow canvases: the area-based cap leaves the column half
         # empty. Raise the common scale until it fills ~86% of the height
         # (width still limits every block, so nothing overflows sideways).
@@ -648,6 +658,9 @@ def _variant(ctx: Ctx, lay: Layout | None) -> Layout | None:
     if ctx.rigid_k < 1:
         lay.name += "·text-first"
         lay.description += f" Images and buttons sized at {int(ctx.rigid_k * 100)}% to give text room."
+    if ctx.shrink:
+        lay.name += "·small-" + "-".join(ctx.shrink)
+        lay.description += f" {', '.join(ctx.shrink)} drawn at half size so the headline has room."
     if ctx.drop:
         lay.name += "·no-" + "-".join(ctx.drop)
         lay.description += f" {', '.join(ctx.drop)} dropped: unreadable at this size."
@@ -667,6 +680,9 @@ def candidates(ctx: Ctx) -> list[Layout]:
     variants = [ctx]
     if min(ctx.W, ctx.H) < 640:  # small canvas: try giving text priority
         variants.append(replace(ctx, rigid_k=0.65))
+        if ctx.H < 200:  # banner heights: secondary copy steps back instead of hiding
+            variants.append(replace(ctx, rigid_k=0.65, shrink=("body", "fineprint")))
+            variants.append(replace(ctx, rigid_k=0.65, shrink=("body", "fineprint", "badges")))
         if ctx.allow_hide:
             roles = {b.role for b in ctx.a.flow}
             acc: list[str] = []

@@ -184,6 +184,14 @@ def adapt(source: dict[str, Any], target_canvas: dict[str, Any],
     # keeps everything (missing assets aside) reaches good readability.
     def drops(lay: Layout) -> bool:
         return any("readable" in why for why in lay.hidden.values())
+    # A layout whose visible text cannot fit its box even at the smallest
+    # size breaks a hard rule: never pick one while a clean layout exists.
+    def clean(out: dict[str, dict[str, Any]], hidden: dict[str, str]) -> bool:
+        return all(fits(n, int(num(n.get("font_size"), 1)), num(n.get("width")), num(n.get("height")) * 1.05)
+                   for n in out.values() if n.get("type") == "text" and n["id"] not in hidden)
+    ok = [t for t in scored if clean(t[2], t[1].hidden)]
+    if ok:
+        scored = ok
     full = [t for t in scored if not drops(t[1])]
     best_full_read = max((t[3]["readability"] for t in full), default=0.0)
     may_drop = best_full_read < READABLE
