@@ -725,7 +725,124 @@ def candidates(ctx: Ctx) -> list[Layout]:
                     out.append(strat_strip(ctx, d, share, demote=dm))
                     if ctx.H < 80:
                         out.append(strat_strip(ctx, d, share, cta_floor=True, demote=dm))
+        if ctx.H < 80:  # banner-ad heights: let the headline lead
+            for hs in (0.6, 0.7, 0.8):
+                for minor in (0.12, 0.18):
+                    out.append(strat_focus(ctx, hs, minor))
     return [c for c in out if c is not None]
+
+
+# ----------------------------------------------------------------------------
+# Headline-first row: banner ads with dense copy
+# ----------------------------------------------------------------------------
+
+FOCUS_ROLES = ("logo", "hero", "headline", "cta")
+
+
+def _minor_column(ctx: Ctx, blocks: list[Block], box: Box) -> tuple[list[Fit], bool]:
+    """Stack secondary pieces in a narrow column at one common scale. Text
+    keeps the full column width (unlike `stack`, which narrows it with the
+    scale), so long copy wraps instead of turning into a sliver."""
+    gap = max(1.0, 0.04 * box.h)
+
+    def sized(s: float) -> list[Fit]:
+        out = []
+        for b in blocks:
+            if b.is_text:
+                el = b.elements[0]
+                font = max(1, min(ctx.text_cap(el), int(num(el.get("font_size"), 12) * s)))
+                _, widest, th = measure(el, font, box.w)
+                while widest > box.w + 0.5 and font > 1:
+                    font -= 1
+                    _, widest, th = measure(el, font, box.w)
+                out.append(Fit(b, min(box.w, widest + 2), th, s, font=font))
+            else:
+                out.append(size_rigid(b, s, box.w, box.h))
+        return out
+
+    def height(fs: list[Fit]) -> float:
+        return sum(f.h for f in fs) + gap * (len(fs) - 1)
+
+    lo, hi = 1e-3, ctx.s_cap
+    ok = height(sized(lo)) <= box.h
+    if height(sized(hi)) <= box.h:
+        lo = hi
+    elif ok:
+        for _ in range(24):
+            mid = (lo + hi) / 2
+            if height(sized(mid)) <= box.h:
+                lo = mid
+            else:
+                hi = mid
+    fs = sized(lo)
+    y = box.y + max(0.0, (box.h - height(fs)) / 2)
+    for f in fs:
+        f.x, f.y = box.x + (box.w - f.w) / 2, y
+        y += f.h + gap
+    return fs, not ok
+
+
+def strat_focus(ctx: Ctx, head_share: float, minor_share: float) -> Layout | None:
+    """Logo, product, headline and button share one row in which the headline
+    claims `head_share` of the width; every other piece (secondary copy,
+    badges, stickers) is stacked small in a narrow end column. Nothing is
+    hidden: on a 320x50 ad the message comes first and the rest steps back."""
+    blocks = sorted(ctx.a.flow + [f for f in ctx.a.floating if f.role != "unavailable"],
+                    key=lambda b: (b.center[1], b.center[0]))
+    head = next((b for b in blocks if b.role == "headline" and b.is_text), None)
+    minor = [b for b in blocks if b.role not in FOCUS_ROLES or (b.is_text and b is not head)]
+    if head is None or not minor:
+        return None
+    major = sorted([b for b in blocks if b not in minor], key=lambda b: b.role != "logo")
+    rigid = [b for b in major if not b.is_text]
+    lay = Layout(f"focus-{int(head_share * 100)}-{int(minor_share * 100)}",
+                 f"Headline-first row: the headline gets {int(head_share * 100)}% of the row; "
+                 f"{', '.join(sorted({b.role for b in minor}))} stacked small at the end, still visible.")
+    m = max(2.0, 0.06 * ctx.H)
+    box = Box(m * 1.5, m, ctx.W - 3 * m, ctx.H - 2 * m)
+    gap_min = max(3.0, 0.2 * ctx.margin)
+    col_w = minor_share * box.w
+    budget = box.w - col_w - gap_min * len(major)
+    max_rigid = budget * (1 - head_share)
+
+    fits_: dict[str, Fit] = {}
+    for b in rigid:
+        cap_h = STRIP_H_CAP.get(b.role, 0.8) * box.h
+        fits_[b.id] = size_rigid(b, cap_h / b.h, math.inf, cap_h)
+    rigid_w = sum(f.w for f in fits_.values())
+    if rigid_w > max_rigid > 0:
+        # The brand mark keeps a third of the row height so it stays
+        # recognisable; the rest shrink together (protecting the button
+        # instead crushes the product to a few pixels).
+        logos = [b for b in rigid if b.role == "logo"]
+        for b in logos:
+            fits_[b.id] = size_rigid(b, min(fits_[b.id].scale, 0.33 * box.h / b.h), math.inf, box.h)
+        rest = [b for b in rigid if b.role != "logo"]
+        logo_w = sum(fits_[b.id].w for b in logos)
+        rest_w = sum(fits_[b.id].w for b in rest)
+        k = max(0.05, (max_rigid - logo_w) / rest_w) if rest_w else 1.0
+        for b in rest:
+            fits_[b.id] = size_rigid(b, fits_[b.id].scale * min(1.0, k), math.inf, box.h)
+        rigid_w = sum(f.w for f in fits_.values())
+
+    el = head.elements[0]
+    head_w = max(1.0, budget - rigid_w)
+    font = fit_font(el, head_w, box.h, ctx.text_cap(el))
+    overflow = font is None
+    font = font or 1
+    _, widest, th = measure(el, font, head_w)
+    fits_[head.id] = Fit(head, min(head_w, widest + 2), th, font=font)
+
+    row = [fits_[b.id] for b in major]
+    used = sum(f.w for f in row) + col_w
+    gap = max(gap_min, min((box.w - used) / len(row), 0.06 * ctx.W))
+    x = box.x + max(0.0, (box.w - used - gap * len(row)) / 2)
+    for f in row:
+        f.x, f.y = x, box.y + (box.h - f.h) / 2
+        x += f.w + gap
+    fm, o2 = _minor_column(ctx, minor, Box(x, box.y, min(col_w, box.x + box.w - x), box.h))
+    lay.fits, lay.overflow = row + fm, overflow or o2
+    return _finish(ctx, lay, [b for b in ctx.a.floating if b.role == "unavailable"])
 
 
 # ----------------------------------------------------------------------------

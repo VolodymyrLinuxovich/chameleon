@@ -203,3 +203,20 @@ def test_tall_canvas_fills_height_and_keeps_text_order():
         assert bottom - top > 0.75 * tc[1], f
         fonts = {e["id"]: e["font_size"] for e in design["elements"] if e["type"] == "text"}
         assert fonts["headline"] == max(fonts.values()), (f, fonts)
+
+
+def test_mobile_banner_headline_leads_without_hiding():
+    # 320x50 with dense copy and hiding off: the headline must stay readable
+    # (it used to shrink to 4px) while every element remains visible.
+    t = load("input/chameleon_sample_level3_advanced.json")
+    for w, h in ((320, 50), (300, 50)):
+        design, rep = adapt(t["source"], {"width": w, "height": h})
+        assert set(rep["hidden"]) <= {"holiday_watermark"}, (w, h, rep["hidden"])
+        el = {e["id"]: e for e in design["elements"]}
+        assert all(e.get("opacity", 1) > 0 for i, e in el.items() if i not in rep["hidden"])
+        fonts = {i: e["font_size"] for i, e in el.items() if e["type"] == "text"}
+        assert fonts["headline"] >= 7, (w, h, fonts)
+        assert fonts["headline"] == max(fonts.values()), (w, h, fonts)
+        assert [p for p in check(t["source"], design) if "overflows" not in p] == []
+    design, _ = adapt(t["source"], {"width": 320, "height": 50})
+    assert {e["id"]: e for e in design["elements"]}["headline"]["font_size"] >= 8
