@@ -37,6 +37,15 @@ python -m tools.build_site          # rebuild the landing page (site/index.html)
 
 Landing page: **https://chameleon-resize.vercel.app** (static, built from `site/template.html` by `tools/build_site.py`, deployed with `cd site && vercel deploy --prod`).
 
+## Models and dependencies
+
+- **No ML model and no weights.** The engine is rule-based and scored, so there is nothing to download, host or fine-tune. Nothing runs on a GPU.
+- **Runtime dependencies** are the starter's only: `Pillow` and `cr-renderer` (see `requirements.txt`). The engine itself uses the Python standard library, plus the renderer's Skia font loader to measure text. If that import fails, it falls back to a built-in width estimate.
+- **Fixed materials used at run time:** `brand_kit/fonts` (for text metrics) and `brand_kit/assets` (to know which images exist). The Dockerfile already copies both.
+- **Dev only:** `requirements-dev.txt` (pytest, jsonschema) for tests and tools.
+- **Hardware:** any CPU. Runs offline with `--network none`.
+- **Switch:** `CHAMELEON_ALLOW_HIDE=1` re-enables the old opt-in mode that may hide unreadable low-priority items (off by default, see Limitations).
+
 ## Supported input
 
 The v0.9 design schema (`chameleon_design_schema_v0.9.json`): `text`, `image` and `shape` elements with geometry, `rotation`, `opacity`, `z_index`, `group_id` and the type-specific fields. You can pass a task file (`{source, target_canvas}`) or a bare design. Bad input degrades gracefully instead of crashing: missing fields, non-numeric values, unknown types, zero-size elements, missing assets, and empty element lists.
@@ -64,12 +73,12 @@ source design ──► analyze ──► candidate layouts ──► score ─�
    - `stack`: one column in source reading order. Top and bottom anchors are kept, and the largest common scale is found by binary search.
    - `split-{left|right}-{40|50}`: hero on one side, message stacked beside it.
    - `columns`: hero | message | actions, for wide banners.
-   - `strip-*`: one row for leaderboards. Only on canvases under 200 px tall, variants may drop the lowest-priority blocks (see Limitations).
+   - `strip-*`: one row for leaderboards. On canvases under 200 px tall, variants give fine print and long body copy their own narrow cell at a small size, so the headline gets the room.
    - `proportional`: uniform contain-scale, which suits near-identical ratios.
-   - On canvases under 640 px on the short side, each strategy also runs as a *text-first* variant (images and buttons at 65%) and as variants that drop fine print, then long body copy, then badges. The headline, logo and CTA are never dropped, and neither is body text under 60 characters (usually a tagline or text CTA).
-   - Banner heights (under 80 px tall) get extra care. Strips shrink pictures before the CTA and keep the logo at least 45% of the strip height. Small button labels may grow up to 1.3x to fill their box. As a last resort the product image may drop out so the message stays readable.
+   - On canvases under 640 px on the short side, each strategy also runs as a *text-first* variant (images and buttons at 65%).
+   - Banner heights (under 80 px tall) get extra care. Strips shrink pictures before the CTA and keep the logo at least 45% of the strip height. Small button labels may grow up to 1.3x to fill their box.
    - The scorer treats text under 5 px and images under 12 px as lost: they are in the JSON but nobody can see them.
-   - **Dropping is a last resort.** A dropping layout can win only if no layout that keeps everything reaches readability 0.8. The report records this decision (`drop_rule`).
+   - **Every element stays visible.** The organisers confirmed this at the Oct 22 info session. The only element ever skipped is an image whose asset file is missing, which the brief allows.
    - In one-row layouts, consecutive text pieces (eyebrow, headline, date, subtitle) stack into one text cell at a shared scale, instead of sitting side by side in narrow columns.
    - After layout, decorations keep their distance to their nearest corner and shrink away from text and buttons, with a small margin. An overlap that already existed in the source is kept as intentional layering. Stickers and tags go back to their original corner, or the nearest free one.
 4. **Score** (`engine/score.py`). Readability, hierarchy kept, use of space, scale consistency, collisions, completeness, reading-order fidelity, and balance. These are our proxies for the brief's §2.5 criteria. Weights are in `WEIGHTS`.
@@ -96,9 +105,8 @@ The slowest run took about 230 ms (the 320×50 banner tries the most variants).
 ## Limitations (honest list)
 
 - **Left-aligned columns** that share a left edge in the source keep sharing one after reflow, so text and its button stay lined up.
-- **Hiding on small canvases.** When no layout that keeps everything reads well, low-priority content may get `opacity: 0`: fine print, long body copy and badges, stickers on strips under 200 px tall, and the product image on banners under 80 px tall. Missing-asset images are always skipped ("skip it" is explicitly allowed for the Level 3 sample). The organisers haven't said whether hiding is acceptable for scoring, so `CHAMELEON_ALLOW_HIDE=0` turns it off and keeps everything visible.
-- **The official renderer ignores `opacity` on text** (we verified this). Hidden text therefore also gets a transparent colour alpha, or it would still draw. Only hidden elements are affected, but it is a change to `color`.
-- **Copy that is simply too long stays small.** Copy can't be rewritten in stage one. The Level 3 headline (140 characters) renders at 8 px on 320×50 and at 9 px on 728×90: readable, but small. Shortening copy is a finale idea we haven't built.
+- **Nothing is hidden.** Every input element stays visible, as the organisers asked. The one exception is an image whose asset file is missing (the Level 3 `holiday_watermark`), which is skipped as the brief allows. The old opt-in hiding mode (`CHAMELEON_ALLOW_HIDE=1`) gives hidden text a transparent colour too, because the official renderer ignores `opacity` on text.
+- **Very dense designs on tiny canvases get small type.** Copy can't be rewritten in stage one, and nothing may be hidden. So the Level 3 poster (17 elements, a 140-character headline) renders its headline at 7 px on 728×90 and about 4 px on 320×50, with the fine print smaller still. Simpler designs stay readable at those sizes. Shortening copy is a finale idea we haven't built.
 - **Roles are heuristics.** Unusual designs can be misread, such as two equally large headlines or a logo at the bottom. Every candidate still obeys the hard rules, and scoring picks the least bad, but the result may be plainer than a designer's.
 - **Not done:** no copy rewriting or font-family changes (stage-one rules forbid them), no image cropping beyond `fit: cover` backgrounds, and no learned model.
 - **Docker is unverified here.** Docker wasn't installed on the development machine. We added no dependencies, and the starter Dockerfile is unchanged.

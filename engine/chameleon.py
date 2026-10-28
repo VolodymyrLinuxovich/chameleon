@@ -20,7 +20,7 @@ READABLE = 0.8
 
 
 def _allow_hide() -> bool:
-    return os.environ.get("CHAMELEON_ALLOW_HIDE", "1") not in ("0", "false", "no")
+    return os.environ.get("CHAMELEON_ALLOW_HIDE", "0") not in ("0", "false", "no")
 
 
 def _r(v: float) -> float:

@@ -57,7 +57,7 @@ def test_banner_rearranges_instead_of_stretching():
 
 def test_leaderboard_keeps_primary_message_readable():
     t = load("input/chameleon_sample_level3_advanced.json")
-    design, rep = adapt(t["source"], t["target_canvas"])
+    design, rep = adapt(t["source"], t["target_canvas"], allow_hide=True)
     el = {e["id"]: e for e in design["elements"]}
     for key in ("headline", "logo", "cta_bg", "cta_label", "product"):
         assert el[key].get("opacity", 1) > 0, key
@@ -65,11 +65,19 @@ def test_leaderboard_keeps_primary_message_readable():
     assert "holiday_watermark" in rep["hidden"]  # missing asset is skipped, not drawn
 
 
-def test_hide_can_be_disabled():
+def test_every_element_visible_by_default():
+    # Organisers (Oct 22 session): every input element stays visible.
+    # Only the intentionally missing asset may be skipped.
+    for f in ("level1_warmup", "level2_core", "level3_advanced"):
+        t = load(f"input/chameleon_sample_{f}.json")
+        for tc in (t["target_canvas"], {"width": 728, "height": 90}, {"width": 320, "height": 50},
+                   {"width": 300, "height": 600}, {"width": 160, "height": 600}):
+            design, rep = adapt(t["source"], tc)
+            assert set(rep["hidden"]) <= {"holiday_watermark"}, (f, tc, rep["hidden"])
+            assert all(e.get("opacity", 1) > 0 for e in design["elements"] if e["id"] not in rep["hidden"])
     t = load("input/chameleon_sample_level3_advanced.json")
-    design, rep = adapt(t["source"], t["target_canvas"], allow_hide=False)
-    assert rep["hidden"] == {}
-    assert all(e.get("opacity", 1) > 0 for e in design["elements"])
+    design, rep = adapt(t["source"], t["target_canvas"])
+    assert design["elements"] and {e["id"]: e for e in design["elements"]}["headline"]["font_size"] >= 7
     assert check(t["source"], design) == [] or all("overflows" in p for p in check(t["source"], design))
 
 
@@ -165,7 +173,7 @@ def test_no_drops_when_full_design_is_readable():
 
 def test_small_canvas_drops_long_copy_to_keep_headline_readable():
     t = load("input/chameleon_sample_level3_advanced.json")
-    design, rep = adapt(t["source"], {"width": 300, "height": 600})
+    design, rep = adapt(t["source"], {"width": 300, "height": 600}, allow_hide=True)
     el = {e["id"]: e for e in design["elements"]}
     assert "subhead" in rep["hidden"] and el["headline"]["font_size"] >= 10
     assert el["cta_label"].get("opacity", 1) > 0 and el["product"].get("opacity", 1) > 0
@@ -173,7 +181,7 @@ def test_small_canvas_drops_long_copy_to_keep_headline_readable():
 
 def test_mobile_banner_keeps_message_readable():
     t = load("input/chameleon_sample_level3_advanced.json")
-    design, rep = adapt(t["source"], {"width": 320, "height": 50})
+    design, rep = adapt(t["source"], {"width": 320, "height": 50}, allow_hide=True)
     el = {e["id"]: e for e in design["elements"]}
     assert el["headline"]["font_size"] >= 8
     assert el["logo"]["height"] >= 15 and el["logo"].get("opacity", 1) > 0

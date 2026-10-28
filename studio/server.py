@@ -100,7 +100,7 @@ def handle_adapt(body: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Pick at least one canvas size.")
     if len(targets) > MAX_TARGETS:
         raise ValueError(f"Pick at most {MAX_TARGETS} sizes at once.")
-    allow_hide = bool(body.get("allow_hide", True))
+    allow_hide = bool(body.get("allow_hide", False))
     results = []
     for t in targets:
         w, h = int(t.get("width", 0)), int(t.get("height", 0))

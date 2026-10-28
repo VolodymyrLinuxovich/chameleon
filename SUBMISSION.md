@@ -30,8 +30,8 @@ The brief lists the qualities the scoring rewards (PDF §2.5), plus "speed and r
 |---|---|---|
 | Rearrange, don't stretch (§2) | Five layout strategies that re-place blocks; text reflows; rigid blocks scale uniformly | `engine/layout.py`; `docs/sheet_*.png` |
 | No unwanted collisions | Stacks and strips can't overlap by construction. Stickers and tags look for a free corner. Decorations shrink away from text. The collision term is scored | `test_no_collisions_between_visible_content` |
-| Everything readable, nothing cut off | Text is measured with the renderer's own fonts and wrap. Integer sizes match the renderer. Readability is scored; unreadable low-priority items may drop away on tight canvases only | `engine/textfit.py`; overflow check in `tools/checks.py` |
-| On brand | Font family, copy, colours (except hidden text, see README), assets, z-order and groups are unchanged. Logo keeps its proportions | `tools/checks.py` field checks |
+| Everything readable, nothing cut off | Text is measured with the renderer's own fonts and wrap. Integer sizes match the renderer. Readability is scored; nothing is hidden, low-priority copy is squeezed on tight strips instead | `engine/textfit.py`; overflow check in `tools/checks.py` |
+| On brand | Font family, copy, colours, assets, z-order and groups are unchanged. Logo keeps its proportions | `tools/checks.py` field checks |
 | Looks intentional | Shared margins and gaps. Source reading order and top/bottom anchors kept. The headline keeps its lead. Consistent scale across blocks | hierarchy, consistency and fidelity terms in `engine/score.py` |
 | Holds up everywhere | Only generic rules, never keyed to a size or design. Tested on 3 samples plus 4 extra designs × 19 sizes, and 40 random designs, with malformed input | `tests/test_engine.py` (194 passing) |
 | JSON valid and honest | Same ids, required fields, schema validation, on-canvas boxes including rotated bounds | `tools/checks.py`; `main.py` self-check shows 0 warnings |
@@ -52,7 +52,7 @@ The brief lists the qualities the scoring rewards (PDF §2.5), plus "speed and r
 
 - [ ] `docker build` / `docker run --network none` (Docker isn't installed here). Run it before submitting
 - [ ] Behaviour on the hidden scorer and AI evaluator
-- [ ] Whether `opacity: 0` hiding is acceptable (ask the organisers; `CHAMELEON_ALLOW_HIDE=0` turns it off)
+- [x] Hiding: organisers said every input element stays visible (Oct 22 recap). Hiding is now off by default; only the missing asset is skipped
 - [ ] Linux/amd64 font metrics vs macOS (same fonts and Skia, so we expect identical results, but this is untested)
 - [ ] Adobe Express add-on (finale deliverable, not started)
 
@@ -64,7 +64,7 @@ The brief lists the qualities the scoring rewards (PDF §2.5), plus "speed and r
 
 ## Questions to send the organisers
 
-1. Is setting `opacity: 0` on an unreadable low-priority element acceptable, given every id is still returned?
+1. ~~Is `opacity: 0` hiding acceptable?~~ Answered in the Oct 22 recap: every element stays visible.
 2. The official renderer ignores `opacity` on text elements. Is that known? Will it be fixed before scoring?
 3. FAQ Q5 mentions a "required (but not scored) viewer add-on" for stage one, but the PDF lists the add-on for the finale only. Which is right?
 4. Does the off-canvas check use the unrotated box or the rotated bounds? (We satisfy both.)

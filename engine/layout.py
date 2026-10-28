@@ -269,6 +269,7 @@ def _left_column(ctx: Ctx, fs: list[Fit]) -> list[Fit]:
 STRIP_H_CAP = {"logo": 0.7, "hero": 0.95, "cta": 0.75, "badges": 0.7, "badge": 0.7,
                "tag": 0.7, "sticker": 0.85, "image": 0.8}
 TEXT_WEIGHT = {"headline": 3.0, "body": 2.0, "fineprint": 1.2}
+DEMOTED_WEIGHT = 0.45  # share for low-priority text squeezed (not hidden) on tight strips
 
 
 def _readable_floor(b: Block) -> float:
@@ -282,7 +283,7 @@ def _readable_floor(b: Block) -> float:
 
 
 def strip(ctx: Ctx, blocks: list[Block], box: Box, text_share: float,
-          cta_floor: bool = False) -> tuple[list[Fit], bool]:
+          cta_floor: bool = False, demote: frozenset[str] = frozenset()) -> tuple[list[Fit], bool]:
     rigid = [b for b in blocks if not b.is_text]
     texts = [b for b in blocks if b.is_text]
     fits_: dict[str, Fit] = {}
@@ -292,7 +293,9 @@ def strip(ctx: Ctx, blocks: list[Block], box: Box, text_share: float,
         fits_[b.id] = size_rigid(b, s, math.inf, cap_h)
     items: list[list[Block]] = []
     for b in blocks:  # consecutive texts form one stacked cell
-        if b.is_text and items and items[-1][0].is_text:
+        if b.id in demote:  # demoted text gets its own narrow cell
+            items.append([b])
+        elif b.is_text and items and items[-1][0].is_text and items[-1][0].id not in demote:
             items[-1].append(b)
         else:
             items.append([b])
@@ -330,11 +333,13 @@ def strip(ctx: Ctx, blocks: list[Block], box: Box, text_share: float,
             rigid_w = sum(fits_[b.id].w for b in rigid)
     text_budget = max(1.0, budget - rigid_w)
     cells = [it for it in items if it[0].is_text]
-    wsum = sum(max(TEXT_WEIGHT.get(b.role, 1.5) for b in c) for c in cells) or 1.0
+    def weight(c: list[Block]) -> float:
+        return DEMOTED_WEIGHT if c[0].id in demote else max(TEXT_WEIGHT.get(b.role, 1.5) for b in c)
+    wsum = sum(weight(c) for c in cells) or 1.0
     overflow = False
     cell_fit: dict[int, Fit] = {}
     for c in cells:
-        alloc = text_budget * max(TEXT_WEIGHT.get(b.role, 1.5) for b in c) / wsum
+        alloc = text_budget * weight(c) / wsum
         fs, ok = _text_cell(ctx, c, alloc, box.h)
         overflow = overflow or not ok
         w = max(f.w for f in fs)
@@ -425,7 +430,7 @@ def fit_box(f: Fit) -> tuple[float, float, float, float]:
 
 
 def place_floating(ctx: Ctx, lay: Layout, b: Block, base_scale: float) -> None:
-    if b.role == "unavailable" and ctx.allow_hide:
+    if b.role == "unavailable":
         lay.hidden[b.elements[0]["id"]] = "asset file is missing, so it is skipped (allowed by the brief)"
         return
     m = 0.5 * ctx.margin
@@ -492,7 +497,7 @@ def strat_proportional(ctx: Ctx) -> Layout:
     s = min(ctx.W / ctx.W0, ctx.H / ctx.H0)
     ox, oy = (ctx.W - ctx.W0 * s) / 2, (ctx.H - ctx.H0 * s) / 2
     for b in ctx.a.flow + ctx.a.floating:
-        if b.role == "unavailable" and ctx.allow_hide:
+        if b.role == "unavailable":
             lay.hidden[b.id] = "asset file is missing, so it is skipped (allowed by the brief)"
             continue
         if b.is_text:
@@ -554,15 +559,23 @@ def strat_columns(ctx: Ctx) -> Layout | None:
     return _finish(ctx, lay, ctx.floating)
 
 
-def strat_strip(ctx: Ctx, drop: tuple[str, ...], text_share: float, cta_floor: bool = False) -> Layout:
+def strat_strip(ctx: Ctx, drop: tuple[str, ...], text_share: float, cta_floor: bool = False,
+                demote: tuple[str, ...] = ()) -> Layout:
     tag = "+".join(drop) if drop else "all"
+    if demote:
+        tag += "~" + "+".join(demote)
     lay = Layout(f"strip-{tag}-{int(text_share * 100)}" + ("·cta7" if cta_floor else ""),
                  "One row, left to right in the original reading order" +
-                 (f"; {', '.join(drop)} dropped to keep the rest readable" if drop else "") + ".")
+                 (f"; {', '.join(drop)} dropped to keep the rest readable" if drop else "") +
+                 (f"; {', '.join(demote)} kept small so the headline stays readable" if demote else "") + ".")
     blocks: list[Block] = []
+    demoted: set[str] = set()
     for b in sorted(ctx.a.flow + [f for f in ctx.a.floating if f.role != "unavailable"],
                     key=lambda b: (b.center[1], b.center[0])):
-        if b.role in drop:
+        if b.role in demote and b.is_text:
+            demoted.add(b.id)
+            blocks.append(b)
+        elif b.role in drop:
             for el in b.elements:
                 lay.hidden[el["id"]] = f"{b.role} can't be shown at a readable size in a {ctx.W:.0f}x{ctx.H:.0f} strip"
         else:
@@ -571,7 +584,7 @@ def strat_strip(ctx: Ctx, drop: tuple[str, ...], text_share: float, cta_floor: b
     blocks.sort(key=lambda b: (b.role in ("sticker", "tag"), b.role != "logo"))
     m = (max(2.0, 0.06 * ctx.H) if ctx.H < 80 else max(4.0, 0.12 * ctx.H)) if ctx.H < 200 else ctx.margin
     box = Box(m * 1.5, m, ctx.W - 3 * m, ctx.H - 2 * m)
-    lay.fits, lay.overflow = strip(ctx, blocks, box, text_share, cta_floor)
+    lay.fits, lay.overflow = strip(ctx, blocks, box, text_share, cta_floor, frozenset(demoted))
     rest = [b for b in ctx.a.floating if b.role == "unavailable"]
     return _finish(ctx, lay, rest)
 
@@ -627,11 +640,20 @@ def candidates(ctx: Ctx) -> list[Layout]:
             for d in opts:
                 acc.append(d)
                 drops.append(tuple(acc))
+        demotes: list[tuple[str, ...]] = [()]
+        if ctx.H < 200:  # squeeze low-priority copy instead of hiding it
+            text_roles = {b.role for b in ctx.a.flow if b.is_text}
+            acc = []
+            for d in ("fineprint", "body"):
+                if d in text_roles:
+                    acc.append(d)
+                    demotes.append(tuple(acc))
         for d in drops:
-            for share in ((0.4, 0.47, 0.54, 0.61, 0.68) if ctx.H < 80 else (0.45, 0.6)):
-                out.append(strat_strip(ctx, d, share))
-                if ctx.H < 80:
-                    out.append(strat_strip(ctx, d, share, cta_floor=True))
+            for dm in (demotes if not d else [()]):
+                for share in ((0.4, 0.47, 0.54, 0.61, 0.68) if ctx.H < 80 else (0.45, 0.6)):
+                    out.append(strat_strip(ctx, d, share, demote=dm))
+                    if ctx.H < 80:
+                        out.append(strat_strip(ctx, d, share, cta_floor=True, demote=dm))
     return [c for c in out if c is not None]
 
 
