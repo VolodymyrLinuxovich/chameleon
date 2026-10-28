@@ -187,3 +187,19 @@ def test_mobile_banner_keeps_message_readable():
     assert el["logo"]["height"] >= 15 and el["logo"].get("opacity", 1) > 0
     assert el["cta_label"].get("opacity", 1) > 0
     assert el["headline"]["font_size"] >= el["cta_label"]["font_size"]  # hierarchy kept
+
+
+def test_tall_canvas_fills_height_and_keeps_text_order():
+    # A skyscraper or story should be filled, not left half empty, and the
+    # headline must stay the largest text (button labels included).
+    for f, tc in (("level1_warmup", (160, 600)), ("level2_core", (160, 600)), ("level3_advanced", (1080, 1920))):
+        t = load(f"input/chameleon_sample_{f}.json")
+        design, rep = adapt(t["source"], {"width": tc[0], "height": tc[1]})
+        assert rep["chosen"] != "proportional", f
+        boxes = [e for e in design["elements"] if e.get("opacity", 1) > 0 and e["id"] not in rep["hidden"]
+                 and e["width"] * e["height"] < 0.9 * tc[0] * tc[1]]
+        top = min(e["y"] for e in boxes)
+        bottom = max(e["y"] + e["height"] for e in boxes)
+        assert bottom - top > 0.75 * tc[1], f
+        fonts = {e["id"]: e["font_size"] for e in design["elements"] if e["type"] == "text"}
+        assert fonts["headline"] == max(fonts.values()), (f, fonts)

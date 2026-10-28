@@ -192,6 +192,53 @@ def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
                 else:
                     hi = mid
             fs, total, gap = attempt(lo)
+    elif anchor_edges and total < 0.7 * box.h and ctx.W / ctx.H < 0.75 * ctx.W0 / ctx.H0:
+        # Tall, narrow canvases: the area-based cap leaves the column half
+        # empty. Raise the common scale until it fills ~86% of the height
+        # (width still limits every block, so nothing overflows sideways).
+        def ranks(fl: list[Fit]) -> list[float]:
+            # Every visible label counts, including text inside buttons and badges.
+            out = []
+            for f in fl:
+                if f.block.is_text:
+                    out.append(float(f.font or 0))
+                else:
+                    sizes = [num(e.get("font_size"), 12) for e in f.block.elements if e.get("type") == "text"]
+                    if sizes:
+                        out.append(max(sizes) * f.scale)
+            return out
+        base = ranks(fs)
+
+        def same_order(fl: list[Fit]) -> bool:
+            # Text sizes must keep their order (the headline stays largest).
+            r = ranks(fl)
+            return all((a > b) == (ra > rb) for a, ra in zip(base, r) for b, rb in zip(base, r) if a != b)
+
+        lo, hi = s_cap, 2.2 * s_cap
+        for _ in range(20):
+            mid = (lo + hi) / 2
+            fl, tot, _g = attempt(mid)
+            # Stop once text hits its size cap: past that point only the
+            # images would keep growing and outweigh the copy.
+            keeps_pace = all(a <= 0 or b >= 0.9 * a * mid / s_cap for a, b in zip(base, ranks(fl)))
+            if tot <= 0.86 * box.h and same_order(fl) and keeps_pace:
+                lo = mid
+            else:
+                hi = mid
+        fs, total, gap = attempt(lo)
+
+    # Spare height on tall canvases goes to the hero image, so the column
+    # fills the canvas instead of leaving a hole between groups.
+    slack = box.h - total
+    if not overflow and slack > 0.12 * box.h:
+        heroes = [i for i, f in enumerate(fs) if f.block.role == "hero" and not f.block.is_text]
+        if heroes:
+            i = max(heroes, key=lambda k: fs[k].w * fs[k].h)
+            f = fs[i]
+            grow = min(0.92 * box.w / f.w, 1 + 0.7 * slack / f.h, 2.5)
+            if grow > 1.05:
+                fs[i] = size_rigid(f.block, f.scale * grow, box.w)
+                total += fs[i].h - f.h
 
     # Vertical distribution: keep top/bottom anchoring from the source.
     n = len(fs)
@@ -608,7 +655,10 @@ def _variant(ctx: Ctx, lay: Layout | None) -> Layout | None:
 
 def candidates(ctx: Ctx) -> list[Layout]:
     r = ctx.W / ctx.H
-    out: list[Layout | None] = [strat_proportional(ctx)]
+    # Uniform scaling only suits shapes close to the source; on a very
+    # different ratio it leaves wide empty bands.
+    near = abs(math.log(r / (ctx.W0 / ctx.H0))) < math.log(1.3)
+    out: list[Layout | None] = [strat_proportional(ctx)] if near or min(ctx.W, ctx.H) < 40 else []
     variants = [ctx]
     if min(ctx.W, ctx.H) < 640:  # small canvas: try giving text priority
         variants.append(replace(ctx, rigid_k=0.65))

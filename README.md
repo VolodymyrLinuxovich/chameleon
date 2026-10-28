@@ -27,7 +27,7 @@ Extras (not part of the scored engine):
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest -q                 # 194 tests
+python -m pytest -q                 # 195 tests
 python -m tools.evaluate --render   # every sample x 15 platform formats, contact sheets in output/eval/
 python -m tools.evaluate --input samples/extra   # 4 extra designs the engine was not tuned on
 python -m tools.stress --n 150      # 150 random realistic designs x 15 formats (2,250 runs)
@@ -74,7 +74,8 @@ source design ──► analyze ──► candidate layouts ──► score ─�
    - `split-{left|right}-{40|50}`: hero on one side, message stacked beside it.
    - `columns`: hero | message | actions, for wide banners.
    - `strip-*`: one row for leaderboards. On canvases under 200 px tall, variants give fine print and long body copy their own narrow cell at a small size, so the headline gets the room.
-   - `proportional`: uniform contain-scale, which suits near-identical ratios.
+   - `proportional`: uniform contain-scale. Only offered when the target's aspect ratio is within 30% of the source's, because on a very different shape it leaves wide empty bands.
+   - On canvases much taller and narrower than the source (stories, skyscrapers), `stack` raises the common scale until the column fills about 86% of the height. It stops as soon as text would hit its size cap or change rank, so the headline stays the largest text and images never outgrow the copy. Spare height after that goes to the product image.
    - On canvases under 640 px on the short side, each strategy also runs as a *text-first* variant (images and buttons at 65%).
    - Banner heights (under 80 px tall) get extra care. Strips shrink pictures before the CTA and keep the logo at least 45% of the strip height. Small button labels may grow up to 1.3x to fill their box.
    - The scorer treats text under 5 px and images under 12 px as lost: they are in the JSON but nobody can see them.
