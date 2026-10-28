@@ -1,171 +1,164 @@
 <title>Chameleon Resize Engine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap">
 <style>
-/* A spec sheet for a layout engine: paper, ink, one blue accent, and dark stages that hold the renders. */
 :root{
-  --paper:#F4F3EF; --ink:#0F0F0E; --ink-2:#4B4B47; --rule:#D5D3CB; --accent:#2B3FE0;
-  --stage:#0D0D0E; --stage-ink:#EDEDE8; --stage-2:#8D8D87; --stage-rule:#29292C; --stage-accent:#97A2FF;
+  --bg:#0A0B0B; --raise:#111313; --ink:#EDEEEA; --ink-2:#9A9E99; --ink-3:#6A6E69; --rule:#1F2221; --rule-2:#2C302E;
+  --accent:#6BE3A8; --on-accent:#06140D; --bad:#FF8F78;
   --sans:"Geist","Helvetica Neue","Segoe UI",system-ui,sans-serif;
+  --serif:"Instrument Serif",Georgia,serif;
   --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace;
-  --ease:cubic-bezier(.65,0,.25,1);
-  /* type scale */
-  --t-label:.72rem; --t-small:.875rem; --t-body:1rem; --t-lead:clamp(1.0625rem,1.4vw,1.25rem);
-  --t-h3:1.125rem; --t-h2:clamp(2rem,4.4vw,3.5rem); --t-h1:clamp(3.4rem,11vw,9.5rem); --t-num:clamp(3rem,6.4vw,5.25rem);
-  /* spacing */
-  --gutter:clamp(16px,4vw,48px); --sec:clamp(72px,10vw,144px); --gap:clamp(20px,2.6vw,36px);
-  color-scheme:light;
+  --ease:cubic-bezier(.22,.8,.24,1);
+  --t-xs:.8125rem; --t-s:.9375rem; --t-lead:clamp(1.0625rem,1.45vw,1.1875rem); --t-h3:1.125rem;
+  --t-h2:clamp(2rem,4.2vw,3.25rem); --t-h1:clamp(3rem,8.4vw,6.75rem); --t-num:clamp(2.75rem,5.6vw,4.5rem);
+  --gutter:clamp(16px,4vw,40px); --sec:clamp(88px,11vw,148px); --gap:clamp(20px,2.6vw,32px);
+  color-scheme:dark;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){ --paper:#0F0F0E; --ink:#EEEDE8; --ink-2:#A4A39D; --rule:#2B2B29; --accent:#97A2FF; --stage:#18181B; --stage-rule:#2C2C30; color-scheme:dark; }
-}
-:root[data-theme="dark"]{ --paper:#0F0F0E; --ink:#EEEDE8; --ink-2:#A4A39D; --rule:#2B2B29; --accent:#97A2FF; --stage:#18181B; --stage-rule:#2C2C30; color-scheme:dark; }
-
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--paper);color:var(--ink);font:400 var(--t-body)/1.6 var(--sans);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-.wrap{max-width:1240px;margin:0 auto;padding-inline:var(--gutter)}
-:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
-h1,h2,h3{margin:0;font-weight:600;text-wrap:balance}
-p{margin:0}
-a{color:inherit}
-.label{font:500 var(--t-label)/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
-.mono{font-family:var(--mono);font-size:var(--t-label);letter-spacing:.02em}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:var(--gutter)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+h1,h2,h3,p{margin:0}
+h1,h2,h3{font-weight:600;text-wrap:balance}
+em{white-space:nowrap;font:italic 400 1.06em/1 var(--serif);letter-spacing:-.01em;color:var(--accent)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.skip{position:absolute;left:var(--gutter);top:-60px;background:var(--ink);color:var(--paper);padding:8px 14px;font-size:var(--t-small);z-index:9}
+.skip{position:absolute;left:var(--gutter);top:-60px;background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;z-index:9}
 .skip:focus{top:12px}
 
 /* header */
-header .in{display:flex;justify-content:space-between;align-items:center;height:68px;border-bottom:1px solid var(--rule)}
-.brand{font-weight:600;letter-spacing:-.02em;display:flex;gap:10px;align-items:center;text-decoration:none}
-.brand i{width:14px;height:14px;border:1.5px solid currentColor;display:inline-block;animation:breathe 6s var(--ease) infinite}
+header{border-bottom:1px solid var(--rule)}
+header .wrap{display:flex;justify-content:space-between;align-items:center;height:60px}
+.brand{font-weight:600;letter-spacing:-.01em;display:flex;gap:10px;align-items:center;text-decoration:none;color:inherit}
+.brand i{width:14px;height:14px;border:1.5px solid var(--accent);border-radius:3px;display:inline-block;animation:breathe 6s var(--ease) infinite}
 @keyframes breathe{0%,100%{width:14px;height:14px}33%{width:19px;height:10px}66%{width:10px;height:19px}}
-nav{display:flex;gap:clamp(14px,2.4vw,28px)}
-nav a{font:500 var(--t-label)/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);text-decoration:none;padding:8px 0}
-nav a:hover{color:var(--ink)}
+nav{display:flex;gap:2px}
+nav a{font-size:var(--t-s);color:var(--ink-2);text-decoration:none;padding:7px 12px;border-radius:8px;transition:color .15s,background .15s}
+nav a:hover{color:var(--ink);background:var(--raise)}
 
-/* section heads: index in a narrow column, heading on a shared left edge */
-.head{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);column-gap:var(--gap);row-gap:16px;align-items:baseline}
-.head .label{padding-top:.5em}
-.head h2{font-size:var(--t-h2);line-height:1.02;letter-spacing:-.035em;max-width:20ch}
-.head .lead{grid-column:2;color:var(--ink-2);font-size:var(--t-lead);line-height:1.55;max-width:56ch}
-.label b{color:var(--accent);font-weight:500}
-section{padding-block:var(--sec);scroll-margin-top:8px}
-section + section{border-top:1px solid var(--rule)}
+/* sections: centred head, then the visual in its own band below */
+section{padding-block:var(--sec);scroll-margin-top:0}
+section + section > .wrap::before{content:"";display:block;height:1px;background:var(--rule);margin-top:calc(-1 * var(--sec));margin-bottom:var(--sec)}
+.head{text-align:center;max-width:720px;margin:0 auto}
+h2{font-size:var(--t-h2);line-height:1.05;letter-spacing:-.035em}
+.lead{color:var(--ink-2);font-size:var(--t-lead);line-height:1.6;max-width:56ch;margin:18px auto 0}
+.band{margin-top:clamp(40px,5vw,64px)}
+.note{text-align:center;color:var(--ink-2);font-size:var(--t-s);margin-top:22px}
+.note b{color:var(--ink);font-weight:500}
 
-/* 01 intro */
-.intro{padding-block:clamp(48px,8vw,112px) 0}
-.intro h1{font-size:var(--t-h1);line-height:.9;letter-spacing:-.055em;margin-top:clamp(20px,3vw,36px)}
+/* intro */
+.intro{padding-block:clamp(72px,10vw,136px) 0;text-align:center}
+.intro h1{font-size:var(--t-h1);line-height:.98;letter-spacing:-.05em}
 .intro h1 span{display:block}
-.intro h1 .a{color:var(--accent)}
-.intro .row{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);column-gap:var(--gap);margin-top:clamp(28px,4vw,48px);padding-top:24px;border-top:1px solid var(--ink)}
-.intro .row > div{grid-column:2;display:flex;justify-content:space-between;align-items:flex-start;gap:24px 40px;flex-wrap:wrap}
-.intro .row p{font-size:var(--t-lead);color:var(--ink-2);max-width:40ch;line-height:1.5}
-.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-.meta li{list-style:none;font:500 var(--t-label)/1 var(--mono);letter-spacing:.04em;color:var(--ink-2);border:1px solid var(--rule);padding:6px 9px}
-.meta{padding:0}
-.cta{display:inline-flex;align-items:center;gap:12px;padding:15px 22px;background:var(--ink);color:var(--paper);font-weight:500;text-decoration:none;white-space:nowrap;transition:background .2s}
-.cta:hover{background:var(--accent);color:#fff}
-.cta span{transition:transform .2s var(--ease)}
-.cta:hover span{transform:translateY(2px)}
+.intro .lead{font-size:clamp(1.125rem,1.7vw,1.3125rem);max-width:44ch;margin-top:24px}
+.actions{display:flex;justify-content:center;align-items:center;gap:10px 22px;flex-wrap:wrap;margin-top:32px}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:12px 20px;border-radius:10px;background:var(--accent);color:var(--on-accent);font-weight:600;font-size:var(--t-s);text-decoration:none;transition:transform .2s var(--ease),box-shadow .2s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 10px 30px -12px var(--accent)}
+.link{color:var(--ink-2);font-size:var(--t-s);text-decoration:none}
+.link:hover{color:var(--ink)}
+.link span{display:inline-block;transition:transform .2s var(--ease)}
+.link:hover span{transform:translateX(3px)}
 
-/* hero canvas band */
-.board{position:relative;margin-top:clamp(40px,6vw,72px);height:clamp(380px,52vw,640px);background:var(--stage);display:grid;place-items:center;overflow:hidden}
-.board::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--stage-rule) 1px,transparent 1px),linear-gradient(90deg,var(--stage-rule) 1px,transparent 1px);background-size:48px 48px;background-position:center;opacity:.55;pointer-events:none}
-.art{position:relative;width:300px;height:375px;transition:width .9s var(--ease),height .9s var(--ease);box-shadow:0 0 0 1px rgba(255,255,255,.08),0 40px 80px -40px #000;overflow:hidden;background:#000}
-.art img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;transition:opacity .5s ease}
-.art img.off{opacity:0}
-.readout{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;gap:16px;padding:14px clamp(14px,2vw,22px);font:500 var(--t-label)/1 var(--mono);letter-spacing:.04em;color:var(--stage-2);border-top:1px solid var(--stage-rule);background:var(--stage)}
-.readout #dim{color:var(--stage-ink);font-variant-numeric:tabular-nums}
+/* hero canvas: frame reshapes, then the real render fades in (never stretched mid-move) */
+.board{position:relative;margin-top:clamp(56px,7vw,88px);height:clamp(360px,48vw,580px);border:1px solid var(--rule);border-radius:16px;background:var(--raise);display:grid;place-items:center;overflow:hidden}
+.board::before{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--rule-2) 1px,transparent 1px);background-size:22px 22px;background-position:center;pointer-events:none}
+.art{position:relative;width:300px;height:375px;margin-bottom:44px;border-radius:4px;transition:width .7s var(--ease),height .7s var(--ease);box-shadow:0 0 0 1px rgba(255,255,255,.1),0 30px 70px -30px #000;background:#1c1620;overflow:hidden}
+.art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .35s ease}
+.art.swap img{opacity:0}
+.readout{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:center;gap:10px;padding:14px;font-size:var(--t-xs);color:var(--ink-2);border-top:1px solid var(--rule);background:var(--raise)}
+.readout #dim{font-family:var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+.readout i{width:3px;height:3px;border-radius:50%;background:var(--ink-3)}
 
-/* 02 problem */
-.figs{margin-top:clamp(40px,5vw,64px);background:var(--stage);padding:clamp(20px,4vw,56px);display:grid;grid-template-columns:auto minmax(0,1fr);gap:clamp(20px,4vw,56px);align-items:center}
-.figs figure{margin:0;min-width:0}
-.figs img{display:block;max-width:100%;height:auto}
-.figs .o img{height:clamp(160px,22vw,300px);width:auto}
-.figs figcaption{display:flex;justify-content:space-between;gap:12px;margin-top:12px;font:500 var(--t-label)/1.4 var(--mono);letter-spacing:.04em;color:var(--stage-2)}
-.figs figcaption b{color:var(--stage-ink);font-weight:500}
-.figs .s figcaption b{color:#FF8A73}
+/* problem: three blocks */
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap)}
+.trio article{min-width:0}
+.trio .pic{position:relative;border:1px solid var(--rule);border-radius:12px;background:var(--raise);aspect-ratio:4/3;display:grid;place-items:center;padding:clamp(14px,2vw,22px);overflow:hidden}
+.trio .pic img{position:absolute;left:22px;right:22px;top:34px;bottom:22px;width:calc(100% - 44px);height:calc(100% - 56px);object-fit:contain}
+.trio .size{position:absolute;left:12px;top:10px;font:500 .75rem/1 var(--mono);color:var(--ink-3)}
+.trio h3{font-size:var(--t-h3);letter-spacing:-.015em;margin-top:20px;display:flex;gap:10px;align-items:baseline}
+.trio h3::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--bad);transform:translateY(-2px)}
+.trio p{color:var(--ink-2);font-size:var(--t-s);margin-top:6px;max-width:34ch}
 
-/* 03 solution: the dark band around the comparison */
-.dark{background:var(--stage);color:var(--stage-ink);--ink:var(--stage-ink);--ink-2:var(--stage-2);--rule:var(--stage-rule);--accent:var(--stage-accent)}
-section.dark{border-top:0}
-section.dark + section{border-top:0}
-.tools{margin-top:clamp(36px,5vw,56px);display:flex;justify-content:space-between;align-items:flex-end;gap:20px 40px;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--rule)}
-.group{display:flex;flex-direction:column;gap:10px;min-width:0}
-.seg{display:flex;flex-wrap:wrap;gap:1px;background:var(--rule);border:1px solid var(--rule)}
-.seg button{font:500 var(--t-small)/1 var(--sans);background:var(--stage);border:0;color:var(--ink-2);padding:11px 14px;cursor:pointer;min-height:40px;transition:color .15s,background .15s}
-.seg button:hover{color:var(--ink);background:color-mix(in srgb,var(--stage) 88%,#fff)}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--stage)}
-.seg.f button{font-family:var(--mono);font-size:var(--t-label);letter-spacing:.02em}
-.stage{margin-top:clamp(24px,3vw,40px);display:grid;place-items:center;min-height:clamp(200px,30vw,420px)}
-.frame{position:relative;max-width:100%;min-width:0;line-height:0;cursor:ew-resize;touch-action:pan-y;box-shadow:0 0 0 1px rgba(255,255,255,.1)}
-.stage:has(#cut:focus-visible) .frame{outline:2px solid var(--accent);outline-offset:6px}
-.frame img{display:block;max-width:100%;max-height:min(66vh,640px);width:auto;height:auto;user-select:none;-webkit-user-drag:none}
+/* solution: the comparison is the centrepiece */
+.chips{display:flex;justify-content:center;flex-wrap:wrap;gap:6px}
+.chips + .chips{margin-top:10px}
+.chips button{font:500 var(--t-s)/1 var(--sans);background:transparent;border:1px solid transparent;color:var(--ink-2);padding:9px 14px;border-radius:999px;cursor:pointer;min-height:38px;transition:color .15s,background .15s,border-color .15s}
+.chips button:hover{color:var(--ink);border-color:var(--rule-2)}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.chips.f button{font-family:var(--mono);font-size:var(--t-xs)}
+.stage{margin-top:24px;border:1px solid var(--rule);border-radius:16px;background:var(--raise);padding:clamp(16px,3vw,40px);display:grid;place-items:center;min-height:clamp(220px,32vw,460px)}
+.frame{position:relative;max-width:100%;min-width:0;line-height:0;cursor:ew-resize;touch-action:pan-y;border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 30px 70px -30px #000;transition:opacity .25s}
+.frame.load{opacity:.3}
+.stage:has(#cut:focus-visible){outline:2px solid var(--accent);outline-offset:3px}
+.frame img{display:block;max-width:100%;max-height:min(64vh,620px);width:auto;height:auto;user-select:none;-webkit-user-drag:none}
 .frame .over{position:absolute;inset:0;clip-path:inset(0 0 0 var(--cut,50%))}
 .frame .over img{width:100%;height:100%;max-height:none}
-.bar{position:absolute;top:-14px;bottom:-14px;left:var(--cut,50%);width:2px;margin-left:-1px;background:#fff;pointer-events:none}
-.bar::after{content:"‹ ›";position:absolute;top:50%;left:50%;width:36px;height:36px;transform:translate(-50%,-50%);border-radius:50%;background:#fff;color:#0D0D0E;font:600 14px/36px var(--sans);text-align:center;letter-spacing:2px;box-shadow:0 4px 16px rgba(0,0,0,.5)}
-.cap{display:grid;grid-template-columns:1fr auto 1fr;gap:8px 16px;margin-top:22px;font:500 var(--t-label)/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
-.cap #dims{text-transform:none;letter-spacing:.02em;color:var(--ink);text-align:center}
-.cap .r{text-align:right;color:var(--accent)}
+.tag{position:absolute;top:10px;font:500 .6875rem/1 var(--sans);letter-spacing:.02em;padding:6px 9px;border-radius:999px;background:rgba(10,11,11,.78);color:var(--ink);pointer-events:none;backdrop-filter:blur(4px)}
+.tag.l{left:10px}.tag.r{right:10px;color:var(--accent)}
+.bar{position:absolute;top:-12px;bottom:-12px;left:var(--cut,50%);width:2px;margin-left:-1px;background:var(--ink);pointer-events:none}
+.bar::after{content:"";position:absolute;top:50%;left:50%;width:34px;height:34px;transform:translate(-50%,-50%);border-radius:50%;background:var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%230A0B0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 5 3 9l4 4M11 5l4 4-4 4'/%3E%3C/svg%3E") center no-repeat;box-shadow:0 4px 16px rgba(0,0,0,.5)}
 
-/* 04 how */
-.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap);margin:clamp(40px,5vw,64px) 0 0;padding:0;list-style:none;counter-reset:s}
-.steps li{counter-increment:s;min-width:0;border-top:1px solid var(--ink);padding-top:18px}
-.steps li::before{content:counter(s,decimal-leading-zero);display:block;font:500 var(--t-label)/1 var(--mono);color:var(--accent);margin-bottom:28px}
-.steps h3{font-size:var(--t-h3);letter-spacing:-.015em;line-height:1.3;margin-bottom:10px}
-.steps p{color:var(--ink-2);font-size:var(--t-small);line-height:1.6;max-width:32ch}
+/* how it works */
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap);margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;min-width:0;border-top:1px solid var(--rule-2);padding-top:22px}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1px solid var(--rule-2);font:500 var(--t-xs)/1 var(--mono);color:var(--accent);margin-bottom:20px}
+.steps h3{font-size:var(--t-h3);letter-spacing:-.015em;line-height:1.3;margin-bottom:8px}
+.steps p{color:var(--ink-2);font-size:var(--t-s);max-width:32ch}
 
-/* 05 evidence */
-.nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:clamp(40px,5vw,64px);border-top:1px solid var(--ink);border-bottom:1px solid var(--rule)}
-.nums div{min-width:0;padding:28px var(--gap) 32px 0}
-.nums div + div{border-left:1px solid var(--rule);padding-left:var(--gap)}
-.nums b{display:block;font-size:var(--t-num);font-weight:600;letter-spacing:-.05em;font-variant-numeric:tabular-nums;line-height:.95}
-.nums span{display:block;color:var(--ink-2);font-size:var(--t-small);margin-top:14px;max-width:22ch;line-height:1.5}
-.limits{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);column-gap:var(--gap);margin-top:32px}
-.limits p{grid-column:2;color:var(--ink-2);font-size:var(--t-small);max-width:68ch}
-.limits b{color:var(--ink);font-weight:600}
+/* evidence */
+.nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--rule);border-radius:16px;overflow:hidden}
+.nums div{min-width:0;padding:clamp(22px,3vw,34px);text-align:center}
+.nums div + div{border-left:1px solid var(--rule)}
+.nums b{display:block;font-size:var(--t-num);font-weight:600;letter-spacing:-.05em;font-variant-numeric:tabular-nums;line-height:1}
+.nums div:nth-child(2) b{color:var(--accent)}
+.nums span{display:block;color:var(--ink-2);font-size:var(--t-s);margin:12px auto 0;max-width:20ch}
 
-/* 06 run */
-.term{margin-top:clamp(40px,5vw,64px);background:var(--stage);color:var(--stage-ink)}
-.term-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 12px 10px 20px;border-bottom:1px solid var(--stage-rule);font:500 var(--t-label)/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--stage-2)}
-.copy{font:500 var(--t-label)/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;background:transparent;color:var(--stage-ink);border:1px solid var(--stage-rule);padding:9px 14px;cursor:pointer;min-height:36px}
-.copy:hover{border-color:var(--stage-2)}
-pre{margin:0;padding:clamp(20px,3vw,32px);overflow-x:auto;font:400 .9rem/1.9 var(--mono)}
-pre .c{color:#77776F}
-pre .p{color:var(--stage-accent);user-select:none}
+/* run it */
+.term{max-width:820px;margin:0 auto;border:1px solid var(--rule);border-radius:14px;background:var(--raise);overflow:hidden}
+.term-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 8px 8px 10px;border-bottom:1px solid var(--rule)}
+.tabs{display:flex;gap:4px}
+.tabs button{font:500 var(--t-s)/1 var(--sans);padding:8px 14px;border:0;border-radius:8px;background:transparent;color:var(--ink-2);cursor:pointer;min-height:36px}
+.tabs button:hover{color:var(--ink)}
+.tabs button[aria-selected="true"]{background:var(--rule-2);color:var(--ink)}
+.copy{font:500 var(--t-xs)/1 var(--sans);background:transparent;color:var(--ink);border:1px solid var(--rule-2);border-radius:8px;padding:9px 14px;cursor:pointer;min-height:36px}
+.copy:hover{border-color:var(--ink-3)}
+.term .hint{padding:16px 22px 0;color:var(--ink-3);font-size:var(--t-xs)}
+pre{margin:0;padding:12px 22px 22px;overflow-x:auto;font:400 .875rem/1.9 var(--mono);color:var(--ink)}
+pre .c{color:var(--ink-3)}
+pre .p{color:var(--accent);user-select:none}
+[role="tabpanel"][hidden]{display:none}
 
-footer .in{display:flex;justify-content:space-between;gap:12px 32px;flex-wrap:wrap;padding-block:28px 40px;border-top:1px solid var(--ink);color:var(--ink-2);font-size:var(--t-small)}
+/* limits */
+.limits{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap)}
+.limits li{border-top:1px solid var(--rule-2);padding-top:20px;color:var(--ink-2);font-size:var(--t-s)}
+.limits b{display:block;color:var(--ink);font-weight:600;font-size:var(--t-h3);letter-spacing:-.015em;margin-bottom:8px}
 
-/* reveal: visible by default; JS pre-hides only what starts below the fold */
-.rv{transition:opacity .8s var(--ease),transform .8s var(--ease)}
-.rv.pre{opacity:0;transform:translateY(20px)}
+footer{border-top:1px solid var(--rule)}
+footer .wrap{display:flex;justify-content:space-between;gap:10px 32px;flex-wrap:wrap;padding-block:24px 32px;color:var(--ink-3);font-size:var(--t-xs)}
+
+/* entrance: fade up once; siblings stagger via --i */
+.rv{transition:opacity .8s var(--ease),transform .8s var(--ease);transition-delay:calc(var(--i,0) * 120ms)}
+.rv.pre{opacity:0;transform:translateY(24px)}
+.intro .rv{animation:up .9s var(--ease) both;animation-delay:calc(var(--i,0) * 110ms)}
+@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 
 @media (max-width:900px){
-  .head,.intro .row,.limits{grid-template-columns:1fr}
-  .head .lead,.intro .row > div,.limits p{grid-column:1}
-  .head .label{padding-top:0}
   .steps{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:40px}
   .nums{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .nums div:nth-child(3){border-left:0;padding-left:0}
+  .nums div:nth-child(3){border-left:0}
   .nums div:nth-child(n+3){border-top:1px solid var(--rule)}
+  .trio,.limits{grid-template-columns:1fr;max-width:540px;margin-inline:auto}
 }
 @media (max-width:560px){
   nav a:not(:last-child){display:none}
-  .figs{grid-template-columns:1fr;align-items:start}
-  .figs .o img{height:200px}
   .steps{grid-template-columns:1fr}
-  .tools{flex-direction:column;align-items:stretch}
-  .seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
-  .seg button{padding-inline:6px}
-  #designs button{font-size:.8rem}
-  .seg button:last-child:nth-child(3n+2){grid-column:span 2}
-  .cap{grid-template-columns:1fr 1fr}
-  .cap #dims{grid-column:1 / -1;grid-row:2}
-  .board{height:clamp(340px,96vw,440px)}
-  .cta{width:100%;justify-content:center}
+  .board{height:clamp(320px,92vw,420px)}
+  .actions .btn{width:100%;justify-content:center}
+  .chips.f{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .chips.f button{padding-inline:4px}
+  .nums b{font-size:2.5rem}
+  .term .hint,pre{padding-inline:16px}
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
@@ -176,173 +169,184 @@ footer .in{display:flex;justify-content:space-between;gap:12px 32px;flex-wrap:wr
 
 <a class="skip" href="#main">Skip to content</a>
 <header>
-  <div class="wrap"><div class="in">
+  <div class="wrap">
     <a class="brand" href="#top"><i aria-hidden="true"></i>Chameleon</a>
-    <nav aria-label="Sections"><a href="#problem">Problem</a><a href="#compare">Solution</a><a href="#how">How</a><a href="#run">Run it</a></nav>
-  </div></div>
+    <nav aria-label="Sections"><a href="#problem">Problem</a><a href="#compare">Solution</a><a href="#how">How it works</a><a href="#run">Run it</a></nav>
+  </div>
 </header>
 
 <main id="main">
   <div class="intro" id="top">
     <div class="wrap">
-      <div class="label">Project CHAMELEON · resize engine</div>
-      <h1><span>Same design.</span><span class="a">Every canvas.</span></h1>
-      <div class="row">
-        <div>
-          <div>
-            <p>Chameleon rebuilds a finished design for any size. It moves the furniture instead of stretching the photo.</p>
-            <ul class="meta"><li>no AI model</li><li>offline</li><li>deterministic</li></ul>
-          </div>
-          <a class="cta" href="#compare">Try the comparison <span aria-hidden="true">↓</span></a>
-        </div>
+      <h1 class="rv" style="--i:0"><span>Same design.</span><em>Every canvas.</em></h1>
+      <p class="lead rv" style="--i:1">Chameleon rebuilds a finished design for any size. It moves the furniture instead of stretching the photo.</p>
+      <div class="actions rv" style="--i:2">
+        <a class="btn" href="#compare">Try the comparison</a>
+        <a class="link" href="#run">Run it <span aria-hidden="true">→</span></a>
       </div>
-      <div class="board" role="img" aria-label="One design rebuilt for several canvas sizes, cycling through formats">
-        <div class="art" id="art"><img id="a0" alt=""><img id="a1" class="off" alt=""></div>
-        <div class="readout" aria-hidden="true"><span id="dim">1080 × 1350</span><span id="fmt">Original</span></div>
+      <div class="board rv" style="--i:3" role="img" aria-label="One design rebuilt for several canvas sizes, cycling through formats">
+        <div class="art" id="art"><img id="a0" alt=""></div>
+        <div class="readout" aria-hidden="true"><span id="fmt">Original</span><i></i><span id="dim">1080 × 1350</span></div>
       </div>
     </div>
   </div>
 
-  <section class="rv" id="problem">
+  <section id="problem">
     <div class="wrap">
       <div class="head">
-        <div class="label"><b>02</b> · The problem</div>
-        <h2>Stretching a design breaks it</h2>
-        <p class="lead">A plain resize scales every element to the new shape. Type distorts, the logo and button get squashed, and the layout no longer reads.</p>
+        <h2 class="rv">Stretching a design <em>breaks it</em></h2>
+        <p class="lead rv" style="--i:1">A plain resize scales every element to the new shape. Here is the same poster, stretched to three common sizes.</p>
       </div>
-      <div class="figs">
-        <figure class="o"><img id="po" alt=""><figcaption><b>Original</b><span id="pod"></span></figcaption></figure>
-        <figure class="s"><img id="ps" alt=""><figcaption><b>Stretched</b><span id="psd"></span></figcaption></figure>
+      <div class="trio band" id="trio"></div>
+    </div>
+  </section>
+
+  <section id="compare">
+    <div class="wrap">
+      <div class="head">
+        <h2 class="rv">Chameleon <em>rebuilds it</em><br>for the new canvas</h2>
+        <p class="lead rv" style="--i:1">Drag across the image. The left side is what a plain resize does. The right side is Chameleon: same elements, same copy, laid out again for the new shape.</p>
+      </div>
+      <div class="band rv">
+        <div class="chips" id="designs" role="group" aria-label="Design"></div>
+        <div class="chips f" id="formats" role="group" aria-label="Canvas size"></div>
+        <div class="stage">
+          <div class="frame" id="frame">
+            <img id="cs" alt="" draggable="false">
+            <div class="over"><img id="cr" alt="" draggable="false"></div>
+            <span class="tag l" aria-hidden="true">Stretch</span><span class="tag r" aria-hidden="true">Chameleon</span>
+            <div class="bar" aria-hidden="true"></div>
+          </div>
+          <label class="sr" for="cut">Comparison position: stretch on the left, Chameleon on the right</label>
+          <input class="sr" id="cut" type="range" min="0" max="100" value="50">
+        </div>
+        <p class="note" id="dims" aria-live="polite"></p>
       </div>
     </div>
   </section>
 
-  <section class="dark rv" id="compare">
+  <section id="how">
     <div class="wrap">
-      <div class="head">
-        <div class="label"><b>03</b> · Our solution</div>
-        <h2>Chameleon rebuilds it for the new canvas</h2>
-        <p class="lead">Drag across the image. The left side is what a plain resize does. The right side is Chameleon: same elements, same copy, laid out again for the new shape.</p>
-      </div>
-      <div class="tools">
-        <div class="group">
-          <span class="label" id="lbl-design">Design</span>
-          <div class="seg" id="designs" role="group" aria-labelledby="lbl-design"></div>
-        </div>
-        <div class="group">
-          <span class="label" id="lbl-size">Canvas size</span>
-          <div class="seg f" id="formats" role="group" aria-labelledby="lbl-size"></div>
-        </div>
-      </div>
-      <div class="stage">
-        <div class="frame" id="frame">
-          <img id="cs" alt="" draggable="false">
-          <div class="over"><img id="cr" alt="" draggable="false"></div>
-          <div class="bar" aria-hidden="true"></div>
-        </div>
-        <label class="sr" for="cut">Comparison position: stretch on the left, Chameleon on the right</label>
-        <input class="sr" id="cut" type="range" min="0" max="100" value="50">
-      </div>
-      <div class="cap"><span>← Stretch</span><span id="dims"></span><span class="r">Chameleon →</span></div>
-    </div>
-  </section>
-
-  <section class="rv" id="how">
-    <div class="wrap">
-      <div class="head">
-        <div class="label"><b>04</b> · How it works</div>
-        <h2>Read the design. Rebuild it.</h2>
-      </div>
-      <ol class="steps">
-        <li class="rv"><h3>Read the structure</h3><p>The input has no labels. Size, position and grouping tell it which piece is the headline, logo, product and button.</p></li>
-        <li class="rv"><h3>Try real layouts</h3><p>A column, a side-by-side split, three columns or a single row, each in the original reading order.</p></li>
-        <li class="rv"><h3>Measure and score</h3><p>Text is measured with the official renderer's fonts. Each layout is scored on readability, hierarchy, collisions and space.</p></li>
-        <li class="rv"><h3>Pick and explain</h3><p>The best layout wins, and every decision is recorded so you can see why.</p></li>
+      <div class="head"><h2 class="rv">Read the design. <em>Rebuild it.</em></h2></div>
+      <ol class="steps band">
+        <li class="rv" style="--i:0"><h3>Read the structure</h3><p>The input has no labels. Size, position and grouping tell it which piece is the headline, logo, product and button.</p></li>
+        <li class="rv" style="--i:1"><h3>Try real layouts</h3><p>A column, a side-by-side split, three columns or a single row, each in the original reading order.</p></li>
+        <li class="rv" style="--i:2"><h3>Measure and score</h3><p>Text is measured with the official renderer's fonts. Each layout is scored on readability, hierarchy, collisions and space.</p></li>
+        <li class="rv" style="--i:3"><h3>Pick and explain</h3><p>The best layout wins, and every decision is recorded so you can see why.</p></li>
       </ol>
     </div>
   </section>
 
-  <section class="rv" id="evidence">
+  <section id="evidence">
     <div class="wrap">
-      <div class="head">
-        <div class="label"><b>05</b> · Evidence</div>
-        <h2>Tested on designs it never saw</h2>
-      </div>
-      <div class="nums">
+      <div class="head"><h2 class="rv">Tested on designs <em>it never saw</em></h2></div>
+      <div class="nums band rv">
         <div><b data-n="2250">2,250</b><span>resizes of 150 random realistic designs</span></div>
         <div><b data-n="0">0</b><span>structural rule problems in those runs</span></div>
         <div><b data-n="194">194</b><span>automated tests passing</span></div>
         <div><b data-n="15">15</b><span>platform formats, 1080×1920 down to 320×50</span></div>
       </div>
-      <div class="limits"><p><b>Limits.</b> Every element stays visible and copy is never rewritten, so very long copy stays small on tiny banners. Numbers are our own checks, not Adobe's scorer.</p></div>
     </div>
   </section>
 
-  <section class="rv" id="run">
+  <section id="run">
     <div class="wrap">
       <div class="head">
-        <div class="label"><b>06</b> · Run it</div>
-        <h2>Three commands</h2>
+        <h2 class="rv">Run it</h2>
+        <p class="lead rv" style="--i:1">The challenge scores every entry in the starter's Python Docker image, so the engine is Python. Run it in Docker the way stage one does, or straight from a virtual environment.</p>
       </div>
-      <div class="term">
-        <div class="term-bar"><span>Python 3.10+, inside the starter repo</span><button class="copy" id="copy" type="button">Copy</button></div>
-<pre id="cmd"><span class="p">$ </span>pip install -r requirements.txt
+      <div class="term band rv">
+        <div class="term-top">
+          <div class="tabs" role="tablist" aria-label="How to run">
+            <button role="tab" id="t-docker" aria-controls="p-docker" aria-selected="true">Docker</button>
+            <button role="tab" id="t-py" aria-controls="p-py" aria-selected="false" tabindex="-1">Python</button>
+          </div>
+          <button class="copy" id="copy" type="button">Copy</button>
+        </div>
+        <div role="tabpanel" id="p-docker" aria-labelledby="t-docker">
+          <p class="hint">Offline, with no network, like stage one.</p>
+<pre><span class="p">$ </span>docker build --platform linux/amd64 -t chameleon-engine .
+<span class="p">$ </span>docker run --rm --network none \
+    -v $(pwd)/input:/app/input -v $(pwd)/output:/app/output chameleon-engine</pre>
+        </div>
+        <div role="tabpanel" id="p-py" aria-labelledby="t-py" hidden>
+          <p class="hint">Python 3.10 or newer, inside the starter repo.</p>
+<pre><span class="p">$ </span>pip install -r requirements.txt
 <span class="p">$ </span>python -m engine.main      <span class="c"># resize every task in input/</span>
 <span class="p">$ </span>python -m studio.server    <span class="c"># demo UI on http://127.0.0.1:8765</span></pre>
+        </div>
       </div>
+    </div>
+  </section>
+
+  <section id="limits">
+    <div class="wrap">
+      <div class="head"><h2 class="rv">Limits</h2></div>
+      <ul class="limits band">
+        <li class="rv" style="--i:0"><b>Long copy stays small</b>Every element stays visible and copy is never rewritten, so very long copy gets small type on tiny banners.</li>
+        <li class="rv" style="--i:1"><b>Roles are inferred</b>The engine reads roles from size and position. An unusual design can be misread, and the result is then plainer.</li>
+        <li class="rv" style="--i:2"><b>Our numbers</b>The figures above come from our own checks, not Adobe's scorer.</li>
+      </ul>
     </div>
   </section>
 </main>
 
 <footer>
-  <div class="wrap"><div class="in">
+  <div class="wrap">
     <span>Independent student entry for the Project CHAMELEON challenge. Not affiliated with or endorsed by Adobe.</span>
-    <span class="mono">Renders by the official cr-renderer</span>
-  </div></div>
+    <span>Renders by the official cr-renderer</span>
+  </div>
 </footer>
 
 <script>
 const DATA = __DATA__;
 const $ = id => document.getElementById(id);
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const fmt = k => DATA.formats.find(x => x.key === k);
 
-/* Hero: the artboard morphs through canvas shapes, showing the real result for each. */
+/* Hero: fade out, reshape the frame, fade the real result in. */
 (() => {
   const d = DATA.designs[0];
   const seq = [{name:"Original", w:d.canvas.width, h:d.canvas.height, src:d.original}]
     .concat(["ig_story","ig_post","yt_thumb","li_banner","leaderboard","skyscraper"].map(k => {
-      const f = DATA.formats.find(x => x.key === k); return {name:f.name, w:f.w, h:f.h, src:d.pairs[k].result};
+      const f = fmt(k); return {name:f.name, w:f.w, h:f.h, src:d.pairs[k].result};
     }));
-  const art = $("art"), imgs = [$("a0"), $("a1")], board = art.parentElement;
-  let i = 0, front = 0, timer = null;
-  function fit(w, h){
-    const bw = board.clientWidth * .9, bh = board.clientHeight - 44 - 64;
+  seq.forEach(s => { const im = new Image(); im.src = s.src; });
+  const art = $("art"), img = $("a0"), board = art.parentElement;
+  let i = 0, timer = null;
+  const fit = (w, h) => {
+    const bw = board.clientWidth * .88, bh = board.clientHeight - 46 - 56;
     const s = Math.min(bw / w, bh / h); return [Math.round(w * s), Math.round(h * s)];
+  };
+  const size = it => { const [w, h] = fit(it.w, it.h); art.style.width = w + "px"; art.style.height = h + "px"; };
+  const label = it => { $("dim").textContent = `${it.w} × ${it.h}`; $("fmt").textContent = it.name; };
+  function show(k){
+    const it = seq[k];
+    art.classList.add("swap");
+    setTimeout(() => { size(it); label(it); }, 350);
+    setTimeout(() => { img.src = it.src; art.classList.remove("swap"); }, 1050);
   }
-  function show(k, first){
-    const it = seq[k], [w, h] = fit(it.w, it.h);
-    art.style.width = w + "px"; art.style.height = h + "px";
-    art.style.marginBottom = "44px";
-    $("dim").textContent = `${it.w} × ${it.h}`; $("fmt").textContent = it.name;
-    const back = imgs[1 - front]; back.src = it.src; back.alt = "";
-    if(first){ imgs[front].src = it.src; return; }
-    setTimeout(() => { back.classList.remove("off"); imgs[front].classList.add("off"); front = 1 - front; }, 380);
-  }
-  show(0, true);
-  const step = () => { i = (i + 1) % seq.length; show(i); };
-  const start = () => { if(!reduce && !timer) timer = setInterval(step, 2400); };
+  size(seq[0]); label(seq[0]); img.src = seq[0].src;
+  const start = () => { if(!reduce && !timer) timer = setInterval(() => { i = (i + 1) % seq.length; show(i); }, 2800); };
   const stop = () => { clearInterval(timer); timer = null; };
   board.addEventListener("mouseenter", stop); board.addEventListener("mouseleave", start);
-  addEventListener("resize", () => show(i, true));
+  addEventListener("resize", () => size(seq[i]));
   start();
 })();
 
-/* Problem: the original next to its plain stretch to a wide banner. */
+/* Problem: the same poster stretched to three sizes. */
 (() => {
-  const d = DATA.designs[0], f = DATA.formats.find(x => x.key === "li_banner");
-  $("po").src = d.original; $("po").alt = `${d.label} original design, ${d.canvas.width} by ${d.canvas.height}`;
-  $("ps").src = d.pairs.li_banner.stretch; $("ps").alt = `The same design stretched to ${f.w} by ${f.h}`;
-  $("pod").textContent = `${d.canvas.width} × ${d.canvas.height}`; $("psd").textContent = `${f.w} × ${f.h}`;
+  const d = DATA.designs[0];
+  const items = [
+    ["li_banner", "Type gets squashed", "Letters are pulled wide and short. The headline stops looking like the brand's font."],
+    ["ig_story", "Shapes lose their proportions", "The product and the logo are pulled tall. Round things stop being round."],
+    ["leaderboard", "Nothing can be read", "On a thin banner every line collapses into a stripe. The message and the button disappear."],
+  ];
+  $("trio").innerHTML = items.map(([k, t, p], n) => { const f = fmt(k); return `
+    <article class="rv" style="--i:${n}">
+      <div class="pic"><span class="size">${f.w} × ${f.h}</span><img src="${d.pairs[k].stretch}" alt="${d.label} stretched to ${f.name}, ${f.w} by ${f.h}"></div>
+      <h3>${t}</h3><p>${p}</p>
+    </article>`; }).join("");
 })();
 
 /* Compare: drag anywhere on the image; keyboard via the range input. */
@@ -352,15 +356,17 @@ const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const frame = $("frame"), cut = $("cut");
   const set = v => { v = Math.max(0, Math.min(100, v)); frame.style.setProperty("--cut", v + "%"); cut.value = v; };
   function draw(){
-    const d = DATA.designs[cd], f = DATA.formats.find(x => x.key === cf), p = d.pairs[cf];
+    const d = DATA.designs[cd], f = fmt(cf), p = d.pairs[cf];
+    frame.classList.add("load");
+    $("cr").onload = () => frame.classList.remove("load");
     $("cs").src = p.stretch; $("cr").src = p.result;
     $("cs").alt = `${d.label} stretched to ${f.w} by ${f.h}`; $("cr").alt = `${d.label} rebuilt for ${f.w} by ${f.h}`;
-    $("dims").textContent = `${f.name} · ${f.w} × ${f.h}`;
+    $("dims").innerHTML = `<b>${d.label}</b> on a <b>${f.name}</b>, ${f.w} × ${f.h}. Stretch on the left, Chameleon on the right.`;
     document.querySelectorAll("#designs button").forEach((b, i) => b.setAttribute("aria-pressed", i === cd));
     document.querySelectorAll("#formats button").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === cf));
   }
   DATA.designs.forEach((d, i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = d.label; b.title = d.desc; b.onclick = () => { cd = i; draw(); }; $("designs").appendChild(b); });
-  fkeys.forEach(k => { const f = DATA.formats.find(x => x.key === k); const b = document.createElement("button"); b.type = "button"; b.dataset.k = k; b.textContent = `${f.w}×${f.h}`; b.title = f.name; b.setAttribute("aria-label", `${f.name}, ${f.w} by ${f.h}`); b.onclick = () => { cf = k; draw(); }; $("formats").appendChild(b); });
+  fkeys.forEach(k => { const f = fmt(k); const b = document.createElement("button"); b.type = "button"; b.dataset.k = k; b.textContent = `${f.w}×${f.h}`; b.title = f.name; b.setAttribute("aria-label", `${f.name}, ${f.w} by ${f.h}`); b.onclick = () => { cf = k; draw(); }; $("formats").appendChild(b); });
   let drag = false;
   const at = e => { const r = frame.getBoundingClientRect(); set((e.clientX - r.left) / r.width * 100); };
   frame.addEventListener("pointerdown", e => { drag = true; frame.setPointerCapture(e.pointerId); at(e); });
@@ -368,54 +374,56 @@ const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   frame.addEventListener("pointerup", () => drag = false);
   cut.addEventListener("input", e => set(+e.target.value));
   draw(); set(50);
-  /* one-time sweep when it scrolls into view, to show it can be dragged */
   if(!reduce && "IntersectionObserver" in window){
     const io = new IntersectionObserver(es => es.forEach(en => {
       if(!en.isIntersecting) return; io.disconnect();
-      const t0 = performance.now(), keys = [50, 18, 82, 50];
-      const tick = t => { const p = Math.min(1, (t - t0) / 1800), seg = Math.min(2, Math.floor(p * 3)), lp = p * 3 - seg;
+      const t0 = performance.now() + 400, keys = [50, 22, 78, 50];
+      const tick = t => { const p = Math.max(0, Math.min(1, (t - t0) / 2000)), seg = Math.min(2, Math.floor(p * 3)), lp = p * 3 - seg;
         const e = lp < .5 ? 2 * lp * lp : 1 - Math.pow(-2 * lp + 2, 2) / 2;
-        set(keys[seg] + (keys[seg + 1] - keys[seg]) * e); if(p < 1 && !drag) requestAnimationFrame(tick); };
+        if(!drag) set(keys[seg] + (keys[seg + 1] - keys[seg]) * e); if(p < 1 && !drag) requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     }), {threshold: .6});
     io.observe(frame);
   }
 })();
 
+/* Run it: tabs, and copy the visible commands. */
+(() => {
+  const tabs = [$("t-docker"), $("t-py")];
+  const pick = t => tabs.forEach(b => { const on = b === t; b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1; $(b.getAttribute("aria-controls")).hidden = !on; });
+  tabs.forEach((b, i) => {
+    b.onclick = () => pick(b);
+    b.onkeydown = e => { if(e.key === "ArrowRight" || e.key === "ArrowLeft"){ const n = tabs[(i + 1) % 2]; pick(n); n.focus(); } };
+  });
+  $("copy").addEventListener("click", async () => {
+    const pre = document.querySelector('[role="tabpanel"]:not([hidden]) pre');
+    const text = [...pre.childNodes].filter(n => !(n.classList && (n.classList.contains("p") || n.classList.contains("c"))))
+      .map(n => n.textContent).join("").replace(/ +\n/g, "\n").trim();
+    try { await navigator.clipboard.writeText(text); $("copy").textContent = "Copied"; }
+    catch { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $("copy").textContent = "Selected"; }
+    setTimeout(() => $("copy").textContent = "Copy", 1600);
+  });
+})();
+
 /* Scroll reveals and counters: only for things that start below the fold. */
 (() => {
   if(reduce || !("IntersectionObserver" in window)) return;
-  const below = el => el.getBoundingClientRect().top > innerHeight;
-  const els = [...document.querySelectorAll(".rv")].filter(below);
+  const els = [...document.querySelectorAll(".rv")].filter(el => !el.closest(".intro") && el.getBoundingClientRect().top > innerHeight * .9);
   els.forEach(el => el.classList.add("pre"));
-  document.querySelectorAll(".steps li.rv").forEach((li, i) => li.style.transitionDelay = (i * 90) + "ms");
+  const count = el => el.querySelectorAll("[data-n]").forEach(b => {
+    const n = +b.dataset.n, t0 = performance.now();
+    const tick = t => { const p = Math.min(1, (t - t0) / 1400), e = 1 - Math.pow(1 - p, 3);
+      b.textContent = Math.round(n * e).toLocaleString("en-US"); if(p < 1) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  });
   const io = new IntersectionObserver(es => es.forEach(en => {
-    if(!en.isIntersecting) return; en.target.classList.remove("pre"); io.unobserve(en.target);
-    en.target.querySelectorAll("[data-n]").forEach(b => {
-      const n = +b.dataset.n, t0 = performance.now();
-      const tick = t => { const p = Math.min(1, (t - t0) / 1200), e = 1 - Math.pow(1 - p, 3);
-        b.textContent = Math.round(n * e).toLocaleString("en-US"); if(p < 1) requestAnimationFrame(tick); };
-      requestAnimationFrame(tick);
-    });
-  }), {threshold: .15});
+    if(!en.isIntersecting) return; en.target.classList.remove("pre"); io.unobserve(en.target); count(en.target);
+  }), {threshold: .15, rootMargin: "0px 0px -6% 0px"});
   els.forEach(el => io.observe(el));
-  /* jumps (anchor links, fast scrolls) can skip past a section: reveal anything already above the fold */
-  const sweep = () => els.forEach(el => { if(el.classList.contains("pre") && el.getBoundingClientRect().top < innerHeight) {
-    el.classList.remove("pre"); io.unobserve(el);
-    el.querySelectorAll("[data-n]").forEach(b => b.textContent = (+b.dataset.n).toLocaleString("en-US")); } });
-  addEventListener("scroll", () => requestAnimationFrame(sweep), {passive: true});
-  /* anchor jumps: finish the reveal instantly so the browser lands on the section's final position */
+  /* anchor jumps: show the target section at once so the page lands in the right place */
   document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener("click", () => {
     const t = document.querySelector(a.getAttribute("href")); if(!t) return;
-    [t, ...t.querySelectorAll(".rv")].forEach(el => { el.style.transition = "none"; el.classList.remove("pre"); });
-    void t.offsetHeight; [t, ...t.querySelectorAll(".rv")].forEach(el => el.style.transition = "");
+    t.querySelectorAll(".rv.pre").forEach(el => { el.style.transition = "none"; el.classList.remove("pre"); io.unobserve(el); void el.offsetHeight; el.style.transition = ""; });
   }));
 })();
-
-$("copy").addEventListener("click", async () => {
-  const text = "pip install -r requirements.txt\npython -m engine.main\npython -m studio.server";
-  try { await navigator.clipboard.writeText(text); $("copy").textContent = "Copied"; }
-  catch { const r = document.createRange(); r.selectNodeContents($("cmd")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $("copy").textContent = "Selected"; }
-  setTimeout(() => $("copy").textContent = "Copy", 1600);
-});
 </script>
