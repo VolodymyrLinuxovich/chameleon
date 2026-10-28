@@ -487,6 +487,11 @@ def place_floating(ctx: Ctx, lay: Layout, b: Block, base_scale: float) -> None:
                ("r" if pref[0] == "l" else "l", pref[1]),
                ("r" if pref[0] == "l" else "l", "b" if pref[1] == "t" else "t")]
     s0 = min(max(base_scale, _readable_floor(b)), 0.4 * ctx.W / b.w, 0.4 * ctx.H / b.h)
+    # A corner sticker is an accent: its label stays well below the headline.
+    head = max((f.font or 0 for f in lay.fits if f.block.role == "headline"), default=0)
+    label = max((num(e.get("font_size"), 12) for e in b.elements if e.get("type") == "text"), default=0)
+    if head and label and label * s0 > 0.46 * head:  # labels may later grow 1.3x to fill their box
+        s0 = max(base_scale * 0.5, 0.46 * head / label)
     occupied = [fit_box(f) for f in lay.fits]
     best: tuple[float, Fit] | None = None
     for corner in corners:
