@@ -110,7 +110,7 @@ The slowest run took about 230 ms (the 320×50 banner tries the most variants).
 - **Very dense designs on tiny canvases get small type.** Copy can't be rewritten in stage one, and nothing may be hidden. So the Level 3 poster (17 elements, a 140-character headline) renders its headline at 7 px on 728×90 and about 4 px on 320×50, with the fine print smaller still. Simpler designs stay readable at those sizes. Shortening copy is a finale idea we haven't built.
 - **Roles are heuristics.** Unusual designs can be misread, such as two equally large headlines or a logo at the bottom. Every candidate still obeys the hard rules, and scoring picks the least bad, but the result may be plainer than a designer's.
 - **Not done:** no copy rewriting or font-family changes (stage-one rules forbid them), no image cropping beyond `fit: cover` backgrounds, and no learned model.
-- **Docker is unverified here.** Docker wasn't installed on the development machine. We added no dependencies, and the starter Dockerfile is unchanged.
+- **Docker verified (Oct 27).** `docker build --platform linux/amd64` and `docker run --network none` succeed on an Apple Silicon Mac (Colima, amd64 emulation). The container's output JSON for all three samples is identical to the macOS run.
 - **The target catalogue is ours.** `tools/formats.py` is our own list of common sizes, used only for tests and the demo. The engine never special-cases a size.
 
 ## Repo map

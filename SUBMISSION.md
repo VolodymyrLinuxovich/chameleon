@@ -46,14 +46,13 @@ The brief lists the qualities the scoring rewards (PDF §2.5), plus "speed and r
 - [x] `python -m pytest -q`: 195 passed
 - [x] `python -m tools.evaluate`: 48 runs, 0 hard-rule problems, max about 230 ms; plus 64 runs on 4 extra designs and 2,250 stress runs on 150 random designs, 0 problems
 - [x] Studio: adapt, hold-to-compare, explanation dialog, role overlay and candidate switching. Checked in headless Chromium with no console errors and no horizontal scroll at 390 px width
+- [x] Docker: amd64 build and offline run pass (Oct 27); output identical to macOS
 - [x] Error paths: invalid JSON, a design without a canvas, no targets, out-of-range sizes
 
 **Unverified**
 
-- [ ] `docker build` / `docker run --network none` (Docker isn't installed here). Run it before submitting
 - [ ] Behaviour on the hidden scorer and AI evaluator
 - [x] Hiding: organisers said every input element stays visible (Oct 22 recap). Hiding is now off by default; only the missing asset is skipped
-- [ ] Linux/amd64 font metrics vs macOS (same fonts and Skia, so we expect identical results, but this is untested)
 - [ ] Adobe Express add-on (finale deliverable, not started)
 
 **If the live demo fails**
