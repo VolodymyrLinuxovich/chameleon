@@ -249,9 +249,9 @@ def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
                 else:
                     hi = mid
             fs, total, gap = attempt(lo)
-    elif total < 0.7 * box.h and ((anchor_edges and ctx.W / ctx.H < 0.75 * ctx.W0 / ctx.H0)
+    elif total < 0.86 * box.h and ((anchor_edges and ctx.W / ctx.H < 0.75 * ctx.W0 / ctx.H0)
                                   or ctx.H < 200):
-        # Tall, narrow canvases: the area-based cap leaves the column half
+        # Tall, narrow canvases: the area-based cap leaves the column part
         # empty. Raise the common scale until it fills ~86% of the height
         # (width still limits every block, so nothing overflows sideways).
         def ranks(fl: list[Fit]) -> list[float]:
@@ -278,9 +278,14 @@ def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
             fl, tot, _g = attempt(mid)
             # Stop once text hits its size cap: past that point only the
             # images would keep growing and outweigh the copy.
-            keeps_pace = all(a <= 0 or b >= 0.9 * a * mid / s_cap for a, b in zip(base, ranks(fl)))
-            # keeps_pace: every label still grows at >= 90% of the common
-            # rate, i.e. no text has hit text_cap yet.
+            # keeps_pace: every free text block still grows at >= 90% of the
+            # common rate, i.e. no text has hit text_cap yet. Labels inside
+            # badges and buttons don't count: on a narrow canvas those blocks
+            # are already as wide as the column and stop growing, which would
+            # otherwise hold the headline back too.
+            free = [i for i, f in enumerate(fs) if f.block.is_text]
+            rk = ranks(fl)
+            keeps_pace = all(base[i] <= 0 or rk[i] >= 0.9 * base[i] * mid / s_cap for i in free if i < len(rk))
             if tot <= 0.86 * box.h and same_order(fl) and keeps_pace:
                 lo = mid
             else:
@@ -813,6 +818,12 @@ def candidates(ctx: Ctx) -> list[Layout]:
                 if d in roles and (d != "body" or long_body):
                     acc.append(d)
                     variants.append(replace(ctx, drop=tuple(acc)))
+    # Banner-ad heights let the headline lead (strat_focus). Up to 120 px
+    # tall (leaderboards) only a long headline needs it: a short one already
+    # reads well in a normal row, next to its eyebrow and date.
+    head = next((b for b in ctx.a.flow if b.role == "headline" and b.is_text), None)
+    long_head = head is not None and len(str(head.elements[0].get("content", ""))) > 60
+    focus = r >= 3.0 and (ctx.H < 80 or (ctx.H < 120 and long_head))
     # Aspect thresholds: split from slightly landscape (1.15), three columns
     # from 2.2 (wide enough for three regions), one row from 3.0.
     for i, v in enumerate(variants):
@@ -823,7 +834,10 @@ def candidates(ctx: Ctx) -> list[Layout]:
                 # to keep the candidate count down.
                 for frac in ((0.4, 0.5) if i == 0 else (0.4,)):
                     out.append(_variant(v, strat_split(v, side, frac)))
-        if r >= 2.2:
+        # Where the headline-first row is offered, three columns would stack
+        # the message at one small common scale beside it; it can edge ahead
+        # on score while leaving the headline smaller than the button.
+        if r >= 2.2 and not focus:
             out.append(_variant(v, strat_columns(v)))
     if r >= 3.0:
         roles = {b.role for b in ctx.a.flow + ctx.a.floating}
@@ -853,13 +867,10 @@ def candidates(ctx: Ctx) -> list[Layout]:
                     out.append(strat_strip(ctx, d, share, demote=dm))
                     if ctx.H < 80:
                         out.append(strat_strip(ctx, d, share, cta_floor=True, demote=dm))
-        # Banner-ad heights let the headline lead. Up to 120 px tall
-        # (leaderboards) only a long headline needs it: a short one already
-        # reads well in a normal row, next to its eyebrow and date.
-        head = next((b for b in ctx.a.flow if b.role == "headline" and b.is_text), None)
-        long_head = head is not None and len(str(head.elements[0].get("content", ""))) > 60
-        if ctx.H < 80 or (ctx.H < 120 and long_head):
-            for hs in (0.6, 0.7, 0.8):
+        if focus:
+            # Leaderboards (80 px and up) have room for a bigger product and
+            # button, so they also try a less greedy headline share.
+            for hs in ((0.45, 0.5, 0.6, 0.7) if ctx.H >= 80 else (0.6, 0.7, 0.8)):
                 for minor in (0.12, 0.18):
                     out.append(strat_focus(ctx, hs, minor))
     return [c for c in out if c is not None]

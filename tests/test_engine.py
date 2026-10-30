@@ -183,7 +183,10 @@ def test_mobile_banner_keeps_message_readable():
     t = load("input/chameleon_sample_level3_advanced.json")
     design, rep = adapt(t["source"], {"width": 320, "height": 50}, allow_hide=True)
     el = {e["id"]: e for e in design["elements"]}
-    assert el["headline"]["font_size"] >= 8
+    # Both key messages stay legible: the legibility floor prefers 7px + 6px
+    # over 8px + a 5px button.
+    assert el["headline"]["font_size"] >= 7
+    assert el["cta_label"]["font_size"] >= 6
     assert el["logo"]["height"] >= 15 and el["logo"].get("opacity", 1) > 0
     assert el["cta_label"].get("opacity", 1) > 0
     assert el["headline"]["font_size"] >= el["cta_label"]["font_size"]  # hierarchy kept
@@ -240,13 +243,37 @@ def test_banner_headline_stays_readable_and_largest():
 
 def test_leaderboard_long_headline_leads():
     # Level 3's own target is a 728x90 leaderboard with a 140-character
-    # headline. The headline-first row keeps it at 14px or more (it was 9px
-    # in a three-column layout), and nothing else is hidden.
+    # headline. The headline-first row keeps it the largest text at 12px or
+    # more (it was 9px in a three-column layout), the button label stays
+    # readable at 10px or more, and nothing else is hidden.
     t = load("input/chameleon_sample_level3_advanced.json")
     design, rep = adapt(t["source"], t["target_canvas"])
     el = {e["id"]: e for e in design["elements"]}
     assert rep["chosen"].startswith("focus"), rep["chosen"]
-    assert el["headline"]["font_size"] >= 14, el["headline"]["font_size"]
+    assert el["headline"]["font_size"] >= 12, el["headline"]["font_size"]
+    assert el["headline"]["font_size"] == max(e["font_size"] for e in design["elements"] if e["type"] == "text")
+    assert el["cta_label"]["font_size"] >= 10, el["cta_label"]["font_size"]
     # Only the image whose asset file is missing may be skipped.
     assert set(rep["hidden"]) <= {"holiday_watermark"}, rep["hidden"]
     assert all(e.get("opacity", 1) > 0 for e in design["elements"] if e["id"] not in rep["hidden"])
+
+
+def test_small_banner_keeps_the_button_readable():
+    # On a 320x50 banner the event poster used to win with a 16px headline
+    # and a 4px "Get tickets". The legibility floor in score.py now prefers
+    # a layout where both key messages can be read.
+    src = load("samples/extra/c_event_poster.json")
+    src = src.get("source", src)
+    design, rep = adapt(src, {"width": 320, "height": 50})
+    el = {e["id"]: e for e in design["elements"]}
+    assert el["tix_label"]["font_size"] >= 8, el["tix_label"]["font_size"]
+    assert el["headline"]["font_size"] >= 9, el["headline"]["font_size"]
+
+
+def test_skyscraper_column_fills_the_height():
+    # On a 160x600 skyscraper the Level 3 column used to stop growing at 70%
+    # of the height. It now grows toward the 86% target.
+    t = load("input/chameleon_sample_level3_advanced.json")
+    design, rep = adapt(t["source"], {"width": 160, "height": 600})
+    el = {e["id"]: e for e in design["elements"]}
+    assert el["headline"]["font_size"] >= 12, el["headline"]["font_size"]

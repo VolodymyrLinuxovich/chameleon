@@ -204,6 +204,11 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
         "completeness": completeness, "fidelity": fidelity, "balance": balance,
     }
     total_score = sum(WEIGHTS[k] * v for k, v in parts.items())
+    # Legibility floor for the key messages: a headline or button label under
+    # 6px can't be read at all, whatever the hierarchy says. The penalty is
+    # flat per message, so a layout only gives up headline size when that
+    # actually makes the button readable, not to move it from 2px to 4px.
+    total_score -= 0.05 * sum(1 for e in key if num(out[e["id"]].get("font_size"), 1) < 6)
     if overflow:
         # Heavy penalty: an overflowing layout wins only if nothing else fits.
         total_score -= 0.3
