@@ -1,0 +1,77 @@
+<!doctype html>
+<!-- Source for docs/how-it-works.png. Screenshot at 1600x900, 2x:
+     chrome --headless --screenshot=docs/how-it-works.png --window-size=1600,900 --force-device-scale-factor=2 tools/how_it_works.html -->
+<html><head><meta charset="utf-8"><title>How it works</title>
+<style>
+  @font-face{font-family:Sol;src:url(../brand_kit/fonts/SolsticeSans-Regular.ttf)}
+  @font-face{font-family:Sol;font-weight:700;src:url(../brand_kit/fonts/SolsticeSans-Bold.ttf)}
+  :root{--bg:#0B0A0D;--card:#17151B;--line:#2D2933;--ink:#F2EEF5;--muted:#9C94A6;--dim:#6F6879;--accent:#F0703F}
+  *{box-sizing:border-box}
+  html,body{margin:0;width:1600px;height:900px;background:var(--bg);color:var(--ink);font-family:-apple-system,"Helvetica Neue",Helvetica,sans-serif}
+  h1,.box b,.rules b,.stats b{font-family:Sol,-apple-system,sans-serif}
+  .wrap{position:relative;padding:64px 80px}
+  .head{display:flex;align-items:center;gap:26px}
+  .head img{width:92px;height:92px}
+  h1{margin:0;font-size:66px;letter-spacing:-.02em;line-height:1}
+  .tag{color:var(--muted);font-size:26px;margin-top:10px}
+  .meta{position:absolute;right:80px;top:76px;color:var(--muted);font-size:17px}
+  .flow{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:64px;margin-top:170px}
+  .box{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;height:226px}
+  .box b{display:block;font-size:22px;margin-bottom:8px}
+  .box .what{color:var(--muted);font-size:15.5px;line-height:1.35;min-height:42px}
+  .box .how{border-top:1px solid var(--line);margin-top:12px;padding-top:10px;color:#8A8394;font-size:13px;line-height:1.55}
+  .box.key{border-color:var(--accent)}
+  .box.key b::after{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-left:8px;vertical-align:middle}
+  .arrow{position:absolute;top:50%;right:-64px;width:64px;height:0;border-top:1.5px solid #4A4452}
+  .arrow::after{content:"";position:absolute;right:0;top:-5px;border:4.5px solid transparent;border-left:7px solid #4A4452;border-right:0}
+  .arrow span{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:12.5px;color:var(--muted)}
+  .rules{position:absolute;left:calc((100% - 5*64px)/6*4 + 4*64px);width:calc((100% - 5*64px)/6);top:-118px;height:auto;width:330px;margin-left:-60px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .rules b{font-size:16px;display:block;margin-bottom:4px}
+  .rules div{color:var(--dim);font-size:12px;line-height:1.45}
+  .v{position:absolute;border-left:1.5px dashed #4A4452}
+  .lbl{position:absolute;font-size:12px;color:var(--muted);text-align:center}
+  .loop{position:absolute;border:1.5px dashed #4A4452;border-top:0;height:44px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);margin-top:110px;padding-top:32px}
+  .stats b{display:block;font-size:56px;letter-spacing:-.02em;line-height:1}
+  .stats span{display:block;color:var(--muted);font-size:18px;margin-top:10px}
+  .foot{margin-top:34px;color:var(--dim);font-size:13px;line-height:1.6}
+  .foot i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:8px;font-style:normal}
+</style></head>
+<body><div class="wrap">
+  <div class="head">
+    <img src="../docs/logo.svg" alt="">
+    <div><h1>Chameleon</h1><div class="tag">Same design. Every canvas.</div></div>
+  </div>
+  <div class="meta">Python · runs offline · no model, no network</div>
+
+  <div class="flow">
+    <div class="rules"><b>Hard rules</b><div>same ids · on canvas · aspect ±5%<br>copy and fonts unchanged · text fits</div></div>
+    <div class="v" style="left:calc((100% - 5*64px)/6*4.5 + 4*64px);top:-38px;height:38px"></div>
+    <div class="lbl" style="left:calc((100% - 5*64px)/6*4.5 + 4*64px + 8px);top:-34px">overflow is rejected</div>
+
+    <div class="box"><b>Input</b><div class="what">A finished design and a new canvas size.</div>
+      <div class="how">v0.9 design JSON<br>text, image, shape<br>no labels at all</div><div class="arrow"><span>elements</span></div></div>
+    <div class="box key"><b>Analyze</b><div class="what">Works out what each piece is.</div>
+      <div class="how">headline, logo, hero, CTA<br>badges, fine print<br>from geometry alone</div><div class="arrow"><span>roles</span></div></div>
+    <div class="box"><b>Measure</b><div class="what">Sizes text the way the renderer draws it.</div>
+      <div class="how">renderer's Skia fonts<br>same greedy wrap<br>whole pixel sizes</div><div class="arrow"><span>fits</span></div></div>
+    <div class="box key"><b>Lay out</b><div class="what">Builds several real layouts.</div>
+      <div class="how">column, split, one row<br>headline-first row<br>rigid blocks scale evenly</div><div class="arrow"><span>candidates</span></div></div>
+    <div class="box key"><b>Score</b><div class="what">Keeps the most readable one.</div>
+      <div class="how">readability, hierarchy<br>space, collisions, order<br>8 terms, each explained</div><div class="arrow"><span>best</span></div></div>
+    <div class="box"><b>Output</b><div class="what">Same elements, new layout.</div>
+      <div class="how">design JSON, same ids<br>report: roles, candidates<br>and the reason for each</div></div>
+
+    <div class="loop" style="left:calc((100% - 5*64px)/6*0.5);width:calc((100% - 5*64px)/6*5 + 5*64px);top:226px"></div>
+    <div class="lbl" style="left:0;right:0;top:280px">if anything fails, a plain uniform fit that still passes every hard rule</div>
+  </div>
+
+  <div class="stats">
+    <div><b>230 ms</b><span>Slowest resize (a 320×50 banner)</span></div>
+    <div><b>0 / 2,362</b><span>Hard-rule problems across runs</span></div>
+    <div><b>197</b><span>Automated tests</span></div>
+    <div><b>No model</b><span>Deterministic, in the starter Docker</span></div>
+  </div>
+  <div class="foot"><i></i>Runs: 48 on the starter samples (3 × 16 sizes), 64 on 4 designs we never tuned on, 2,250 on 150 random designs.<br>
+  Timing on an Apple Silicon laptop. The score is our proxy for the brief's criteria, not Adobe's scorer. Every input element stays visible.</div>
+</div></body></html>

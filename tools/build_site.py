@@ -5,7 +5,7 @@
     python -m tools.build_site
 
 Embeds the stretch/result renders as WebP data URIs into site/template.html,
-so the page is one self-contained static file (deployable anywhere).
+so the page is one static file plus site/resize.gif (deployable anywhere).
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ from __future__ import annotations
 import base64
 import io
 import json
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -59,6 +60,8 @@ def main() -> None:
                               "result": enc(f"output/eval/{stem}__{k}.png")} for k, *_ in FORMATS},
             })
     body = Path("site/template.html").read_text().replace("__DATA__", json.dumps(data))
+    body = body.replace("__CARD__", enc("docs/how-it-works.png", 1600, 900))
+    shutil.copyfile("docs/resize.gif", "site/resize.gif")
     title_end = body.index("</style>") + len("</style>")
     page = HEAD + body[:title_end] + "\n</head>\n<body>\n" + body[title_end:] + "\n</body>\n</html>\n"
     Path("site/index.html").write_text(page)

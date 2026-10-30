@@ -21,9 +21,10 @@ fonts never change.**
 
 <br/>
 
-<img src="docs/sheet_level3_advanced.png" alt="Stretch vs Chameleon: the Level 3 sample across 16 formats" width="820"/>
+<img src="docs/resize.gif" alt="One design swept through canvas sizes from an Instagram story to a 320 by 50 banner. Left: naive stretch distorts it. Right: Chameleon rearranges it into a column, image beside text, or one row" width="820"/>
 
-<sub>The Level 3 sample across 16 formats. Naive stretch on top, Chameleon below. Both rendered by the official renderer.</sub>
+<sub>One design, swept through every size from a story to a 320×50 banner. Every frame is a real engine result drawn by
+the official renderer. Left: stretch. Right: Chameleon. Made by <code>python -m tools.make_gif</code>.</sub>
 
 </div>
 
@@ -64,6 +65,34 @@ never change, and **every input element stays visible** (confirmed by the organi
 
 ---
 
+## Why Not Just Use a Resize Tool
+
+| | Keeps proportions | Rearranges for the new shape | Every element kept | Explains each choice | No setup per design | Offline and open |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| Stretch to the new size | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ |
+| Fit or crop | ✓ | ✗ | ✗ crop cuts, fit leaves bands | ✗ | ✓ | ✓ |
+| Canva Magic Switch | ✓ | Partly ¹ | Not stated | ✗ | ✓ | ✗ Pro plan, cloud |
+| Adobe Express Resize | ✓ | Partly ¹ | Not stated | ✗ | ✓ | ✗ Premium plan, cloud |
+| Figma constraints and auto layout | ✓ | ✓ once set up | ✓ | ✗ | ✗ set by hand per frame | ✗ |
+| **Chameleon** | **✓** | **✓ 6 layout families, scored** | **✓ by rule, tested** | **✓ report per element** | **✓** | **✓ no model, no network** |
+
+<sub>¹ Both resize and move elements automatically, but neither publishes how, and the challenge brief calls resizing in
+Adobe Express "a real, currently unsolved problem inside the product". Rows other than Chameleon come from public product
+pages as of Oct 2026 (<a href="https://www.canva.com/pro/magic-switch/">Canva</a>,
+<a href="https://helpx.adobe.com/express/web/organize-your-designs/arrange-layers-and-pages/change-page-size.html">Adobe Express</a>).
+This is a feature comparison, not a benchmark.</sub>
+
+What Chameleon adds on top of a good resize:
+
+- **It knows what each piece is.** Headline, logo, product, button, badges and fine print are found from geometry, with a
+  reason recorded for each.
+- **Text sizes are exact.** Text is measured with the official renderer's fonts and wrap, so "fits" in the JSON means
+  fits in the PNG.
+- **Every choice can be checked.** The report lists every layout tried, its score on each term, and why the winner won.
+  In the Studio you can pick a different one.
+
+---
+
 ## Built With
 
 | Area | Stack |
@@ -79,6 +108,10 @@ never change, and **every input element stays visible** (confirmed by the organi
 ---
 
 ## Architecture at a Glance
+
+<img src="docs/how-it-works.png" alt="How Chameleon works: input, analyze, measure, lay out, score, output, with hard rules checked before scoring and a safe uniform fit if anything fails. 230 ms slowest resize, 0 hard-rule problems in 2,362 runs, 197 tests, no model" width="100%"/>
+
+<sub>Made from <code>tools/how_it_works.html</code>.</sub>
 
 ```mermaid
 flowchart LR
@@ -205,6 +238,10 @@ problems** under our checks (`tools/checks.py`):
 
 The slowest run took about **230 ms** (the 320×50 banner tries the most variants).
 
+<img src="docs/sheet_level3_advanced.png" alt="Stretch vs Chameleon: the Level 3 sample across 16 formats" width="100%"/>
+
+<sub>The Level 3 sample across 16 formats. Naive stretch on top, Chameleon below. Both rendered by the official renderer.</sub>
+
 <table align="center"><tr>
 <td align="center"><img src="docs/sheet_level1_warmup.png" alt="Level 1 sample across formats" width="400"/></td>
 <td align="center"><img src="docs/sheet_level2_core.png" alt="Level 2 sample across formats" width="400"/></td>
@@ -299,11 +336,11 @@ The v0.9 design schema (`chameleon_design_schema_v0.9.json`): `text`, `image` an
 | `engine/chameleon.py` | `adapt()`: runs the pipeline, finalizes, builds the report |
 | `engine/main.py` | Starter batch runner, unchanged |
 | `tests/test_engine.py` | Hard rules × samples × formats, random designs, malformed input |
-| `tools/` | Format catalogue, rule checks, batch evaluator, stress generator, site builder |
+| `tools/` | Format catalogue, rule checks, batch evaluator, stress generator, site builder, animation (`make_gif.py`) and card source (`how_it_works.html`) |
 | `studio/` | Local demo UI (stdlib server + one HTML file) |
 | `site/` | Landing page template and build |
 | `samples/extra/` | Four designs the engine was not tuned on |
-| `docs/` | Contact sheets, Studio screenshots, logo |
+| `docs/` | Contact sheets, Studio screenshots, the animation, the How it works card, logo |
 | `CHALLENGE_NOTES.md`, `BUILD_PLAN.md`, `SUBMISSION.md` | Brief analysis, plan, pitch and demo pack |
 | `STARTER_README.md`, `RULES.md`, `FAQ.md` | Organiser-provided starter docs |
 
