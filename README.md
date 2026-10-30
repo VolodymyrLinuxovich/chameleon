@@ -109,10 +109,10 @@ What Chameleon adds on top of a good resize:
 
 ## Architecture at a Glance
 
-<img src="docs/pipeline.png" alt="One real resize, stage by stage: the Level 3 poster as input, the roles the engine found drawn as boxes, four real candidate layouts for a 1584 by 396 LinkedIn banner with their scores (three columns wins at 96.5), and the final banner with every hard rule passing" width="100%"/>
+<img src="docs/how-it-works.gif" alt="Animation of one real resize: the Level 3 poster appears, the engine draws a box around each role it found, four real layouts for a 1584 by 396 LinkedIn banner flash by with their scores counting up (three columns wins at 96.5), and the final banner appears with every hard rule passing" width="100%"/>
 
-<sub>One real resize, stage by stage: the Level 3 poster becomes a 1584×396 LinkedIn banner. Every picture is the
-engine's own output. Built by <code>tools/build_site.py</code>, also on the <a href="https://chameleon-resize.vercel.app/#how">landing page</a>.</sub>
+<sub>One real resize, animated: input, the roles the engine found, the layouts it tried with their scores, and the
+result. Every frame is the engine's own output. Also on the <a href="https://chameleon-resize.vercel.app/#how">landing page</a>.</sub>
 
 ```mermaid
 flowchart TB

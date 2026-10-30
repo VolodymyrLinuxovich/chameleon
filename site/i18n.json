@@ -132,7 +132,9 @@
   "Lay out and score": "Maquetar y puntuar",
   "Tries real layouts, keeps the best.": "Prueba diseños reales y se queda con el mejor.",
   "All hard rules pass": "Todas las reglas se cumplen",
-  "The Level 3 poster becoming a 1584 × 396 LinkedIn banner. Real engine output at every step.": "El cartel del nivel 3 convertido en un banner de LinkedIn de 1584 × 396. Salida real del motor en cada paso."
+  "The Level 3 poster becoming a 1584 × 396 LinkedIn banner. Real engine output at every step.": "El cartel del nivel 3 convertido en un banner de LinkedIn de 1584 × 396. Salida real del motor en cada paso.",
+  "Tries real layouts, scores each one.": "Prueba diseños reales y puntúa cada uno.",
+  "Keeps the best. Every hard rule is checked.": "Se queda con el mejor. Se comprueba cada regla."
  },
  "fr": {
   "Problem": "Problème",
@@ -264,6 +266,8 @@
   "Lay out and score": "Mettre en page et noter",
   "Tries real layouts, keeps the best.": "Essaie de vraies mises en page, garde la meilleure.",
   "All hard rules pass": "Toutes les règles sont respectées",
-  "The Level 3 poster becoming a 1584 × 396 LinkedIn banner. Real engine output at every step.": "L'affiche du niveau 3 devient une bannière LinkedIn de 1584 × 396. Sortie réelle du moteur à chaque étape."
+  "The Level 3 poster becoming a 1584 × 396 LinkedIn banner. Real engine output at every step.": "L'affiche du niveau 3 devient une bannière LinkedIn de 1584 × 396. Sortie réelle du moteur à chaque étape.",
+  "Tries real layouts, scores each one.": "Essaie de vraies mises en page et note chacune.",
+  "Keeps the best. Every hard rule is checked.": "Garde la meilleure. Chaque règle est vérifiée."
  }
 }
