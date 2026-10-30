@@ -223,7 +223,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:10px 32px;flex-wrap:
     <div class="wrap">
       <div class="head">
         <h2 class="rv">Stretching a design <em>breaks it</em></h2>
-        <p class="lead rv" style="--i:1">A plain resize scales every element to the new shape. Here is the same poster, stretched to three common sizes.</p>
+        <p class="lead rv" style="--i:1">A plain resize scales every element to the new shape. Here is one poster, stretched to three common sizes.</p>
       </div>
       <div class="trio band" id="trio"></div>
     </div>
@@ -250,10 +250,6 @@ footer .wrap{display:flex;justify-content:space-between;gap:10px 32px;flex-wrap:
         </div>
         <p class="note" id="dims" aria-live="polite"></p>
       </div>
-      <figure class="fig rv">
-        <img src="resize.gif" width="1000" height="540" loading="lazy" alt="One design swept through canvas sizes from an Instagram story to a 320 by 50 banner. Left: stretch distorts it. Right: Chameleon rearranges it into a column, image beside text, or one row">
-        <figcaption>One design swept through every size from a story to a 320×50 banner. Each frame is a real engine result.</figcaption>
-      </figure>
     </div>
   </section>
 
@@ -367,11 +363,13 @@ const fmt = k => DATA.formats.find(x => x.key === k);
 
 /* Hero: fade out, reshape the frame, fade the real result in. */
 (() => {
-  const d = DATA.designs[0];
-  const seq = [{name:"Original", w:d.canvas.width, h:d.canvas.height, src:d.original}]
-    .concat(["ig_story","ig_post","yt_thumb","li_banner","leaderboard","skyscraper"].map(k => {
+  // Rotate through every design, not just one poster: each design shows
+  // its original, then two very different canvases.
+  const plan = {advanced: ["ig_story", "li_banner"], core: ["yt_thumb", "leaderboard"], event: ["skyscraper", "billboard"]};
+  const seq = DATA.designs.flatMap(d => [{name:`${d.label} · original`, w:d.canvas.width, h:d.canvas.height, src:d.original}]
+    .concat((plan[d.key] || ["ig_story", "li_banner"]).map(k => {
       const f = fmt(k); return {name:f.name, w:f.w, h:f.h, src:d.pairs[k].result};
-    }));
+    })));
   seq.forEach(s => { const im = new Image(); im.src = s.src; });
   const art = $("art"), img = $("a0"), board = art.parentElement;
   let i = 0, timer = null;
@@ -395,9 +393,9 @@ const fmt = k => DATA.formats.find(x => x.key === k);
   start();
 })();
 
-/* Problem: the same poster stretched to three sizes. */
+/* Problem: one poster stretched to three sizes. */
 (() => {
-  const d = DATA.designs[0];
+  const d = DATA.designs[1];
   const items = [
     ["li_banner", "Type gets squashed", "Letters are pulled wide and short. The headline stops looking like the brand's font."],
     ["ig_story", "Shapes lose their proportions", "The product and the logo are pulled tall. Round things stop being round."],
