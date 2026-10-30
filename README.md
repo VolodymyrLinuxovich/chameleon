@@ -179,14 +179,14 @@ sequenceDiagram
    - On canvases much taller and narrower than the source (stories, skyscrapers), `stack` raises the common scale until the column fills about 86% of the height. It stops as soon as text would hit its size cap or change rank, so the headline stays the largest text and images never outgrow the copy. Spare height after that goes to the product image.
    - On canvases under 640 px on the short side, each strategy also runs as a *text-first* variant (images and buttons at 65%). On banner heights (under 200 px) there are also variants that draw long body copy, fine print and badge rows at half size, so the headline and button get the room. Nothing is hidden.
    - On banner heights, a column may also grow past the area-based size cap while it has spare height, under the same rules as tall canvases (text keeps its rank, images never outgrow the copy).
-   - `focus`: on banner-ad heights (under 80 px, or under 120 px when the headline is longer than 60 characters), a headline-first row. Logo, product, headline and button share one row with most of the width going to the headline. Secondary copy, badges and stickers stack small in an end column. Nothing is hidden.
+   - `focus`: on banner-ad heights (under 80 px, or under 120 px when the headline is longer than 60 characters), a headline-first row. Where it is offered, three columns is not, and leaderboards also try giving the headline only 45-50% of the row so the product and button keep their size. Logo, product, headline and button share one row with most of the width going to the headline. Secondary copy, badges and stickers stack small in an end column. Nothing is hidden.
    - A layout whose visible text can't fit its box even at the smallest size is never chosen while a clean layout exists.
    - Banner heights (under 80 px tall) get extra care. Strips shrink pictures before the CTA and keep the logo at least 45% of the strip height. Small button labels may grow up to 1.3x to fill their box.
    - The scorer treats text under 5 px and images under 12 px as lost: they are in the JSON but nobody can see them.
    - **Every element stays visible.** The organisers confirmed this at the Oct 22 info session. The only element ever skipped is an image whose asset file is missing, which the brief allows.
    - In one-row layouts, consecutive text pieces (eyebrow, headline, date, subtitle) stack into one text cell at a shared scale, instead of sitting side by side in narrow columns.
    - After layout, decorations keep their distance to their nearest corner and shrink away from text and buttons, with a small margin. An overlap that already existed in the source is kept as intentional layering. Stickers and tags go back to their original corner, or the nearest free one.
-4. **Score** (`engine/score.py`). Readability, hierarchy kept, use of space, scale consistency, collisions, completeness, reading-order fidelity, and balance. These are our proxies for the brief's §2.5 criteria. Weights are in `WEIGHTS`.
+4. **Score** (`engine/score.py`). Readability, hierarchy kept, use of space, scale consistency, collisions, completeness, reading-order fidelity, and balance. A headline or button label under 6 px costs a flat penalty, so the engine prefers a layout where both key messages can be read. These are our proxies for the brief's §2.5 criteria. Weights are in `WEIGHTS`.
 5. **Finalize** (`engine/chameleon.py`). Clamp rotated bounds inside the canvas, re-fit any text whose box changed, and keep every id in source order. If anything throws, `resize()` falls back to a uniform contain-fit that is still valid (`safe_fit`).
 
 `adapt()` also returns a report: roles with reasons, every candidate with its score breakdown and design, and before→after for each element. The Studio shows this report.
@@ -261,7 +261,7 @@ The slowest run took about **230 ms** (the 320×50 banner tries the most variant
   event poster on a solid shape, and a sale post with text overlapping the product. They gave **64** more runs with
   **0** hard-rule problems. They also exposed three bugs, now fixed: body copy misread as fine print, a bottom-corner
   logo not recognised, and left-aligned columns breaking apart.
-- **Tests.** `python -m pytest -q`: **198 passed**. Hard rules × samples × formats, random designs, malformed input.
+- **Tests.** `python -m pytest -q`: **200 passed**. Hard rules × samples × formats, random designs, malformed input.
 - **Docker.** `docker build --platform linux/amd64` and `docker run --network none` succeed on an Apple Silicon Mac
   (Colima, amd64 emulation), and all three outputs pass every hard rule inside the container. Levels 1 and 2 are
   **identical** to the macOS run. Level 3 picks the same layout and font sizes, but its headline box is a few pixels
@@ -303,7 +303,7 @@ Extras (not part of the scored engine):
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest -q                 # 198 tests
+python -m pytest -q                 # 200 tests
 python -m tools.evaluate --render   # every sample x 15 platform formats, contact sheets in output/eval/
 python -m tools.evaluate --input samples/extra   # 4 extra designs the engine was not tuned on
 python -m tools.stress --n 150      # 150 random realistic designs x 15 formats (2,250 runs)
@@ -354,8 +354,8 @@ The v0.9 design schema (`chameleon_design_schema_v0.9.json`): `text`, `image` an
 ## Limits
 
 - **Very dense designs on tiny canvases get small type.** Copy can't be rewritten in stage one, and nothing may be
-  hidden. So the Level 3 poster (17 elements, a 140-character headline) renders its headline at 16 px on its 728×90 target
-  (up from 9 px) and 8 px on 320×50 (up from about 4 px), with body copy and fine print much smaller in an end column. Simpler designs
+  hidden. So the Level 3 poster (17 elements, a 140-character headline) renders its headline at 13 px with a 12 px button on its 728×90 target
+  (up from 9 px and 8 px) and 8 px on 320×50 (up from about 4 px), with body copy and fine print much smaller in an end column. Simpler designs
   stay readable at those sizes.
 - **Nothing is hidden.** Every input element stays visible, as the organisers asked. The one exception is an image whose
   asset file is missing (the Level 3 `holiday_watermark`), which is skipped as the brief allows. The old opt-in hiding
