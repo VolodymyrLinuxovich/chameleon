@@ -10,8 +10,9 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap">
 <style>
 :root{
-  --bg:#0A0B0B; --raise:#111313; --ink:#EDEEEA; --ink-2:#9A9E99; --ink-3:#6A6E69; --rule:#1F2221; --rule-2:#2C302E;
-  --accent:#6BE3A8; --on-accent:#06140D; --bad:#FF8F78;
+  /* Brand palette: the plum-black, ink and Solstice orange of the logo, the How it works card and the GIF */
+  --bg:#0B0A0D; --raise:#151318; --ink:#F2EEF5; --ink-2:#A49CAE; --ink-3:#716A7B; --rule:#221F27; --rule-2:#2D2933;
+  --accent:#F0703F; --on-accent:#1B0E08; --bad:#F0703F;
   --sans:"Geist","Helvetica Neue","Segoe UI",system-ui,sans-serif;
   --serif:"Instrument Serif",Georgia,serif;
   --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace;
@@ -37,8 +38,7 @@ em{white-space:nowrap;font:italic 400 1.06em/1 var(--serif);letter-spacing:-.01e
 header{border-bottom:1px solid var(--rule)}
 header .wrap{display:flex;justify-content:space-between;align-items:center;height:60px}
 .brand{font-weight:600;letter-spacing:-.01em;display:flex;gap:10px;align-items:center;text-decoration:none;color:inherit}
-.brand i{width:14px;height:14px;border:1.5px solid var(--accent);border-radius:3px;display:inline-block;animation:breathe 6s var(--ease) infinite}
-@keyframes breathe{0%,100%{width:14px;height:14px}33%{width:19px;height:10px}66%{width:10px;height:19px}}
+.brand svg{width:24px;height:24px;display:block}
 nav{display:flex;gap:2px}
 nav a{font-size:var(--t-s);color:var(--ink-2);text-decoration:none;padding:7px 12px;border-radius:8px;transition:color .15s,background .15s}
 nav a:hover{color:var(--ink);background:var(--raise)}
@@ -60,7 +60,7 @@ h2{font-size:var(--t-h2);line-height:1.05;letter-spacing:-.035em}
 .intro .lead{font-size:clamp(1.125rem,1.7vw,1.3125rem);max-width:44ch;margin-top:24px}
 .actions{display:flex;justify-content:center;align-items:center;gap:10px 22px;flex-wrap:wrap;margin-top:32px}
 .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 20px;border-radius:10px;background:var(--accent);color:var(--on-accent);font-weight:600;font-size:var(--t-s);text-decoration:none;transition:transform .2s var(--ease),box-shadow .2s}
-.btn:hover{transform:translateY(-1px);box-shadow:0 10px 30px -12px var(--accent)}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
 .link{color:var(--ink-2);font-size:var(--t-s);text-decoration:none}
 .link:hover{color:var(--ink)}
 .link span{display:inline-block;transition:transform .2s var(--ease)}
@@ -68,8 +68,7 @@ h2{font-size:var(--t-h2);line-height:1.05;letter-spacing:-.035em}
 
 /* hero canvas: frame reshapes, then the real render fades in (never stretched mid-move) */
 .board{position:relative;margin-top:clamp(56px,7vw,88px);height:clamp(360px,48vw,580px);border:1px solid var(--rule);border-radius:16px;background:var(--raise);display:grid;place-items:center;overflow:hidden}
-.board::before{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--rule-2) 1px,transparent 1px);background-size:22px 22px;background-position:center;pointer-events:none}
-.art{position:relative;width:300px;height:375px;margin-bottom:44px;border-radius:4px;transition:width .7s var(--ease),height .7s var(--ease);box-shadow:0 0 0 1px rgba(255,255,255,.1),0 30px 70px -30px #000;background:#1c1620;overflow:hidden}
+.art{position:relative;width:300px;height:375px;margin-bottom:44px;border-radius:4px;transition:width .7s var(--ease),height .7s var(--ease);box-shadow:0 0 0 1px rgba(242,238,245,.08),0 30px 70px -30px #000;background:#1E1A22;overflow:hidden}
 .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .35s ease}
 .art.swap img{opacity:0}
 .readout{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:center;gap:10px;padding:14px;font-size:var(--t-xs);color:var(--ink-2);border-top:1px solid var(--rule);background:var(--raise)}
@@ -94,16 +93,16 @@ h2{font-size:var(--t-h2);line-height:1.05;letter-spacing:-.035em}
 .chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .chips.f button{font-variant-numeric:tabular-nums}
 .stage{margin-top:24px;border:1px solid var(--rule);border-radius:16px;background:var(--raise);padding:clamp(16px,3vw,40px);display:grid;place-items:center;min-height:clamp(220px,32vw,460px)}
-.frame{position:relative;max-width:100%;min-width:0;line-height:0;cursor:ew-resize;touch-action:pan-y;border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 30px 70px -30px #000;transition:opacity .25s}
+.frame{position:relative;max-width:100%;min-width:0;line-height:0;cursor:ew-resize;touch-action:pan-y;border-radius:3px;box-shadow:0 0 0 1px rgba(242,238,245,.08),0 30px 70px -30px #000;transition:opacity .25s}
 .frame.load{opacity:.3}
 .stage:has(#cut:focus-visible){outline:2px solid var(--accent);outline-offset:3px}
 .frame img{display:block;max-width:100%;max-height:min(64vh,620px);width:auto;height:auto;user-select:none;-webkit-user-drag:none}
 .frame .over{position:absolute;inset:0;clip-path:inset(0 0 0 var(--cut,50%))}
 .frame .over img{width:100%;height:100%;max-height:none}
-.tag{position:absolute;top:10px;font:500 .6875rem/1 var(--sans);letter-spacing:.02em;padding:6px 9px;border-radius:999px;background:rgba(10,11,11,.78);color:var(--ink);pointer-events:none;backdrop-filter:blur(4px)}
+.tag{position:absolute;top:10px;font:500 .6875rem/1 var(--sans);letter-spacing:.02em;padding:6px 9px;border-radius:999px;background:rgba(11,10,13,.82);color:var(--ink);pointer-events:none}
 .tag.l{left:10px}.tag.r{right:10px;color:var(--accent)}
 .bar{position:absolute;top:-12px;bottom:-12px;left:var(--cut,50%);width:2px;margin-left:-1px;background:var(--ink);pointer-events:none}
-.bar::after{content:"";position:absolute;top:50%;left:50%;width:34px;height:34px;transform:translate(-50%,-50%);border-radius:50%;background:var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%230A0B0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 5 3 9l4 4M11 5l4 4-4 4'/%3E%3C/svg%3E") center no-repeat;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.bar::after{content:"";position:absolute;top:50%;left:50%;width:34px;height:34px;transform:translate(-50%,-50%);border-radius:50%;background:var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%230B0A0D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 5 3 9l4 4M11 5l4 4-4 4'/%3E%3C/svg%3E") center no-repeat;box-shadow:0 4px 16px rgba(0,0,0,.5)}
 
 /* how it works */
 .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap);margin:0;padding:0;list-style:none}
@@ -195,7 +194,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:10px 32px;flex-wrap:
 <a class="skip" href="#main">Skip to content</a>
 <header>
   <div class="wrap">
-    <a class="brand" href="#top"><i aria-hidden="true"></i>Chameleon</a>
+    <a class="brand" href="#top"><svg viewBox="0 0 240 240" aria-hidden="true"><rect width="240" height="240" rx="52" fill="#1E1A22"/><rect x="62" y="40" width="72" height="128" rx="10" fill="none" stroke="#F0703F" stroke-width="12" opacity=".45"/><rect x="78" y="78" width="104" height="104" rx="12" fill="none" stroke="#F0703F" stroke-width="12" opacity=".75"/><rect x="40" y="150" width="160" height="50" rx="10" fill="#F0703F"/></svg>Chameleon</a>
     <nav aria-label="Sections"><a href="#problem">Problem</a><a href="#compare">Solution</a><a href="#how">How it works</a><a href="#run">Run it</a></nav>
   </div>
 </header>
