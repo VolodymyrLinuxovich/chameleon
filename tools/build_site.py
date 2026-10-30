@@ -46,6 +46,68 @@ def enc(path: str | Path, maxw: int = 1280, maxh: int = 1100) -> str:
     return "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
+ROLE_COLORS = {"logo": (90, 160, 255), "hero": (90, 210, 130), "headline": (255, 200, 60), "body": (235, 235, 235),
+               "badges": (190, 140, 255), "badge": (190, 140, 255), "cta": (255, 130, 70), "sticker": (255, 90, 160),
+               "tag": (255, 90, 160), "fineprint": (170, 170, 170), "unavailable": (120, 120, 120)}
+ROLE_NAMES = {"logo": "Logo", "hero": "Product", "headline": "Headline", "body": "Body text", "badges": "Badge row",
+              "badge": "Badge", "cta": "Button", "sticker": "Sticker", "tag": "Tag", "fineprint": "Fine print",
+              "unavailable": "Missing asset"}
+
+
+def pipeline(tmp: str) -> dict:
+    """One real resize, stage by stage, for the How it works section: the
+    original, the roles the engine found, one candidate per layout family
+    with its score, the winner's score breakdown and the result."""
+    from PIL import ImageDraw
+    from engine.chameleon import adapt
+    task = json.loads(Path("input/chameleon_sample_level3_advanced.json").read_text())
+    src = task["source"]
+    W, H = 1584, 396
+    design, rep = adapt(src, {"width": W, "height": H})
+    orig = Path(tmp) / "pipe_orig.png"
+    render_design_to_png(src, "brand_kit/assets", str(orig), max_size=1200)
+    im = Image.open(orig).convert("RGB")
+    k = im.width / src["canvas"]["width"]
+    d = ImageDraw.Draw(im)
+    els = {e["id"]: e for e in src["elements"]}
+    found = []
+    for r in rep["roles"]:
+        col = ROLE_COLORS.get(r["role"])
+        if not col:
+            continue
+        boxes = [els[i] for i in r["elements"] if i in els]
+        x0 = min(e["x"] for e in boxes) * k; y0 = min(e["y"] for e in boxes) * k
+        x1 = max(e["x"] + e["width"] for e in boxes) * k; y1 = max(e["y"] + e["height"] for e in boxes) * k
+        d.rectangle([x0, y0, x1, y1], outline=col, width=max(3, int(4 * k * 2)))
+        name = ROLE_NAMES.get(r["role"], r["role"])
+        if name not in [f["name"] for f in found]:
+            found.append({"name": name, "color": "#%02x%02x%02x" % col})
+    roles_png = Path(tmp) / "pipe_roles.png"
+    im.save(roles_png)
+    best: dict = {}
+    for c in rep["candidates"]:
+        fam = c["name"].split("-")[0].split("·")[0]
+        best.setdefault(fam, c)
+    fam_names = {"columns": "Three columns", "split": "Image beside text", "strip": "One row", "stack": "One column",
+                 "focus": "Headline-first row", "proportional": "Scaled as is"}
+    cands = []
+    for fam, c in list(best.items())[:4]:
+        p = Path(tmp) / f"pipe_{fam}.png"
+        render_design_to_png(c["design"], "brand_kit/assets", str(p))
+        cands.append({"name": fam_names.get(fam, fam), "score": round(c["score"] * 100, 1),
+                      "win": c["name"] == rep["chosen"], "img": enc(p, 1000, 300)})
+    win = next(c for c in rep["candidates"] if c["name"] == rep["chosen"])
+    part_names = {"readability": "Readability", "hierarchy": "Hierarchy", "space": "Use of space",
+                  "consistency": "Consistency", "collisions": "No collisions", "completeness": "Completeness",
+                  "fidelity": "Reading order", "balance": "Balance"}
+    out = Path(tmp) / "pipe_out.png"
+    render_design_to_png(design, "brand_kit/assets", str(out))
+    return {"w": W, "h": H, "n": len(src["elements"]), "ms": round(rep["ms"]), "tried": len(rep["candidates"]),
+            "orig": enc(orig, 600, 750), "roles": enc(roles_png, 600, 750), "found": found, "cands": cands,
+            "parts": [{"name": part_names.get(k2, k2), "v": round(v * 100)} for k2, v in win["parts"].items()],
+            "score": round(win["score"] * 100, 1), "out": enc(out, 1584, 396)}
+
+
 def main() -> None:
     data = {"designs": [], "formats": [{"key": k, "name": n, "w": w, "h": h} for k, n, w, h in FORMATS]}
     with tempfile.TemporaryDirectory() as tmp:
@@ -59,6 +121,7 @@ def main() -> None:
                 "pairs": {k: {"stretch": enc(f"output/eval/{stem}__{k}__stretch.png"),
                               "result": enc(f"output/eval/{stem}__{k}.png")} for k, *_ in FORMATS},
             })
+        data["pipe"] = pipeline(tmp)
     body = Path("site/template.html").read_text().replace("__DATA__", json.dumps(data))
     body = body.replace("__CARD__", enc("docs/how-it-works.png", 1600, 900))
     logo = "data:image/svg+xml;base64," + base64.b64encode(Path("docs/logo.svg").read_bytes()).decode()

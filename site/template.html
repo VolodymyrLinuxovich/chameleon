@@ -31,10 +31,18 @@ em{white-space:nowrap;font:italic 400 1.06em/1 var(--serif);letter-spacing:-.01e
 /* header */
 header{border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:50;background:rgba(10,11,11,.82);-webkit-backdrop-filter:saturate(1.4) blur(12px);backdrop-filter:saturate(1.4) blur(12px)}
 .hdr-r{display:flex;align-items:center;gap:14px}
-.lang{display:flex;gap:2px;padding:3px;border:1px solid var(--rule-2);border-radius:999px}
-.lang button{font:600 .75rem/1 var(--sans);letter-spacing:.02em;color:var(--ink-2);background:transparent;border:0;border-radius:999px;padding:7px 10px;min-height:30px;cursor:pointer}
-.lang button:hover{color:var(--ink)}
-.lang button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.lang{position:relative}
+.globe{display:flex;align-items:center;gap:7px;font:600 .8125rem/1 var(--sans);letter-spacing:.02em;color:var(--ink);background:transparent;border:1px solid var(--rule-2);border-radius:999px;padding:0 12px;min-height:36px;cursor:pointer;transition:border-color .15s,background .15s}
+.globe:hover,.globe[aria-expanded="true"]{border-color:var(--accent);background:var(--raise)}
+.globe svg:first-child{color:var(--accent)}
+.globe .caret{color:var(--ink-3);transition:transform .2s}
+.globe[aria-expanded="true"] .caret{transform:rotate(180deg)}
+.langs{position:absolute;right:0;top:calc(100% + 8px);min-width:170px;margin:0;padding:6px;list-style:none;background:var(--raise);border:1px solid var(--rule-2);border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.langs[hidden]{display:none}
+.langs button{display:flex;justify-content:space-between;align-items:center;width:100%;font:500 var(--t-s)/1 var(--sans);color:var(--ink-2);background:transparent;border:0;border-radius:9px;padding:11px 12px;cursor:pointer;text-align:left}
+.langs button:hover,.langs button:focus-visible{background:var(--rule);color:var(--ink);outline:none}
+.langs button[aria-checked="true"]{color:var(--ink)}
+.langs button[aria-checked="true"]::after{content:"✓";color:var(--accent);font-weight:700}
 header .wrap{display:flex;justify-content:space-between;align-items:center;height:60px}
 .brand{font-weight:600;letter-spacing:-.01em;display:flex;gap:10px;align-items:center;text-decoration:none;color:inherit}
 .brand img{width:26px;height:26px;display:block;border-radius:6px}
@@ -111,6 +119,44 @@ h2{font-size:var(--t-h2);line-height:1.05;letter-spacing:-.035em}
 .steps li:first-child{border-top-color:var(--accent)}
 .steps h3{font-size:var(--t-h3);letter-spacing:-.015em;line-height:1.3;margin-bottom:8px}
 .steps p{color:var(--ink-2);font-size:var(--t-s);max-width:32ch}
+
+/* how it works: one real resize, stage by stage */
+.pipe-lead{text-align:center;max-width:720px;margin:14px auto 0}
+.pipe{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:28px}
+.st{position:relative;min-width:0;background:var(--raise);border:1px solid var(--rule);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.s-in{grid-column:span 3}.s-an{grid-column:span 3}.s-ly{grid-column:span 6}.s-sc{grid-column:span 4}.s-out{grid-column:span 8}
+.st h3{font-size:var(--t-h3);letter-spacing:-.015em;line-height:1.25;margin:0}
+.st > p{color:var(--ink-2);font-size:var(--t-s);margin:0}
+.st .shot{display:block;width:100%;height:auto;border-radius:8px;border:1px solid var(--rule)}
+.st .meta{color:var(--ink-3);font-size:var(--t-xs)}
+.s-in::after,.s-an::after,.s-sc::after{content:"→";position:absolute;right:-24px;top:50%;transform:translateY(-50%);color:var(--accent);font-weight:600;font-size:18px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:var(--t-xs);color:var(--ink-2)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.cands{display:grid;gap:12px}
+.cand{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;align-items:center;padding:10px;border:1px solid var(--rule);border-radius:12px}
+.cand.win{border-color:var(--accent);background:rgba(240,112,63,.08)}
+.cand img{display:block;width:100%;height:auto;border-radius:6px}
+.cand b{display:flex;justify-content:space-between;gap:8px;font-size:var(--t-s);font-weight:600}
+.cand b span{font-variant-numeric:tabular-nums;color:var(--ink-2);font-weight:500}
+.cand.win b span{color:var(--accent);font-weight:600}
+.meter{height:6px;border-radius:99px;background:var(--rule);overflow:hidden;margin-top:8px}
+.meter i{display:block;height:6px;background:var(--ink-3);border-radius:99px}
+.cand.win .meter i,.parts .meter i{background:var(--accent)}
+.win-tag{display:inline-block;margin-top:8px;font-size:var(--t-xs);color:var(--accent);font-weight:600}
+.parts{display:grid;gap:10px}
+.parts > div{display:grid;grid-template-columns:minmax(0,1fr) 34px;gap:4px 10px;align-items:center;font-size:var(--t-xs);color:var(--ink-2)}
+.parts > div span:last-of-type{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+.parts .meter{grid-column:1 / -1;margin-top:0}
+.total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--rule);padding-top:12px}
+.total b{font-size:var(--t-num);font-weight:600;letter-spacing:-.04em;color:var(--accent);line-height:1}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks span{font-size:var(--t-xs);color:var(--ink);border:1px solid var(--rule-2);border-radius:999px;padding:6px 11px}
+.checks span::before{content:"✓";color:var(--accent);margin-right:6px;font-weight:700}
+@media (max-width:900px){
+  .s-in,.s-an{grid-column:span 6}.s-ly,.s-sc,.s-out{grid-column:1 / -1}
+  .st::after{display:none}
+}
+@media (max-width:560px){ .s-in,.s-an{grid-column:1 / -1} .cand{grid-template-columns:1fr} }
 
 /* figures and comparison */
 .fig{margin:clamp(36px,5vw,56px) auto 0;max-width:1120px}
@@ -195,7 +241,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:10px 32px;flex-wrap:
 <header>
   <div class="wrap">
     <a class="brand" href="#top"><img src="__LOGO__" alt="" width="26" height="26">Chameleon</a>
-    <div class="hdr-r"><nav aria-label="Sections"><a href="#problem">Problem</a><a href="#compare">Solution</a><a href="#how">How it works</a><a href="#vs">Compare</a><a href="#run">Run it</a></nav><div class="lang" role="group" aria-label="Language"><button type="button" lang="en" data-lang="en" aria-label="English">EN</button><button type="button" lang="es" data-lang="es" aria-label="Español">ES</button><button type="button" lang="fr" data-lang="fr" aria-label="Français">FR</button></div></div>
+    <div class="hdr-r"><nav aria-label="Sections"><a href="#problem">Problem</a><a href="#compare">Solution</a><a href="#how">How it works</a><a href="#vs">Compare</a><a href="#run">Run it</a></nav><div class="lang"><button type="button" class="globe" id="globe" aria-haspopup="true" aria-expanded="false" aria-controls="langs" aria-label="Language"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.9 3.9 6 3.9 9.5S14.6 18.6 12 21.5M12 2.5C9.4 5.4 8.1 8.5 8.1 12s1.3 6.6 3.9 9.5"/></svg><span id="lang-code">EN</span><svg class="caret" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><ul class="langs" id="langs" role="menu" hidden><li role="none"><button type="button" role="menuitemradio" lang="en" data-lang="en">English</button></li><li role="none"><button type="button" role="menuitemradio" lang="es" data-lang="es">Español</button></li><li role="none"><button type="button" role="menuitemradio" lang="fr" data-lang="fr">Français</button></li></ul></div></div>
   </div>
 </header>
 
@@ -252,18 +298,11 @@ footer .wrap{display:flex;justify-content:space-between;gap:10px 32px;flex-wrap:
   <section id="how">
     <div class="wrap">
       <div class="head"><h2 class="rv">Read the design. <em>Rebuild it.</em></h2></div>
-      <ol class="steps band">
-        <li class="rv" style="--i:0"><h3>Read the structure</h3><p>The input has no labels. Size, position and grouping tell it which piece is the headline, logo, product and button.</p></li>
-        <li class="rv" style="--i:1"><h3>Try real layouts</h3><p>A column, a side-by-side split, three columns or a single row, each in the original reading order.</p></li>
-        <li class="rv" style="--i:2"><h3>Measure and score</h3><p>Text is measured with the official renderer's fonts. Each layout is scored on readability, hierarchy, collisions and space.</p></li>
-        <li class="rv" style="--i:3"><h3>Pick and explain</h3><p>The best layout wins, and every decision is recorded so you can see why.</p></li>
-      </ol>
+      <p class="lead rv pipe-lead" style="--i:1">One real resize, step by step: the Level 3 poster becomes a 1584 × 396 LinkedIn banner. Every picture below is the engine's own output.</p>
+      <div class="pipe band" id="pipe"></div>
       <figure class="fig rv">
         <img src="studio.gif" width="1200" height="750" loading="lazy" alt="Studio walkthrough: pick Level 3, press Adapt design, seven canvases appear, hold for stretch to compare, open Why, show what the engine saw, use another layout">
         <figcaption>The Studio in use, recorded live: adapt one design to seven canvases, hold to compare with stretch, then see why each layout won.</figcaption>
-      </figure>
-      <figure class="fig rv">
-        <img src="__CARD__" width="1600" height="900" loading="lazy" alt="How Chameleon works: input, analyze, measure, lay out, score, output, with hard rules checked before scoring and a safe uniform fit if anything fails. 230 ms slowest resize, 0 hard-rule problems in 2,362 runs, 198 tests, no model">
       </figure>
     </div>
   </section>
@@ -373,11 +412,24 @@ function applyLang(lang){
     if(el.dataset.en === undefined) el.dataset.en = el.innerHTML.trim();
     el.innerHTML = t(el.dataset.en);
   });
-  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === LANG));
+  document.querySelectorAll(".langs button").forEach(b => b.setAttribute("aria-checked", b.dataset.lang === LANG));
+  $("lang-code").textContent = LANG.toUpperCase();
   onLang.forEach(f => f());
   try { localStorage.setItem("lang", LANG); } catch(e) {}
 }
-document.querySelectorAll(".lang button").forEach(b => b.onclick = () => applyLang(b.dataset.lang));
+(() => {
+  const g = $("globe"), m = $("langs");
+  const open = on => { m.hidden = !on; g.setAttribute("aria-expanded", on); if(on) (m.querySelector('[aria-checked="true"]') || m.querySelector("button")).focus(); };
+  g.onclick = e => { e.stopPropagation(); open(m.hidden); };
+  m.querySelectorAll("button").forEach(b => b.onclick = () => { applyLang(b.dataset.lang); open(false); g.focus(); });
+  m.addEventListener("keydown", e => {
+    const items = [...m.querySelectorAll("button")], i = items.indexOf(document.activeElement);
+    if(e.key === "ArrowDown"){ e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    if(e.key === "ArrowUp"){ e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+  });
+  addEventListener("keydown", e => { if(e.key === "Escape" && !m.hidden){ open(false); g.focus(); } });
+  addEventListener("click", e => { if(!m.hidden && !m.contains(e.target)) open(false); });
+})();
 
 /* Hero: fade out, reshape the frame, fade the real result in. */
 (() => {
@@ -504,6 +556,30 @@ document.querySelectorAll(".lang button").forEach(b => b.onclick = () => applyLa
     const t = document.querySelector(a.getAttribute("href")); if(!t) return;
     t.querySelectorAll(".rv.pre").forEach(el => { el.style.transition = "none"; el.classList.remove("pre"); io.unobserve(el); void el.offsetHeight; el.style.transition = ""; });
   }));
+})();
+
+/* How it works: one real resize, stage by stage. */
+(() => {
+  const P = DATA.pipe, el = $("pipe");
+  const draw = () => {
+    el.innerHTML = `
+    <article class="st s-in"><h3>${t("Input")}</h3><p>${t("A finished poster. The file has no labels, only boxes.")}</p>
+      <img class="shot" src="${P.orig}" alt="${t("The original Level 3 poster")}"><span class="meta">1080 × 1350 · ${P.n} ${t("elements")}</span></article>
+    <article class="st s-an"><h3>${t("Analyze")}</h3><p>${t("Size, position and grouping tell it what each piece is.")}</p>
+      <img class="shot" src="${P.roles}" alt="${t("The poster with a box around each role the engine found")}">
+      <div class="legend">${P.found.map(f => `<span><i style="background:${f.color}"></i>${t(f.name)}</span>`).join("")}</div></article>
+    <article class="st s-ly"><h3>${t("Lay out")}</h3><p>${t("It builds real layouts for the new shape and measures every line with the renderer's fonts.").replace("{n}", P.tried)}</p>
+      <div class="cands">${P.cands.map(c => `<div class="cand${c.win ? " win" : ""}"><img src="${c.img}" alt="${t(c.name)}">
+        <div><b>${t(c.name)}<span>${c.score}</span></b><div class="meter"><i style="width:${c.score}%"></i></div>${c.win ? `<span class="win-tag">${t("Winner")}</span>` : ""}</div></div>`).join("")}</div>
+      <span class="meta">${t("{n} layouts tried, best of each kind shown.").replace("{n}", P.tried)}</span></article>
+    <article class="st s-sc"><h3>${t("Score")}</h3><p>${t("Eight measurable terms. The highest total wins.")}</p>
+      <div class="parts">${P.parts.map(q => `<div><span>${t(q.name)}</span><span>${q.v}</span><div class="meter"><i style="width:${q.v}%"></i></div></div>`).join("")}</div>
+      <div class="total"><span class="meta">${t("Total")}</span><b>${P.score}</b></div></article>
+    <article class="st s-out"><h3>${t("Output")}</h3><p>${t("Same elements, same copy, laid out again. Then every hard rule is checked.")}</p>
+      <img class="shot" src="${P.out}" alt="${t("The final LinkedIn banner")}">
+      <div class="checks"><span>${t("Same ids")}</span><span>${t("Nothing off canvas")}</span><span>${t("Images in proportion")}</span><span>${t("Fonts and copy unchanged")}</span><span>${t("Text fits")}</span><span>${P.ms} ms</span></div></article>`;
+  };
+  draw(); onLang.push(draw);
 })();
 
 /* Pick the saved language, or the browser's if it is Spanish or French. */

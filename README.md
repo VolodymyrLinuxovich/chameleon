@@ -109,9 +109,10 @@ What Chameleon adds on top of a good resize:
 
 ## Architecture at a Glance
 
-<img src="docs/how-it-works.png" alt="How Chameleon works: input, analyze, measure, lay out, score, output, with hard rules checked before scoring and a safe uniform fit if anything fails. 230 ms slowest resize, 0 hard-rule problems in 2,362 runs, 198 tests, no model" width="100%"/>
+<img src="docs/pipeline.png" alt="One real resize, stage by stage: the Level 3 poster as input, the roles the engine found drawn as boxes, four real candidate layouts for a 1584 by 396 LinkedIn banner with their scores (three columns wins at 96.5), the winner's eight score terms, and the final banner with every hard rule passing" width="100%"/>
 
-<sub>Made from <code>tools/how_it_works.html</code>.</sub>
+<sub>One real resize, stage by stage: the Level 3 poster becomes a 1584×396 LinkedIn banner. Every picture is the
+engine's own output. Built by <code>tools/build_site.py</code>, also on the <a href="https://chameleon-resize.vercel.app/#how">landing page</a>.</sub>
 
 ```mermaid
 flowchart TB
