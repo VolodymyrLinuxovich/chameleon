@@ -36,7 +36,8 @@ STEPS = 8          # in-between frames per leg
 HOLD_MS, STEP_MS = 1500, 70  # time on each named size, and per in-between frame
 W, H = 1000, 540   # GIF size
 PANEL = (440, 380) # max box for each canvas
-BG, INK, MUTED, ACCENT, LINE = (14, 12, 16), (242, 238, 245), (150, 142, 158), (240, 112, 63), (60, 54, 66)
+# Paper, ink and the darker brand orange, to match the light landing page.
+BG, INK, MUTED, ACCENT, LINE = (251, 250, 247), (24, 22, 27), (110, 103, 116), (194, 70, 31), (220, 213, 202)
 
 
 def sizes():
