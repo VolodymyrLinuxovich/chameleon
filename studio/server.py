@@ -158,6 +158,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         if self.path in ("/", "/index.html"):
             self._send(200, (ROOT / "studio" / "index.html").read_bytes(), "text/html; charset=utf-8")
+        elif self.path == "/favicon.ico":
+            self._send(200, (ROOT / "docs" / "logo.svg").read_bytes(), "image/svg+xml")
         elif self.path == "/api/meta":
             self._json(200, {"samples": samples(), "formats": FORMATS, "renderer": RENDERER})
         else:
