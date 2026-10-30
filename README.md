@@ -114,37 +114,28 @@ What Chameleon adds on top of a good resize:
 <sub>Made from <code>tools/how_it_works.html</code>.</sub>
 
 ```mermaid
-flowchart LR
-    subgraph IN["Input"]
-        SRC[Source design<br/>v0.9 schema]
-        TGT[Target canvas]
-    end
+flowchart TB
+    SRC[Source design<br/>v0.9 schema, no labels] --> AN
+    TGT[Target canvas] --> LY
 
     subgraph ENG["Engine"]
-        AN[analyze.py<br/>roles, groups, order]
-        TF[textfit.py<br/>renderer font metrics]
-        LY[layout.py<br/>stack, split, columns,<br/>strip, focus, proportional]
-        SC[score.py<br/>8 measurable criteria]
+        direction TB
+        AN[analyze.py<br/>roles, groups, reading order] --> LY
+        TF[textfit.py<br/>renderer font metrics] --> LY
+        LY[layout.py<br/>stack, split, columns, strip, focus, proportional] -->|candidates| SC
+        SC[score.py<br/>8 measurable criteria] -->|best| FN
         FN[chameleon.py<br/>clamp, refit, report]
     end
 
-    subgraph OUT["Output"]
-        JS[Design JSON<br/>same ids]
-        RP[Report<br/>roles, candidates, reasons]
-    end
-
-    SRC --> AN --> LY
-    TGT --> LY
-    TF --> LY
-    LY -->|candidates| SC -->|best| FN
-    FN --> JS
-    FN --> RP
+    FN --> JS[Design JSON<br/>same ids]
+    FN --> RP[Report<br/>roles, candidates, reasons]
     FN -.anything throws.-> SF[resize.py<br/>safe_fit fallback] --> JS
 ```
 
 ### One resize, start to finish
 
 ```mermaid
+%%{init: {'sequence': {'actorMargin': 40, 'width': 120, 'messageMargin': 30}}}%%
 sequenceDiagram
     participant U as Caller
     participant R as resize.py
@@ -152,16 +143,16 @@ sequenceDiagram
     participant L as layout
     participant S as score
 
-    U->>R: design + target canvas
-    R->>A: find background, headline, logo, hero, CTA, badges, fine print
-    A-->>R: roles with priorities and reasons
-    R->>L: build every strategy that fits this shape
-    L->>L: measure text with the renderer's fonts, scale rigid blocks uniformly
-    L-->>R: candidate layouts
-    R->>S: readability, hierarchy, space, consistency, collisions, completeness, order, balance
-    S-->>R: one score per candidate
-    R->>R: drop any layout whose text overflows, keep the best
-    R-->>U: design JSON + report (or a uniform contain fit if anything failed)
+    U->>R: design + canvas
+    R->>A: what is each piece?
+    A-->>R: roles + reasons
+    R->>L: build layouts
+    L->>L: measure text
+    L-->>R: candidates
+    R->>S: score each
+    S-->>R: 8-term scores
+    R->>R: keep best
+    R-->>U: design + report
 ```
 
 ---
