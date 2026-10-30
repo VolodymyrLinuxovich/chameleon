@@ -221,7 +221,7 @@ The slowest run took about **230 ms** (the 320×50 banner tries the most variant
   event poster on a solid shape, and a sale post with text overlapping the product. They gave **64** more runs with
   **0** hard-rule problems. They also exposed three bugs, now fixed: body copy misread as fine print, a bottom-corner
   logo not recognised, and left-aligned columns breaking apart.
-- **Tests.** `python -m pytest -q`: **196 passed**. Hard rules × samples × formats, random designs, malformed input.
+- **Tests.** `python -m pytest -q`: **197 passed**. Hard rules × samples × formats, random designs, malformed input.
 - **Docker.** `docker build --platform linux/amd64` and `docker run --network none` succeed on an Apple Silicon Mac
   (Colima, amd64 emulation). The container's output JSON for all three samples is **identical** to the macOS run.
   Last verified **Oct 29**.
@@ -261,7 +261,7 @@ Extras (not part of the scored engine):
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest -q                 # 196 tests
+python -m pytest -q                 # 197 tests
 python -m tools.evaluate --render   # every sample x 15 platform formats, contact sheets in output/eval/
 python -m tools.evaluate --input samples/extra   # 4 extra designs the engine was not tuned on
 python -m tools.stress --n 150      # 150 random realistic designs x 15 formats (2,250 runs)
