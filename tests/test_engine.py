@@ -220,3 +220,19 @@ def test_mobile_banner_headline_leads_without_hiding():
         assert [p for p in check(t["source"], design) if "overflows" not in p] == []
     design, _ = adapt(t["source"], {"width": 320, "height": 50})
     assert {e["id"]: e for e in design["elements"]}["headline"]["font_size"] >= 8
+
+
+def test_banner_headline_stays_readable_and_largest():
+    # Every starter sample on every banner format (wide and under 300 px
+    # tall), hiding off: the headline is at least 8px and still the largest
+    # text. Before the mobile banner fix, Level 3 drew it at 4px on 320x50.
+    banners = [f for f in FORMATS if f["height"] < 300 and f["width"] / f["height"] >= 2]
+    assert {f["key"] for f in banners} >= {"leaderboard", "mobile_banner"}
+    for p in sorted(Path("input").glob("*.json")):
+        src = load(p)["source"]
+        for f in banners:
+            design, rep = adapt(src, {"width": f["width"], "height": f["height"]})
+            head = next(r["elements"][0] for r in rep["roles"] if r["role"] == "headline")
+            fonts = {e["id"]: e["font_size"] for e in design["elements"] if e["type"] == "text"}
+            assert fonts[head] >= 8, (p.stem, f["key"], fonts[head])
+            assert fonts[head] == max(fonts.values()), (p.stem, f["key"], fonts)

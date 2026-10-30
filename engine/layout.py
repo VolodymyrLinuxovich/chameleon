@@ -1,5 +1,11 @@
 """Layout strategies: rebuild the analysed design on the target canvas.
 
+Second step of the pipeline: analyze -> layout candidates -> score -> pick
+-> report. candidates() returns every layout worth trying for one target
+size (single column, hero split, three columns, one-row strips and
+headline-first rows for banners); chameleon.py builds and scores each one
+and keeps the best.
+
 Every strategy places *blocks* (rigid groups, reflowable text, rows of
 badges) into regions of the target canvas. Rigid blocks scale uniformly so
 images and buttons keep their proportions; text blocks reflow, i.e. keep
@@ -19,6 +25,7 @@ from .textfit import fit_font, fits, measure
 
 @dataclass
 class Box:
+    """A rectangular region of the target canvas, in target px."""
     x: float
     y: float
     w: float
@@ -40,6 +47,8 @@ class Fit:
 
 @dataclass
 class Layout:
+    """One candidate: positioned fits plus the ids it leaves undrawn and
+    why. `overflow` means something could not be made to fit."""
     name: str
     description: str
     fits: list[Fit] = field(default_factory=list)          # flow + floating, positioned
@@ -53,6 +62,9 @@ class Layout:
 
 @dataclass
 class Ctx:
+    """Everything a strategy needs for one (source, target) pair, plus the
+    variant knobs. candidates() copies it with dataclasses.replace() to
+    try text-first, shrunk and dropped variants."""
     a: Analysis
     W: float
     H: float
@@ -62,12 +74,14 @@ class Ctx:
     shrink: tuple[str, ...] = ()   # roles drawn at half scale (still visible)
 
     def shrunk(self, b: Block) -> bool:
+        """True if this variant draws `b` at half scale."""
         if b.role not in self.shrink:
             return False
         # Short body lines are usually taglines: they keep full size.
         return b.role != "body" or len(str(b.elements[0].get("content", ""))) > 60
 
     def dropped(self, b: Block) -> bool:
+        """True if this variant leaves `b` out (only when hiding is enabled)."""
         if b.role not in self.drop:
             return False
         # Short body lines are usually taglines or text CTAs: never dropped.
@@ -91,24 +105,36 @@ class Ctx:
 
     @property
     def s_area(self) -> float:
+        """Scale that keeps each block's share of the canvas area. Width or
+        height ratios alone would blow content up or crush it when the
+        aspect ratio changes a lot."""
         return math.sqrt(self.W * self.H / (self.W0 * self.H0))
 
     @property
     def s_cap(self) -> float:
+        """Default upper limit on block scale: 15% above area-preserving,
+        enough to use spare room without content looking blown up."""
         return 1.15 * self.s_area
 
     @property
     def margin(self) -> float:
+        """Safe margin: 6% of the short side, kept between 4 and 80 px."""
         return max(4.0, min(80.0, 0.06 * min(self.W, self.H)))
 
     @property
     def src_gap(self) -> float:
+        """Typical vertical gap between flow blocks in the source (the
+        median), clamped to 1.5%-4% of the source height. Reused, scaled,
+        as the gap in stacks so spacing looks like the original."""
         flow = sorted(self.a.flow, key=lambda b: b.bbox[1])
         gaps = [b.bbox[1] - p.bbox[3] for p, b in zip(flow, flow[1:]) if b.bbox[1] - p.bbox[3] > 0]
         g = sorted(gaps)[len(gaps) // 2] if gaps else 0.03 * self.H0
         return max(0.015 * self.H0, min(0.04 * self.H0, g))
 
     def text_cap(self, el: dict[str, Any]) -> int:
+        """Largest font size a text element may get. Text may always keep
+        its source size (up to 40% of the canvas height) even when the
+        canvas shrinks; whether it fits is decided by measuring, not here."""
         fs = num(el.get("font_size"), 12)
         return max(1, int(max(fs * self.s_cap, min(fs, 0.4 * self.H))))
 
@@ -118,12 +144,16 @@ class Ctx:
 # ----------------------------------------------------------------------------
 
 def _row_gap(b: Block) -> float:
+    """Gap between badges in a row: the source's average gap, but at least
+    15% of the smallest badge height so they never touch."""
     kids = b.children
     gaps = [k.bbox[0] - p.bbox[2] for p, k in zip(kids, kids[1:])]
     return max(0.15 * min(k.h for k in kids), sum(gaps) / len(gaps)) if gaps else 0.0
 
 
 def _row_dims(b: Block, s: float, per_line: int) -> tuple[float, float]:
+    """(width, height) of a badge row at scale `s` wrapped to `per_line`
+    badges per line."""
     kids, gap = b.children, _row_gap(b) * s
     lines = [kids[i:i + per_line] for i in range(0, len(kids), per_line)]
     w = max(sum(k.w * s for k in ln) + gap * (len(ln) - 1) for ln in lines)
@@ -132,11 +162,16 @@ def _row_dims(b: Block, s: float, per_line: int) -> tuple[float, float]:
 
 
 def size_rigid(b: Block, s: float, max_w: float, max_h: float = math.inf) -> Fit:
+    """Scale a rigid block uniformly: `s`, or less if needed to fit
+    max_w x max_h. Rows of badges may wrap onto more lines when that lets
+    them stay bigger."""
     if b.children:
         best: Fit | None = None
         for k in range(len(b.children), 0, -1):
             w1, h1 = _row_dims(b, 1.0, k)
             se = min(s, max_w / w1, max_h / h1)
+            # Wrap onto another line only for a real gain (> 2% bigger),
+            # so near ties keep the row on one line as in the source.
             if best is None or se > best.scale * 1.02:
                 best = Fit(b, w1 * se, h1 * se, se, per_line=k)
         assert best is not None
@@ -146,8 +181,12 @@ def size_rigid(b: Block, s: float, max_w: float, max_h: float = math.inf) -> Fit
 
 
 def size_text(b: Block, s: float, max_w: float, cap: int) -> Fit:
+    """Reflow a text block at scale `s`: integer font size (the renderer
+    truncates to int anyway), box width scaled with it, height measured."""
     el = b.elements[0]
     font = max(1, min(cap, int(num(el.get("font_size"), 12) * s)))
+    # Up to 25% wider than the scaled source box: fewer line breaks make
+    # the block shorter, so the column can afford a bigger common scale.
     width = max(1.0, min(max_w, b.w * s * 1.25))
     n, widest, h = measure(el, font, width)
     while widest > width + 0.5 and font > 1:  # one very long word
@@ -157,6 +196,8 @@ def size_text(b: Block, s: float, max_w: float, cap: int) -> Fit:
 
 
 def size_block(ctx: Ctx, b: Block, s: float, max_w: float) -> Fit:
+    """Size any block at scale `s`, applying the variant's half-scale and
+    text-first (rigid_k) settings."""
     if ctx.shrunk(b):
         s *= 0.5
     if b.is_text:
@@ -165,6 +206,8 @@ def size_block(ctx: Ctx, b: Block, s: float, max_w: float) -> Fit:
 
 
 def _anchor(ctx: Ctx, b: Block) -> str:
+    """Horizontal alignment the block had in the source: centred if its
+    centre was in the middle 20% of the width, otherwise left or right."""
     f = b.center[0] / ctx.W0
     return "center" if 0.4 <= f <= 0.6 else ("left" if f < 0.4 else "right")
 
@@ -176,7 +219,10 @@ def _anchor(ctx: Ctx, b: Block) -> str:
 def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
           anchor_edges: bool = True, h_align: str | None = None) -> tuple[list[Fit], bool]:
     """Place `blocks` top-to-bottom in `box`, finding the largest common
-    scale that fits. Returns (fits, overflow)."""
+    scale that fits. Returns (fits, overflow).
+
+    One scale for the whole column keeps sizes in proportion to each other,
+    which is what keeps the hierarchy intact."""
     if not blocks:
         return [], False
     s_cap = s_cap or ctx.s_cap
@@ -189,6 +235,8 @@ def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
     fs, total, gap = attempt(s_cap)
     overflow = False
     if total > box.h:
+        # Too tall: binary search the largest scale that fits. 28 halvings
+        # take the scale interval below 1e-8, far finer than one pixel.
         lo, hi = 1e-3, s_cap
         fs_lo, total_lo, gap_lo = attempt(lo)
         if total_lo > box.h:
@@ -231,6 +279,8 @@ def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
             # Stop once text hits its size cap: past that point only the
             # images would keep growing and outweigh the copy.
             keeps_pace = all(a <= 0 or b >= 0.9 * a * mid / s_cap for a, b in zip(base, ranks(fl)))
+            # keeps_pace: every label still grows at >= 90% of the common
+            # rate, i.e. no text has hit text_cap yet.
             if tot <= 0.86 * box.h and same_order(fl) and keeps_pace:
                 lo = mid
             else:
@@ -245,12 +295,17 @@ def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
         if heroes:
             i = max(heroes, key=lambda k: fs[k].w * fs[k].h)
             f = fs[i]
+            # The hero takes at most 70% of the spare height, stays within
+            # 92% of the column width and never grows beyond 2.5x.
             grow = min(0.92 * box.w / f.w, 1 + 0.7 * slack / f.h, 2.5)
             if grow > 1.05:
                 fs[i] = size_rigid(f.block, f.scale * grow, box.w)
                 total += fs[i].h - f.h
 
     # Vertical distribution: keep top/bottom anchoring from the source.
+    # Blocks centred in the top 20% stay pinned to the top, those below 86%
+    # to the bottom (a logo up top, fine print at the foot); the rest are
+    # centred in between.
     n = len(fs)
     top_n = 0
     bot_n = 0
@@ -262,6 +317,7 @@ def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
     top, mid, bot = fs[:top_n], fs[top_n:n - bot_n], fs[n - bot_n:]
 
     def run(group: list[Fit], y: float, g: float) -> float:
+        # Place `group` downward from y; return the bottom edge.
         for f in group:
             f.y = y
             y += f.h + g
@@ -276,6 +332,8 @@ def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
         region_bot = box.y + box.h - bot_h - (gap if bot else 0)
         mid_h = sum(f.h for f in mid)
         space = region_bot - region_top - mid_h
+        # Spread the middle group a little (gaps up to 1.5x), not all the
+        # way: big even gaps make the blocks look unrelated.
         g = gap if len(mid) < 2 else max(gap, min(gap * 1.5, space / (len(mid) + 1)))
         mid_total = mid_h + g * max(0, len(mid) - 1)
         run(mid, region_top + (space - (mid_total - mid_h)) / 2, g)
@@ -292,6 +350,9 @@ def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
         x0s = [f.block.bbox[0] for f in col]
         src_l, src_r = min(x0s), max(f.block.bbox[2] for f in col)
         col_w = max(f.w for f in col)
+        # Centre the column if asked, if it was roughly centred in the
+        # source, or if it is wide enough (>= 60%) that a left-flush column
+        # would leave a lopsided gap on the right.
         centred = (h_align == "center" or abs((src_l + src_r) / 2 - ctx.W0 / 2) < 0.12 * ctx.W0
                    or col_w >= 0.6 * box.w)
         cx = box.x + ((box.w - col_w) / 2 if centred else 0.0)
@@ -305,7 +366,9 @@ def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
 
 
 def _left_column(ctx: Ctx, fs: list[Fit]) -> list[Fit]:
-    """Fits whose source blocks are left-aligned on a common edge."""
+    """Fits whose source blocks are left-aligned on a common edge (within
+    3% of the width of the median left edge). Needs at least two members,
+    one of them left-aligned text, to count as a column."""
     def is_left(f: Fit) -> bool:
         if f.block.is_text:  # left-aligned text: judge by its left edge
             return (f.block.text_el or {}).get("text_align", "left") == "left" and f.block.bbox[0] < 0.35 * ctx.W0
@@ -323,14 +386,20 @@ def _left_column(ctx: Ctx, fs: list[Fit]) -> list[Fit]:
 # Horizontal strip: leaderboards and extreme banners
 # ----------------------------------------------------------------------------
 
+# Tallest a rigid block may be in a strip, as a share of the strip height.
+# Below 1 so the row has some air; the hero may nearly fill it.
 STRIP_H_CAP = {"logo": 0.7, "hero": 0.95, "cta": 0.75, "badges": 0.7, "badge": 0.7,
                "tag": 0.7, "sticker": 0.85, "image": 0.8}
+# How the strip's text width is shared between text cells.
 TEXT_WEIGHT = {"headline": 3.0, "body": 2.0, "fineprint": 1.2}
 DEMOTED_WEIGHT = 0.45  # share for low-priority text squeezed (not hidden) on tight strips
 
 
 def _readable_floor(b: Block) -> float:
-    """Smallest scale at which a rigid block still reads (label >= 11px, logo >= 36px tall)."""
+    """Smallest scale at which a rigid block still reads (label >= 11px, logo >= 36px tall).
+
+    11px is about the smallest label that still reads on a phone screen;
+    36px is about the smallest height at which a wordmark stays legible."""
     fonts = [num(e.get("font_size"), 12) for e in b.elements if e.get("type") == "text"]
     if fonts:
         return 11.0 / max(1.0, min(fonts))
@@ -341,6 +410,12 @@ def _readable_floor(b: Block) -> float:
 
 def strip(ctx: Ctx, blocks: list[Block], box: Box, text_share: float,
           cta_floor: bool = False, demote: frozenset[str] = frozenset()) -> tuple[list[Fit], bool]:
+    """Lay `blocks` out left to right in one row inside `box`.
+
+    Text gets about `text_share` of the width, the rest goes to images and
+    buttons. Rigid blocks shrink first (CTA last, logo with a floor), then
+    text cells fill what is left, each at the largest size that fits.
+    Returns (fits, overflow)."""
     rigid = [b for b in blocks if not b.is_text]
     texts = [b for b in blocks if b.is_text]
     fits_: dict[str, Fit] = {}
@@ -367,14 +442,16 @@ def strip(ctx: Ctx, blocks: list[Block], box: Box, text_share: float,
         flex = [b for b in rigid if b.role != "cta"]
         keep_w = sum(fits_[b.id].w for b in keep)
         flex_w = sum(fits_[b.id].w for b in flex)
+        # Never below 20% in this pass, so nothing collapses to a speck.
         k_flex = max(0.2, (max_rigid - keep_w) / flex_w) if flex_w else 1.0
         for b in flex:
             sc = fits_[b.id].scale * min(1.0, k_flex)
-            if b.role == "logo":  # the brand mark must stay recognisable
+            if b.role == "logo":  # the brand mark must stay recognisable (>= 45% of the strip height)
                 sc = max(sc, min(fits_[b.id].scale, 0.45 * box.h / b.h))
             fits_[b.id] = size_rigid(b, sc, math.inf, box.h)
         rigid_w = sum(fits_[b.id].w for b in rigid)
         if rigid_w > max_rigid:
+            # Still too wide: shrink everything but the logo, CTA included.
             logos = [b for b in rigid if b.role == "logo"]
             rest = [b for b in rigid if b.role != "logo"]
             logo_w = sum(fits_[b.id].w for b in logos)
@@ -409,6 +486,8 @@ def strip(ctx: Ctx, blocks: list[Block], box: Box, text_share: float,
     used = sum(f.w for f in row)
     n = len(row)
     gap = (box.w - used) / (n - 1) if n > 1 else 0.0
+    # Spread leftover width as gaps, but at most 8% of the width each; past
+    # that the row reads as separate pieces, so it is centred instead.
     gap = max(gap_min, min(gap, 0.08 * ctx.W))
     total = used + gap * (n - 1)
     x = box.x + max(0.0, (box.w - total) / 2)
@@ -432,6 +511,8 @@ def strip(ctx: Ctx, blocks: list[Block], box: Box, text_share: float,
 
 
 def _cell_gap(fs: list[Fit]) -> float:
+    """Gap between lines of text stacked in one cell: a quarter of the
+    smallest font size."""
     return 0.25 * min((f.font or 10) for f in fs) if len(fs) > 1 else 0.0
 
 
@@ -460,6 +541,8 @@ def _text_cell(ctx: Ctx, blocks: list[Block], w: float, h: float) -> tuple[list[
         font = font or 1
         _, widest, th = measure(el, font, w)
         return [Fit(blocks[0], min(w, widest + 2), th, font=font)], ok
+    # Several blocks: binary search one common scale (up to 4x the source
+    # size; text_cap still limits each block).
     lo, hi = 1e-3, 4.0
     if height(sized(lo)) > h:
         return sized(lo), False
@@ -477,25 +560,37 @@ def _text_cell(ctx: Ctx, blocks: list[Block], w: float, h: float) -> tuple[list[
 # ----------------------------------------------------------------------------
 
 def _overlap(a: tuple[float, float, float, float], b: tuple[float, float, float, float]) -> float:
+    """Overlap area of two (x0, y0, x1, y1) boxes."""
     w = min(a[2], b[2]) - max(a[0], b[0])
     h = min(a[3], b[3]) - max(a[1], b[1])
     return w * h if w > 0 and h > 0 else 0.0
 
 
 def fit_box(f: Fit) -> tuple[float, float, float, float]:
+    """A positioned fit as an (x0, y0, x1, y1) box."""
     return f.x, f.y, f.x + f.w, f.y + f.h
 
 
 def place_floating(ctx: Ctx, lay: Layout, b: Block, base_scale: float) -> None:
+    """Put a sticker or corner tag in the corner where it overlaps the
+    laid-out content least, trying its source corner first. Modifies `lay`.
+
+    Called after the flow is placed, so it can avoid it. With hiding off
+    (the default) the block is always placed, even if every corner
+    overlaps; only a missing asset is skipped."""
     if b.role == "unavailable":
         lay.hidden[b.elements[0]["id"]] = "asset file is missing, so it is skipped (allowed by the brief)"
         return
     m = 0.5 * ctx.margin
     cx, cy = b.center
     pref = ("l" if cx < ctx.W0 / 2 else "r", "t" if cy < ctx.H0 / 2 else "b")
+    # Source corner, then the same side flipped vertically, then the other
+    # side, then the opposite corner: the closest to the original first.
     corners = [pref, (pref[0], "b" if pref[1] == "t" else "t"),
                ("r" if pref[0] == "l" else "l", pref[1]),
                ("r" if pref[0] == "l" else "l", "b" if pref[1] == "t" else "t")]
+    # Same scale as the rest of the layout, but readable and no more than
+    # 40% of the canvas in either direction.
     s0 = min(max(base_scale, _readable_floor(b)), 0.4 * ctx.W / b.w, 0.4 * ctx.H / b.h)
     # A corner sticker is an accent: its label stays well below the headline.
     head = max((f.font or 0 for f in lay.fits if f.block.role == "headline"), default=0)
@@ -505,7 +600,7 @@ def place_floating(ctx: Ctx, lay: Layout, b: Block, base_scale: float) -> None:
     occupied = [fit_box(f) for f in lay.fits]
     best: tuple[float, Fit] | None = None
     for corner in corners:
-        for k in (1.0, 0.85, 0.7):
+        for k in (1.0, 0.85, 0.7):  # shrink a little before moving on to another corner
             f = size_rigid(b, s0 * k, math.inf)
             f.x = m if corner[0] == "l" else ctx.W - m - f.w
             f.y = m if corner[1] == "t" else ctx.H - m - f.h
@@ -524,6 +619,8 @@ def place_floating(ctx: Ctx, lay: Layout, b: Block, base_scale: float) -> None:
     lay.fits.append(best[1])
 
 
+# Floating blocks at or below this priority (badges, stickers, tags) may be
+# hidden when no corner is free, but only if hiding is enabled.
 PRIORITY_HIDEABLE = 45
 
 
@@ -532,16 +629,19 @@ PRIORITY_HIDEABLE = 45
 # ----------------------------------------------------------------------------
 
 def _content_box(ctx: Ctx) -> Box:
+    """The canvas minus the safe margin on every side."""
     m = ctx.margin
     return Box(m, m, ctx.W - 2 * m, ctx.H - 2 * m)
 
 
 def _median_scale(fs: list[Fit]) -> float:
+    """Median scale of the rigid blocks, so floating pieces match them."""
     sc = sorted(f.scale for f in fs if not f.block.is_text) or [1.0]
     return sc[len(sc) // 2]
 
 
 def _finish(ctx: Ctx, lay: Layout, floating: list[Block]) -> Layout:
+    """Place the floating blocks once the flow is in place."""
     base = _median_scale(lay.fits) if lay.fits else ctx.s_area
     for b in floating:
         place_floating(ctx, lay, b, base)
@@ -549,12 +649,17 @@ def _finish(ctx: Ctx, lay: Layout, floating: list[Block]) -> Layout:
 
 
 def strat_stack(ctx: Ctx) -> Layout:
+    """Everything in one column. Works for any shape; best for portrait
+    and square targets."""
     lay = Layout("stack", "Single column in the original reading order; top and bottom anchors kept.")
     lay.fits, lay.overflow = stack(ctx, ctx.flow, _content_box(ctx))
     return _finish(ctx, lay, ctx.floating)
 
 
 def strat_proportional(ctx: Ctx) -> Layout:
+    """The original composition scaled to fit and centred. Only offered
+    when the aspect ratio is close to the source (or the canvas is tiny),
+    where it is often the most faithful choice."""
     lay = Layout("proportional", "Whole composition scaled uniformly and centred (keeps every relative position).")
     s = min(ctx.W / ctx.W0, ctx.H / ctx.H0)
     ox, oy = (ctx.W - ctx.W0 * s) / 2, (ctx.H - ctx.H0 * s) / 2
@@ -573,6 +678,8 @@ def strat_proportional(ctx: Ctx) -> Layout:
 
 
 def strat_split(ctx: Ctx, hero_side: str, frac: float) -> Layout | None:
+    """Hero image on one side taking `frac` of the width, everything else
+    stacked on the other. For landscape targets; None without a hero."""
     hero = next((b for b in ctx.flow if b.role == "hero"), None)
     if hero is None:
         return None
@@ -581,6 +688,8 @@ def strat_split(ctx: Ctx, hero_side: str, frac: float) -> Layout | None:
     cb = _content_box(ctx)
     gap = ctx.margin
     hw = (cb.w - gap) * frac
+    # The hero may grow to 1.6x the usual cap: it has a whole side to
+    # itself, and its region still limits it.
     hf = size_rigid(hero, 1.6 * ctx.s_cap * ctx.rigid_k, hw, cb.h)
     rest_w = cb.w - gap - hf.w
     if hero_side == "left":
@@ -595,7 +704,10 @@ def strat_split(ctx: Ctx, hero_side: str, frac: float) -> Layout | None:
 
 
 def strat_columns(ctx: Ctx) -> Layout | None:
-    """hero | message | actions — for wide banners."""
+    """hero | message | actions — for wide banners.
+
+    The hero takes up to 30% of the width; the message gets 60% of the rest
+    and the buttons the remainder. None without buttons or message text."""
     flow = ctx.flow
     hero = next((b for b in flow if b.role == "hero"), None)
     actions = [b for b in flow if b.role in ("cta", "badge", "badges")]
@@ -623,6 +735,9 @@ def strat_columns(ctx: Ctx) -> Layout | None:
 
 def strat_strip(ctx: Ctx, drop: tuple[str, ...], text_share: float, cta_floor: bool = False,
                 demote: tuple[str, ...] = ()) -> Layout:
+    """Everything in one row for very wide targets (ratio >= 3). `drop`
+    roles are hidden (hiding must be enabled), `demote` text is kept small
+    in its own cell. See strip() for the sizing."""
     tag = "+".join(drop) if drop else "all"
     if demote:
         tag += "~" + "+".join(demote)
@@ -644,6 +759,8 @@ def strat_strip(ctx: Ctx, drop: tuple[str, ...], text_share: float, cta_floor: b
             blocks.append(b)
     # Stickers and tags go last so the row ends with an accent, logo first.
     blocks.sort(key=lambda b: (b.role in ("sticker", "tag"), b.role != "logo"))
+    # Short banners get a margin relative to their height: the usual
+    # margin would eat most of a 50 or 90 px strip.
     m = (max(2.0, 0.06 * ctx.H) if ctx.H < 80 else max(4.0, 0.12 * ctx.H)) if ctx.H < 200 else ctx.margin
     box = Box(m * 1.5, m, ctx.W - 3 * m, ctx.H - 2 * m)
     lay.fits, lay.overflow = strip(ctx, blocks, box, text_share, cta_floor, frozenset(demoted))
@@ -672,13 +789,18 @@ def _variant(ctx: Ctx, lay: Layout | None) -> Layout | None:
 
 
 def candidates(ctx: Ctx) -> list[Layout]:
+    """Every layout worth scoring for this target. Which strategies are
+    tried depends on the target's aspect ratio and size, so the scorer
+    only compares layouts that suit the shape."""
     r = ctx.W / ctx.H
     # Uniform scaling only suits shapes close to the source; on a very
     # different ratio it leaves wide empty bands.
+    # "Close" means the ratios differ by less than 1.3x in either direction.
     near = abs(math.log(r / (ctx.W0 / ctx.H0))) < math.log(1.3)
     out: list[Layout | None] = [strat_proportional(ctx)] if near or min(ctx.W, ctx.H) < 40 else []
     variants = [ctx]
     if min(ctx.W, ctx.H) < 640:  # small canvas: try giving text priority
+        # Images and buttons at 65% leave room for text to stay readable.
         variants.append(replace(ctx, rigid_k=0.65))
         if ctx.H < 200:  # banner heights: secondary copy steps back instead of hiding
             variants.append(replace(ctx, rigid_k=0.65, shrink=("body", "fineprint")))
@@ -691,10 +813,14 @@ def candidates(ctx: Ctx) -> list[Layout]:
                 if d in roles and (d != "body" or long_body):
                     acc.append(d)
                     variants.append(replace(ctx, drop=tuple(acc)))
+    # Aspect thresholds: split from slightly landscape (1.15), three columns
+    # from 2.2 (wide enough for three regions), one row from 3.0.
     for i, v in enumerate(variants):
         out.append(_variant(v, strat_stack(v)))
         if r >= 1.15:
             for side in ("left", "right"):
+                # Two hero widths for the base variant, one for the others
+                # to keep the candidate count down.
                 for frac in ((0.4, 0.5) if i == 0 else (0.4,)):
                     out.append(_variant(v, strat_split(v, side, frac)))
         if r >= 2.2:
@@ -721,6 +847,8 @@ def candidates(ctx: Ctx) -> list[Layout]:
                     demotes.append(tuple(acc))
         for d in drops:
             for dm in (demotes if not d else [()]):
+                # Banner-ad heights get a finer sweep of text shares: there,
+                # a few px decide whether the headline is readable.
                 for share in ((0.4, 0.47, 0.54, 0.61, 0.68) if ctx.H < 80 else (0.45, 0.6)):
                     out.append(strat_strip(ctx, d, share, demote=dm))
                     if ctx.H < 80:
@@ -736,6 +864,7 @@ def candidates(ctx: Ctx) -> list[Layout]:
 # Headline-first row: banner ads with dense copy
 # ----------------------------------------------------------------------------
 
+# Roles that get a full-height slot in a headline-first row.
 FOCUS_ROLES = ("logo", "hero", "headline", "cta")
 
 
@@ -746,6 +875,8 @@ def _minor_column(ctx: Ctx, blocks: list[Block], box: Box) -> tuple[list[Fit], b
     gap = max(1.0, 0.04 * box.h)
 
     def sized(s: float) -> list[Fit]:
+        # Every block at common scale s; text shrinks a step at a time if
+        # one word is still wider than the column.
         out = []
         for b in blocks:
             if b.is_text:
@@ -801,6 +932,8 @@ def strat_focus(ctx: Ctx, head_share: float, minor_share: float) -> Layout | Non
     m = max(2.0, 0.06 * ctx.H)
     box = Box(m * 1.5, m, ctx.W - 3 * m, ctx.H - 2 * m)
     gap_min = max(3.0, 0.2 * ctx.margin)
+    # Width left for the main row once the minor column and gaps are taken;
+    # images and the button may use (1 - head_share) of it.
     col_w = minor_share * box.w
     budget = box.w - col_w - gap_min * len(major)
     max_rigid = budget * (1 - head_share)
@@ -835,6 +968,8 @@ def strat_focus(ctx: Ctx, head_share: float, minor_share: float) -> Layout | Non
 
     row = [fits_[b.id] for b in major]
     used = sum(f.w for f in row) + col_w
+    # Leftover width becomes gaps (one after each piece, the last one
+    # before the minor column), at most 6% of the width each.
     gap = max(gap_min, min((box.w - used) / len(row), 0.06 * ctx.W))
     x = box.x + max(0.0, (box.w - used - gap * len(row)) / 2)
     for f in row:
@@ -850,6 +985,9 @@ def strat_focus(ctx: Ctx, head_share: float, minor_share: float) -> Layout | Non
 # ----------------------------------------------------------------------------
 
 def emit_rigid(b: Block, x: float, y: float, s: float) -> list[dict[str, Any]]:
+    """Output elements for a rigid block whose top-left goes to (x, y) at
+    scale `s`. Each element keeps its offset inside the block (measured
+    centre to centre, so rotation is preserved) and its own fields."""
     bx0, by0 = b.bbox[0], b.bbox[1]
     out = []
     for el in b.elements:
@@ -861,6 +999,8 @@ def emit_rigid(b: Block, x: float, y: float, s: float) -> list[dict[str, Any]]:
         if el.get("type") == "text":
             fs = num(el.get("font_size"), 12)
             font = max(1, int(fs * s))
+            # Only re-fit labels that fitted their box in the source; if the
+            # designer let text overflow on purpose, leave it as scaled.
             src_fits = fits(el, int(fs), num(el.get("width")), num(el.get("height")))
             if src_fits and fs * s < 10:
                 # Small labels may grow (up to 1.3x) to use their scaled box.
@@ -873,6 +1013,8 @@ def emit_rigid(b: Block, x: float, y: float, s: float) -> list[dict[str, Any]]:
 
 
 def emit_fit(f: Fit) -> list[dict[str, Any]]:
+    """Output elements for one positioned fit. Only geometry and font_size
+    change; every other field is copied from the source element."""
     b = f.block
     if b.is_text and f.font is not None:
         n = dict(b.elements[0])
@@ -887,7 +1029,7 @@ def emit_fit(f: Fit) -> list[dict[str, Any]]:
         for ln in lines:
             lw = sum(c.w * f.scale for c in ln) + gap * (len(ln) - 1)
             lh = max(c.h for c in ln) * f.scale
-            x = f.x + (f.w - lw) / 2
+            x = f.x + (f.w - lw) / 2  # each line of badges centred in the row
             for c in ln:
                 out += emit_rigid(c, x, y + (lh - c.h * f.scale) / 2, f.scale)
                 x += c.w * f.scale + gap

@@ -8,149 +8,267 @@
 :root{
   --paper:#F4F1EC; --card:#FFFFFF; --ink:#1E1A22; --muted:#5F5866; --line:#E2DCD3;
   --accent:#C2461F; --accent-ink:#FFFFFF; --stage:#2A2530; --ok:#1F7A4D; --warn:#A4501A; --focus:#2457D6;
+  --sunk:#EBE6DE; --accent-soft:#F6E3DA; --ok-soft:#E1F0E7; --warn-soft:#F7E7DA; --shadow:0 1px 2px rgba(30,26,34,.06),0 8px 24px -12px rgba(30,26,34,.18);
   --r:14px;
+  color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --paper:#16131A; --card:#211D26; --ink:#F2EEF5; --muted:#B4ABBC; --line:#352F3C;
     --accent:#F0703F; --accent-ink:#1B0E08; --stage:#0E0C10; --ok:#5BD69A; --warn:#F2A46B; --focus:#8AB0FF;
+    --sunk:#1B1820; --accent-soft:#3A2219; --ok-soft:#18301F; --warn-soft:#3A2A1A; --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -14px rgba(0,0,0,.6);
+    color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --paper:#16131A; --card:#211D26; --ink:#F2EEF5; --muted:#B4ABBC; --line:#352F3C;
   --accent:#F0703F; --accent-ink:#1B0E08; --stage:#0E0C10; --ok:#5BD69A; --warn:#F2A46B; --focus:#8AB0FF;
+  --sunk:#1B1820; --accent-soft:#3A2219; --ok-soft:#18301F; --warn-soft:#3A2A1A; --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -14px rgba(0,0,0,.6);
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit;color:inherit}
-:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
-header{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;padding:20px 28px 12px;border-bottom:1px solid var(--line)}
-header h1{margin:0;font-size:22px;letter-spacing:-.01em}
-header p{margin:0;color:var(--muted)}
-.wrap{display:grid;grid-template-columns:320px 1fr;gap:0;min-height:calc(100vh - 64px)}
-aside{border-right:1px solid var(--line);padding:20px 22px;display:flex;flex-direction:column;gap:22px}
-main{padding:22px 28px;min-width:0}
-h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px}
+button{cursor:pointer}
+h1,h2,h3,p{margin:0}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* header */
+header{display:flex;align-items:center;gap:14px;padding:14px 28px;border-bottom:1px solid var(--line);background:var(--paper)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand i{width:14px;height:14px;border:2px solid var(--accent);border-radius:3px}
+header h1{font-size:17px;font-weight:650;letter-spacing:-.01em}
+header p{color:var(--muted);font-size:14px}
+
+/* layout */
+.wrap{display:grid;grid-template-columns:330px minmax(0,1fr);min-height:calc(100vh - 57px)}
+aside{border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:auto}
+.panel{padding:22px 22px 12px;display:flex;flex-direction:column;gap:26px;flex:1}
+main{padding:24px 28px 48px;min-width:0}
+h2{font-size:15px;font-weight:650;margin-bottom:10px}
+h2 small{font-weight:400;color:var(--muted);margin-left:6px;font-size:13px}
+
+/* design picker */
 .samples{display:flex;flex-direction:column;gap:8px}
-.sample{display:flex;gap:10px;align-items:flex-start;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer}
-.sample[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
-.sample b{display:block;font-size:14px}
-.sample small{color:var(--muted)}
-.upload{display:block;margin-top:8px;font-size:14px;color:var(--muted)}
-.upload input{display:block;margin-top:4px;max-width:100%}
+.sample{display:block;width:100%;text-align:left;padding:11px 14px;border:1px solid var(--line);border-radius:11px;background:var(--card)}
+.sample:hover{border-color:var(--muted)}
+.sample[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
+.sample b{display:block;font-size:14px;font-weight:600}
+.sample small{display:block;color:var(--muted);font-size:13px}
+.upload{margin-top:10px}
+.upload input{position:absolute;width:1px;height:1px;opacity:0}
+.upload label{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border:1px dashed var(--muted);border-radius:11px;color:var(--ink);font-size:14px;cursor:pointer;background:transparent}
+.upload label:hover{background:var(--card)}
+.upload input:focus-visible + label{outline:3px solid var(--focus);outline-offset:2px}
+.upload.on label{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
+.note{font-size:13px;color:var(--muted);margin-top:8px}
+.note.err{color:var(--warn);background:var(--warn-soft);padding:9px 11px;border-radius:9px}
+.note.ok{color:var(--ink)}
+
+/* canvas chips */
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);cursor:pointer;font-size:13px}
+.chip{display:inline-flex;align-items:baseline;gap:6px;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--card);font-size:13px;min-height:32px}
+.chip:hover{border-color:var(--muted)}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.chip small{opacity:.7;margin-left:4px}
-.custom{display:flex;gap:6px;margin-top:10px;align-items:center}
-.custom input{width:78px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
-.btn{padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--card);cursor:pointer}
-.primary{width:100%;padding:13px 16px;border:0;border-radius:11px;background:var(--accent);color:var(--accent-ink);font-weight:650;font-size:16px;cursor:pointer}
-.primary:disabled{opacity:.55;cursor:progress}
-label.toggle{display:flex;gap:10px;align-items:flex-start;font-size:14px}
-label.toggle small{display:block;color:var(--muted)}
-.hint{color:var(--muted);font-size:13px;margin:6px 0 0}
-.banner{padding:12px 14px;border-radius:10px;margin-bottom:16px;border:1px solid}
-.banner.err{border-color:var(--warn);color:var(--warn)}
-.empty{display:grid;place-items:center;text-align:center;min-height:50vh;color:var(--muted)}
-.empty h3{color:var(--ink);font-size:20px;margin:0 0 6px}
-.origin{display:flex;gap:18px;align-items:center;margin-bottom:22px;flex-wrap:wrap}
-.origin img{max-height:180px;max-width:260px;border-radius:8px;background:var(--stage)}
-.origin .meta b{font-size:17px;display:block}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
-.card .top{display:flex;justify-content:space-between;gap:8px;padding:10px 14px;align-items:baseline}
-.card .top b{font-size:14px}
-.card .top small{color:var(--muted)}
-.stage{background:var(--stage);display:grid;place-items:center;padding:14px;min-height:230px;position:relative}
-.stage img{max-width:100%;max-height:300px;display:block;box-shadow:0 6px 24px rgba(0,0,0,.35)}
-.stage .tag{position:absolute;left:10px;top:10px;font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;letter-spacing:.04em}
-.card .bot{display:flex;gap:8px;padding:10px 14px;align-items:center;flex-wrap:wrap}
-.pill{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
-.pill.ok{color:var(--ok);border-color:currentColor}
-.pill.warn{color:var(--warn);border-color:currentColor}
-.spacer{flex:1}
-.skeleton{background:linear-gradient(90deg,var(--line),transparent,var(--line));background-size:200% 100%;animation:sh 1.2s infinite;min-height:300px;border-radius:var(--r)}
-@keyframes sh{to{background-position:-200% 0}}
-@media (prefers-reduced-motion: reduce){.skeleton{animation:none}}
-dialog{width:min(1200px,96vw);max-height:94vh;border:1px solid var(--line);border-radius:16px;padding:0;background:var(--paper);color:var(--ink)}
+.chip small{opacity:.7;font-size:12px;font-variant-numeric:tabular-nums}
+.custom{display:flex;gap:6px;margin-top:12px;align-items:center}
+.custom input{width:84px;min-width:0;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:var(--card)}
+.custom span{color:var(--muted)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 12px;border:1px solid var(--line);border-radius:9px;background:var(--card);font-size:14px;min-height:36px;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn:disabled{opacity:.6;cursor:progress}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.quiet:hover{color:var(--ink);background:var(--sunk)}
+.go{position:sticky;bottom:0;padding:14px 22px 18px;background:var(--paper);border-top:1px solid var(--line)}
+.primary{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 16px;border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink);font-weight:650;font-size:16px;box-shadow:var(--shadow)}
+.primary:hover{filter:brightness(1.06)}
+.primary[aria-disabled="true"]{opacity:.7;cursor:progress}
+.go p{font-size:13px;color:var(--muted);text-align:center;margin-top:8px}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(1turn)}}
+label.toggle{display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer}
+label.toggle input{margin-top:4px;accent-color:var(--accent)}
+label.toggle small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+
+/* states */
+.state{display:grid;place-items:center;text-align:center;min-height:62vh;padding:24px}
+.state > div{max-width:440px}
+.state h3{font-size:20px;font-weight:650;margin:22px 0 6px;letter-spacing:-.01em}
+.state p{color:var(--muted)}
+.shapes{display:flex;justify-content:center;align-items:flex-end;gap:10px}
+.shapes i{display:block;border:2px solid var(--line);border-radius:4px;background:var(--card)}
+.shapes i:nth-child(2){border-color:var(--accent)}
+.alert{display:flex;gap:14px;align-items:flex-start;text-align:left;padding:16px 18px;border-radius:12px;background:var(--warn-soft);color:var(--ink);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);margin-bottom:18px}
+.alert b{display:block;margin-bottom:2px}
+.alert p{color:var(--muted);font-size:14px}
+.alert .ic{flex:none;width:22px;height:22px;border-radius:50%;background:var(--warn);color:var(--paper);display:grid;place-items:center;font-weight:700;font-size:14px;line-height:1}
+
+/* results */
+.summary{display:flex;gap:18px;align-items:center;margin-bottom:24px;padding:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
+.summary img{width:auto;height:96px;max-width:140px;object-fit:contain;border-radius:6px;background:var(--stage);flex:none}
+.summary h2{font-size:18px;margin:0 0 2px}
+.summary p{color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.card .top{display:flex;justify-content:space-between;gap:10px;padding:12px 16px;align-items:baseline}
+.card .top h3{font-size:15px;font-weight:650}
+.card .top span{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stage{background:var(--stage);display:grid;place-items:center;padding:18px;height:260px;position:relative}
+.stage img{max-width:100%;max-height:224px;width:auto;height:auto;display:block;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.stage .tag{position:absolute;left:10px;top:10px;font-size:12px;padding:3px 9px;border-radius:999px;background:rgba(0,0,0,.62);color:#fff}
+.stage .tag.alt{background:#fff;color:#111}
+.stage .none{color:#bbb;font-size:13px}
+.card .bot{display:flex;flex-direction:column;gap:12px;padding:12px 16px 14px}
+.facts{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted);min-width:0}
+.facts .lay{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.pill{font-size:12px;padding:2px 9px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.acts{display:flex;gap:8px}
+.acts .btn{flex:1}
+[data-cmp]{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+[data-cmp][aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.skeleton .stage{background:var(--sunk)}
+.skeleton .stage::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--card) 60%,transparent),transparent);background-size:200% 100%;animation:sh 1.3s infinite}
+.skeleton .bar-ph{height:12px;border-radius:6px;background:var(--sunk);width:60%}
+@keyframes sh{from{background-position:100% 0}to{background-position:-100% 0}}
+@media (prefers-reduced-motion: reduce){.skeleton .stage::after,.spin{animation:none}}
+
+/* explanation dialog */
+dialog{width:min(1240px,96vw);max-height:94vh;border:1px solid var(--line);border-radius:18px;padding:0;background:var(--paper);color:var(--ink);overflow:hidden}
 dialog::backdrop{background:rgba(10,8,12,.6)}
-.dlg{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);grid-template-rows:100%;height:min(92vh,940px)}
-.dlg .left{background:var(--stage);padding:18px;overflow:hidden;display:flex;flex-direction:column;gap:12px;min-height:0}
-.dlg .right{padding:18px 20px;overflow:auto}
-.seg{display:inline-flex;border:1px solid #555;border-radius:9px;overflow:hidden}
-.seg button{padding:6px 12px;border:0;background:transparent;color:#ddd;cursor:pointer}
+.dhead{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--card)}
+.dhead h2{font-size:18px;margin:0;flex:1;min-width:0}
+.dhead h2 span{color:var(--muted);font-weight:400;font-size:15px;margin-left:8px;font-variant-numeric:tabular-nums}
+.dlg{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,1fr);height:min(calc(94vh - 66px),880px)}
+.dlg .left{background:var(--stage);padding:16px;display:flex;flex-direction:column;gap:14px;min-height:0;color:#eee}
+.dlg .right{padding:20px 22px 28px;overflow:auto}
+.lefttools{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid #555;border-radius:10px;overflow:hidden}
+.seg button{padding:7px 13px;border:0;background:transparent;color:#ddd;font-size:14px}
+.seg button + button{border-left:1px solid #555}
 .seg button[aria-pressed="true"]{background:#fff;color:#111}
-.viewer{position:relative;display:grid;place-items:center;flex:1;min-height:0}
-.viewer .box{position:relative;max-width:100%}
-.viewer img{display:block;max-width:100%;max-height:calc(94vh - 110px);object-fit:contain}
+.lefttools label{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+.lefttools input{accent-color:var(--accent);width:16px;height:16px}
+.viewer{display:grid;place-items:center;flex:1;min-height:0}
+.viewer .box{position:relative;max-width:100%;max-height:100%}
+.viewer img{display:block;max-width:100%;max-height:calc(94vh - 170px);object-fit:contain}
 .viewer svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.lefttools{display:flex;gap:12px;align-items:center;color:#ddd;flex-wrap:wrap}
-.dlg h3{margin:0 0 4px;font-size:19px}
-.section{margin-top:18px}
-.cand{display:grid;grid-template-columns:1fr 90px auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
-.cand.sel b{color:var(--accent)}
-.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--accent)}
-.parts{display:grid;grid-template-columns:110px 1fr 40px;gap:6px 10px;font-size:13px;align-items:center}
-.role{display:grid;grid-template-columns:14px 92px 1fr;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line)}
-.sw{width:12px;height:12px;border-radius:3px;margin-top:4px}
-.role code{font-size:12px;color:var(--muted)}
-.x{position:absolute;right:14px;top:12px;z-index:2}
-@media (max-width:860px){
-  .wrap{grid-template-columns:1fr}
-  aside{border-right:0;border-bottom:1px solid var(--line);padding:16px}
-  main{padding:16px}
-  header{padding:16px}
-  .dlg{grid-template-columns:1fr;grid-template-rows:auto;height:auto}
-  .grid{grid-template-columns:1fr}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:#ccc}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i,.sw{display:inline-block;width:11px;height:11px;border-radius:3px;flex:none}
+.lede{color:var(--muted)}
+.verdict{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:12px 14px;border-radius:12px;font-size:14px}
+.verdict.ok{background:var(--ok-soft)}
+.verdict.warn{background:var(--warn-soft)}
+.verdict b{display:block}
+.verdict .ic{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--paper);margin-top:1px}
+.verdict.ok .ic{background:var(--ok)}
+.verdict.warn .ic{background:var(--warn)}
+.section{margin-top:26px}
+.section > p.hint{margin-top:10px}
+.hint{color:var(--muted);font-size:13px}
+.cand{display:grid;grid-template-columns:minmax(0,1fr) 72px 34px 64px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.cand:first-of-type{border-top:1px solid var(--line)}
+.cand .nm{min-width:0;overflow-wrap:anywhere}
+.cand .nm small{display:block;color:var(--muted)}
+.cand.sel .nm b{color:var(--accent)}
+.cand .num{font-variant-numeric:tabular-nums;color:var(--muted);text-align:right}
+.cand .btn{min-height:32px;padding:4px 10px;font-size:13px}
+.cand .pill{justify-self:center}
+.bar{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.parts{display:grid;grid-template-columns:110px minmax(0,1fr) 32px;gap:8px 12px;font-size:13px;align-items:center}
+.parts span:last-child,.parts .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.role{display:grid;grid-template-columns:11px 84px minmax(0,1fr);gap:10px;font-size:13px;padding:8px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.role .sw{transform:translateY(1px)}
+.role code{display:block;font-size:12px;color:var(--muted);overflow-wrap:anywhere;margin-top:2px}
+.more{margin-top:8px}
+.more summary{cursor:pointer;color:var(--muted);font-size:13px;padding:6px 0}
+
+@media (max-width:900px){
+  .wrap{grid-template-columns:minmax(0,1fr)}
+  aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);overflow:visible}
+  .panel{padding:18px 16px 4px}
+  .go{position:static;padding:16px;background:none}
+  main{padding:18px 16px 40px}
+  header{padding:12px 16px;flex-wrap:wrap;gap:4px 12px}
+  dialog{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0;border:0}
+  .dlg{grid-template-columns:minmax(0,1fr);height:calc(100dvh - 70px);overflow:auto;display:block}
+  .dlg .left{padding:12px}
+  .dhead{padding:12px 16px;gap:8px}
+  .dhead h2{font-size:17px}
+  .dhead h2 span{display:block;margin-left:0;font-size:14px}
+  .viewer img{max-height:46vh}
+  .dlg .right{overflow:visible;padding:18px 16px 32px}
+  .state{min-height:auto;padding:28px 8px}
+}
+@media (max-width:420px){
+  .summary{gap:12px;padding:12px}
+  .summary img{height:72px;max-width:96px}
+  .cand{grid-template-columns:minmax(0,1fr) 34px 64px}
+  .cand .bar{display:none}
+  .stage{height:220px}
+  .stage img{max-height:184px}
 }
 </style>
 </head>
 <body>
 <header>
-  <h1>Chameleon Studio</h1>
+  <div class="brand"><i aria-hidden="true"></i><h1>Chameleon Studio</h1></div>
   <p>One design, every canvas. Rearranged, not stretched.</p>
 </header>
 <div class="wrap">
   <aside aria-label="Settings">
-    <section>
-      <h2 id="h-design">1 · Design</h2>
-      <div class="samples" id="samples" role="group" aria-labelledby="h-design"></div>
-      <label class="upload">Or upload a task or design JSON
-        <input type="file" id="file" accept="application/json,.json">
-      </label>
-      <p class="hint" id="filehint"></p>
-    </section>
-    <section>
-      <h2 id="h-canvas">2 · Canvases</h2>
-      <div class="chips" id="chips" role="group" aria-labelledby="h-canvas"></div>
-      <div class="custom">
-        <label class="sr" for="cw" style="position:absolute;left:-9999px">Custom width</label>
-        <input id="cw" type="number" min="16" max="8000" placeholder="width" inputmode="numeric">
-        <span aria-hidden="true">×</span>
-        <label for="ch" style="position:absolute;left:-9999px">Custom height</label>
-        <input id="ch" type="number" min="16" max="8000" placeholder="height" inputmode="numeric">
-        <button class="btn" id="addc" type="button">Add</button>
-      </div>
-      <p class="hint" id="chiphint"></p>
-    </section>
-    <section>
-      <h2>3 · Options</h2>
-      <label class="toggle"><input type="checkbox" id="hide">
-        <span>Let low-priority elements drop away when they can't be read
-          <small>Only when no layout that keeps everything is readable. Never the headline, logo or CTA (the product only on banners under 80 px tall). Every element id is still returned.</small></span>
-      </label>
-    </section>
-    <button class="primary" id="go" type="button">Adapt design</button>
+    <div class="panel">
+      <section>
+        <h2 id="h-design">Design</h2>
+        <div class="samples" id="samples" role="group" aria-labelledby="h-design"></div>
+        <div class="upload" id="upwrap">
+          <input type="file" id="file" accept="application/json,.json" aria-describedby="filehint">
+          <label for="file" id="filelabel">Upload a design or task JSON</label>
+        </div>
+        <p class="note" id="filehint" aria-live="polite"></p>
+      </section>
+      <section>
+        <h2 id="h-canvas">Canvases <small id="chiphint" aria-live="polite"></small></h2>
+        <div class="chips" id="chips" role="group" aria-labelledby="h-canvas"></div>
+        <div class="custom">
+          <label class="sr" for="cw">Custom width in pixels</label>
+          <input id="cw" type="number" min="16" max="8000" placeholder="Width" inputmode="numeric">
+          <span aria-hidden="true">×</span>
+          <label class="sr" for="ch">Custom height in pixels</label>
+          <input id="ch" type="number" min="16" max="8000" placeholder="Height" inputmode="numeric">
+          <button class="btn" id="addc" type="button">Add size</button>
+        </div>
+        <p class="note" id="customhint" aria-live="polite"></p>
+      </section>
+      <section>
+        <h2>Options</h2>
+        <label class="toggle"><input type="checkbox" id="hide">
+          <span>Let low-priority elements drop away when they can't be read
+            <small>Off by default: the brief asks for every element to stay visible. When on, it applies only if no layout that keeps everything is readable, and never to the headline, logo or button.</small></span>
+        </label>
+      </section>
+    </div>
+    <div class="go">
+      <button class="primary" id="go" type="button">Adapt design</button>
+      <p id="gohint">Runs locally with the official renderer.</p>
+    </div>
   </aside>
-  <main id="main" aria-live="polite">
-    <div class="empty"><div><h3>Pick a design and some canvases</h3><p>Then press <b>Adapt design</b>. Everything runs locally with the official renderer.</p></div></div>
-  </main>
+  <main id="main" aria-live="polite" aria-busy="false"></main>
 </div>
 
 <dialog id="dlg" aria-labelledby="dlg-title">
-  <button class="btn x" id="dlg-close" type="button" aria-label="Close">Close</button>
+  <div class="dhead">
+    <h2 id="dlg-title"></h2>
+    <button class="btn" type="button" id="dl">Download JSON</button>
+    <button class="btn" id="dlg-close" type="button">Close</button>
+  </div>
   <div class="dlg">
     <div class="left">
       <div class="lefttools">
@@ -161,6 +279,7 @@ dialog::backdrop{background:rgba(10,8,12,.6)}
         </div>
         <label><input type="checkbox" id="boxes"> Show what the engine saw</label>
       </div>
+      <div class="legend" id="legend" hidden></div>
       <div class="viewer"><div class="box"><img id="dimg" alt=""><svg id="dsvg" aria-hidden="true"></svg></div></div>
     </div>
     <div class="right" id="dright"></div>
@@ -171,16 +290,39 @@ dialog::backdrop{background:rgba(10,8,12,.6)}
 const ROLE_COLORS = {headline:"#F2B441",logo:"#6FB8FF",cta:"#FF7A59",hero:"#7ED67E",body:"#E8E8E8",
   badges:"#C59BFF",badge:"#C59BFF",tag:"#FF9AD5",sticker:"#FF5C8A",fineprint:"#A8A8A8",image:"#5ED6CF",
   unavailable:"#888",decoration:"#776F80",background:"#444"};
+const ROLE_NAMES = {headline:"Headline",logo:"Logo",cta:"Button",hero:"Product",body:"Body text",badges:"Badge row",
+  badge:"Badge",tag:"Corner tag",sticker:"Sticker",fineprint:"Fine print",image:"Image",unavailable:"Missing asset",
+  decoration:"Decoration",background:"Background"};
+const PART_NAMES = {readability:"Readability",hierarchy:"Hierarchy",space:"Use of space",consistency:"Consistency",
+  collisions:"No collisions",completeness:"Completeness",fidelity:"Reading order",balance:"Balance"};
 const DEFAULT_FORMATS = ["ig_story","ig_post","yt_thumb","li_banner","leaderboard","skyscraper"];
 const S = {meta:null, sample:null, upload:null, selected:new Set(DEFAULT_FORMATS), custom:[], data:null, open:null};
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const roleName = r => ROLE_NAMES[r] || r;
+// A hidden id is either a missing asset (always allowed) or a drop the user opted into.
+const isMissing = why => /asset file is missing/.test(why);
 
 async function api(path, body){
-  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  let r;
+  try{
+    r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  }catch(e){ throw new Error("The Studio server isn't responding. Is python -m studio.server still running?"); }
   const j = await r.json().catch(() => ({error:"The server sent an unreadable response."}));
-  if(!r.ok) throw new Error(j.error || `Request failed (${r.status})`);
+  if(!r.ok) throw new Error(j.error || `Request failed (${r.status}).`);
   return j;
+}
+
+function showEmpty(){
+  $("#main").innerHTML = `<div class="state"><div>
+    <div class="shapes" aria-hidden="true"><i style="width:44px;height:78px"></i><i style="width:66px;height:66px"></i><i style="width:112px;height:28px"></i><i style="width:30px;height:96px"></i></div>
+    <h3>Pick a design and the canvases you need</h3>
+    <p>Then press <b>Adapt design</b>. Each canvas gets its own layout, rendered by the official renderer on this machine.</p>
+  </div></div>`;
+}
+
+function showError(title, msg){
+  $("#main").innerHTML = `<div class="alert" role="alert"><span class="ic" aria-hidden="true">!</span><div><b>${esc(title)}</b><p>${esc(msg)}</p></div></div>`;
 }
 
 function renderSamples(){
@@ -188,10 +330,18 @@ function renderSamples(){
   for(const s of S.meta.samples){
     const b = document.createElement("button");
     b.type = "button"; b.className = "sample"; b.setAttribute("aria-pressed", S.sample === s.key && !S.upload);
-    b.innerHTML = `<span><b>${esc(s.label)}</b><small>${s.canvas.width}×${s.canvas.height} · ${s.elements} elements${s.target ? ` · task target ${s.target.width}×${s.target.height}` : ""}</small></span>`;
-    b.onclick = () => { S.sample = s.key; S.upload = null; $("#file").value = ""; $("#filehint").textContent = ""; renderSamples(); renderChips(); };
+    b.innerHTML = `<b>${esc(s.label)}</b><small>${s.canvas.width}×${s.canvas.height} · ${s.elements} elements${s.target ? ` · task target ${s.target.width}×${s.target.height}` : ""}</small>`;
+    b.onclick = () => {
+      S.sample = s.key; S.upload = null; $("#file").value = ""; setFileNote("");
+      $("#upwrap").classList.remove("on"); $("#filelabel").textContent = "Upload a design or task JSON";
+      renderSamples(); renderChips();
+    };
     el.appendChild(b);
   }
+}
+
+function setFileNote(text, kind){
+  const n = $("#filehint"); n.textContent = text; n.className = "note" + (kind ? " " + kind : "");
 }
 
 function currentTaskTarget(){
@@ -208,41 +358,73 @@ function renderChips(){
     const b = document.createElement("button");
     b.type = "button"; b.className = "chip"; b.setAttribute("aria-pressed", S.selected.has(f.key));
     b.innerHTML = `${esc(f.name)}<small>${f.width}×${f.height}</small>`;
-    b.onclick = () => { S.selected.has(f.key) ? S.selected.delete(f.key) : S.selected.add(f.key); renderChips(); };
+    b.onclick = () => { S.selected.has(f.key) ? S.selected.delete(f.key) : S.selected.add(f.key); renderChips(); el.children[list.indexOf(f)].focus(); };
     el.appendChild(b);
   }
-  $("#chiphint").textContent = `${[...S.selected].filter(k => list.some(f => f.key === k)).length} selected`;
+  const n = [...S.selected].filter(k => list.some(f => f.key === k)).length;
+  $("#chiphint").textContent = `${n} selected`;
   S._list = list;
 }
 
 $("#addc").onclick = () => {
-  const w = +$("#cw").value, h = +$("#ch").value;
-  if(!(w >= 16 && w <= 8000 && h >= 16 && h <= 8000)){ $("#chiphint").textContent = "Custom sizes must be 16 to 8000 px per side."; return; }
+  const w = +$("#cw").value, h = +$("#ch").value, note = $("#customhint");
+  if(!(Number.isInteger(w) && Number.isInteger(h) && w >= 16 && w <= 8000 && h >= 16 && h <= 8000)){
+    note.textContent = "Enter a whole number from 16 to 8000 px for both width and height."; note.className = "note err"; return;
+  }
+  note.textContent = ""; note.className = "note";
   const key = `c${w}x${h}`;
   if(!S.custom.some(c => c.key === key)) S.custom.push({key, name:"Custom", width:w, height:h});
   S.selected.add(key); renderChips();
 };
+for(const id of ["#cw", "#ch"]) $(id).onkeydown = e => { if(e.key === "Enter") $("#addc").click(); };
+
+// Friendly checks before the upload goes to the server (which validates again).
+function checkDesign(j){
+  if(!j || typeof j !== "object" || Array.isArray(j)) return "The file should hold one JSON object: a design with \"canvas\" and \"elements\", or a task with \"source\".";
+  const src = j.source || j;
+  const c = src.canvas;
+  if(!c || typeof c !== "object") return "This design has no canvas. Add \"canvas\": {\"width\": 1080, \"height\": 1080} with its real size and upload it again.";
+  if(!(c.width > 0 && c.height > 0)) return "The canvas needs a positive width and height in pixels.";
+  if(!Array.isArray(src.elements) || !src.elements.length) return "This design has no elements to lay out.";
+  return null;
+}
 
 $("#file").onchange = async e => {
   const f = e.target.files[0]; if(!f) return;
-  try{
-    if(f.size > 5e6) throw new Error("File is larger than 5 MB.");
-    const j = JSON.parse(await f.text());
-    const src = j.source || j;
-    if(!src.canvas || !Array.isArray(src.elements)) throw new Error("Expected a design with 'canvas' and 'elements', or a task with 'source'.");
-    S.upload = {design: src, target: j.target_canvas || null, name: f.name};
-    $("#filehint").textContent = `Loaded ${f.name}: ${src.canvas.width}×${src.canvas.height}, ${src.elements.length} elements.`;
-    S._taskSeen = false; renderSamples(); renderChips();
-  }catch(err){ S.upload = null; $("#filehint").textContent = `Couldn't use that file: ${err.message}`; }
+  const fail = msg => {
+    S.upload = null; $("#upwrap").classList.remove("on"); $("#filelabel").textContent = "Upload a design or task JSON";
+    setFileNote(`Couldn't use ${f.name}. ${msg}`, "err"); renderSamples(); renderChips();
+  };
+  if(f.size > 5e6) return fail("It's larger than 5 MB.");
+  let j;
+  try{ j = JSON.parse(await f.text()); }
+  catch(err){ return fail("It isn't valid JSON. Check for a missing comma or bracket, or export it again."); }
+  const problem = checkDesign(j);
+  if(problem) return fail(problem);
+  const src = j.source || j;
+  S.upload = {design: src, target: j.target_canvas || null, name: f.name};
+  $("#upwrap").classList.add("on"); $("#filelabel").textContent = f.name;
+  setFileNote(`${src.canvas.width}×${src.canvas.height}, ${src.elements.length} elements. Pick a sample above to switch back.`, "ok");
+  S._taskSeen = false; renderSamples(); renderChips();
 };
 
 $("#go").onclick = run;
+// aria-disabled instead of disabled: a disabled button loses keyboard focus.
+let busy = false;
+function setBusy(on){
+  const b = $("#go"); busy = on; b.setAttribute("aria-disabled", on);
+  b.innerHTML = on ? `<span class="spin" aria-hidden="true"></span>Adapting…` : "Adapt design";
+  $("#main").setAttribute("aria-busy", on);
+}
 async function run(){
+  if(busy) return;
   const targets = S._list.filter(f => S.selected.has(f.key)).map(f => ({name:f.name, width:f.width, height:f.height}));
-  const main = $("#main");
-  if(!targets.length){ main.innerHTML = `<div class="banner err" role="alert">Pick at least one canvas size.</div>`; return; }
-  $("#go").disabled = true; $("#go").textContent = "Adapting…";
-  main.innerHTML = `<div class="grid">${targets.map(() => `<div class="skeleton" aria-hidden="true"></div>`).join("")}</div>`;
+  if(!targets.length){ showError("No canvases selected", "Pick at least one canvas size, then press Adapt design."); return; }
+  setBusy(true);
+  $("#main").innerHTML = `<p class="sr">Adapting ${targets.length} canvases…</p><div class="grid">${targets.map(t => `
+    <div class="card skeleton" aria-hidden="true"><div class="top"><h3>${esc(t.name)}</h3><span>${t.width}×${t.height}</span></div>
+    <div class="stage"></div><div class="bot"><div class="bar-ph"></div></div></div>`).join("")}</div>`;
+  if(matchMedia("(max-width:900px)").matches) $("#main").scrollIntoView({behavior:"smooth", block:"start"});
   try{
     const body = {targets, allow_hide: $("#hide").checked};
     if(S.upload) body.design = S.upload.design; else body.sample = S.sample;
@@ -250,8 +432,8 @@ async function run(){
     S.data.results.forEach(r => r.sel = r.report.chosen);
     renderResults();
   }catch(err){
-    main.innerHTML = `<div class="banner err" role="alert">${esc(err.message)}</div>`;
-  }finally{ $("#go").disabled = false; $("#go").textContent = "Adapt design"; }
+    showError("Couldn't adapt this design", err.message);
+  }finally{ setBusy(false); }
 }
 
 const img = b64 => b64 ? `data:image/png;base64,${b64}` : "";
@@ -259,47 +441,65 @@ const img = b64 => b64 ? `data:image/png;base64,${b64}` : "";
 function renderResults(){
   const d = S.data, src = d.source;
   const totalMs = d.results.reduce((a, r) => a + r.report.ms, 0);
+  const issues = d.results.reduce((a, r) => a + r.report.candidates.find(c => c.name === r.sel).problems.length, 0);
   $("#main").innerHTML = `
-    ${d.renderer ? "" : `<div class="banner err">Official renderer not available, so previews are missing. Install requirements.txt.</div>`}
-    <div class="origin">
-      <img src="${img(d.source_png)}" alt="Original design">
-      <div class="meta"><b>Original · ${src.canvas.width}×${src.canvas.height}</b>
-        <span style="color:var(--muted)">${src.elements.length} elements → ${d.results.length} canvases, engine time ${totalMs.toFixed(0)} ms total</span></div>
+    ${d.renderer ? "" : `<div class="alert" role="status"><span class="ic" aria-hidden="true">!</span><div><b>No previews</b><p>The official renderer isn't installed, so layouts are computed but not drawn. Run pip install -r requirements.txt.</p></div></div>`}
+    <div class="summary">
+      ${d.source_png ? `<img src="${img(d.source_png)}" alt="Original design">` : ""}
+      <div><h2>Original, ${src.canvas.width}×${src.canvas.height}</h2>
+        <p>${src.elements.length} elements adapted to ${d.results.length} canvas${d.results.length === 1 ? "" : "es"} in ${totalMs.toFixed(0)} ms of engine time. ${issues ? `${issues} rule issue${issues === 1 ? "" : "s"} found.` : "Every hard-rule check passes."}</p></div>
     </div>
     <div class="grid">${d.results.map((r, i) => card(r, i)).join("")}</div>`;
   document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => openDetail(+b.dataset.open));
   document.querySelectorAll("[data-cmp]").forEach(b => {
     const i = +b.dataset.cmp, im = document.getElementById(`im${i}`), tag = document.getElementById(`tg${i}`);
-    const show = on => { const r = S.data.results[i]; im.src = img(on ? r.stretch_png : r.png); tag.textContent = on ? "NAIVE STRETCH" : "CHAMELEON"; b.setAttribute("aria-pressed", on); };
-    b.onpointerdown = () => show(true); b.onpointerup = b.onpointerleave = () => show(false);
-    b.onkeydown = e => { if(e.key === " " || e.key === "Enter"){ e.preventDefault(); show(true); } };
-    b.onkeyup = () => show(false);
+    const show = on => {
+      const r = S.data.results[i];
+      if(im) im.src = img(on ? r.stretch_png : r.png);
+      tag.textContent = on ? "Naive stretch" : "Chameleon"; tag.classList.toggle("alt", on);
+      b.setAttribute("aria-pressed", on);
+    };
+    b.onpointerdown = e => { b.setPointerCapture?.(e.pointerId); show(true); };
+    b.onpointerup = b.onpointercancel = b.onlostpointercapture = () => show(false);
+    b.oncontextmenu = e => e.preventDefault();
+    b.onkeydown = e => { if(e.key === " " || e.key === "Enter"){ e.preventDefault(); if(!e.repeat) show(true); } };
+    b.onkeyup = b.onblur = () => show(false);
   });
 }
 
 function card(r, i){
   const cand = r.report.candidates.find(c => c.name === r.sel);
-  const hidden = Object.keys(cand.hidden).length;
-  return `<article class="card">
-    <div class="top"><b>${esc(r.name)}</b><small>${r.width}×${r.height}</small></div>
-    <div class="stage"><span class="tag" id="tg${i}">CHAMELEON</span><img id="im${i}" src="${img(r.png)}" alt="${esc(r.name)} result"></div>
+  const hidden = Object.values(cand.hidden);
+  const missing = hidden.filter(isMissing).length, dropped = hidden.length - missing;
+  return `<article class="card" aria-labelledby="ct${i}">
+    <div class="top"><h3 id="ct${i}">${esc(r.name)}</h3><span>${r.width} × ${r.height} px</span></div>
+    <div class="stage"><span class="tag" id="tg${i}">Chameleon</span>${r.png ? `<img id="im${i}" src="${img(r.png)}" alt="${esc(r.name)}, adapted">` : `<span class="none">No preview</span>`}</div>
     <div class="bot">
-      <span class="pill">${esc(r.sel)}</span>
-      ${cand.problems.length ? `<span class="pill warn">${cand.problems.length} rule issue(s)</span>` : `<span class="pill ok">rules pass</span>`}
-      ${hidden ? `<span class="pill">${hidden} dropped</span>` : ""}
-      <span class="spacer"></span>
-      <button class="btn" type="button" data-cmp="${i}" aria-pressed="false">Hold: stretch</button>
-      <button class="btn" type="button" data-open="${i}">Why?</button>
+      <div class="facts">
+        <span class="lay" title="${esc(cand.description)}">${esc(r.sel)}</span>
+        ${cand.problems.length ? `<span class="pill warn">${cand.problems.length} rule issue${cand.problems.length === 1 ? "" : "s"}</span>` : `<span class="pill ok">Rules pass</span>`}
+        ${dropped ? `<span class="pill warn">${dropped} dropped</span>` : ""}
+        ${missing ? `<span class="pill" title="The image file is not in the brand kit">${missing} missing asset</span>` : ""}
+      </div>
+      <div class="acts">
+        <button class="btn" type="button" data-cmp="${i}" aria-pressed="false" aria-label="Hold to compare with the naive stretch">Hold for stretch</button>
+        <button class="btn" type="button" data-open="${i}" aria-label="Why this layout for ${esc(r.name)}">Why</button>
+      </div>
     </div></article>`;
 }
 
-let view = "result";
+let view = "result", opener = null;
 function openDetail(i){
-  S.open = i; view = "result";
+  S.open = i; view = "result"; opener = document.activeElement;
   document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === view));
-  drawDetail(); $("#dlg").showModal();
+  drawDetail(); $("#dlg").showModal(); $("#dright").scrollTop = 0;
 }
 $("#dlg-close").onclick = () => $("#dlg").close();
+// Use re-renders the grid, so the opener may be gone; fall back to that card's Why.
+$("#dlg").addEventListener("close", () => {
+  const el = opener && document.contains(opener) ? opener : document.querySelector(`[data-open="${S.open}"]`);
+  if(el) el.focus();
+});
 document.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
   view = b.dataset.v; document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x === b)); drawStage();
 });
@@ -310,18 +510,22 @@ function drawStage(){
   const cand = r.report.candidates.find(c => c.name === r.sel);
   const design = view === "original" ? S.data.source : view === "stretch" ? null : cand.design;
   $("#dimg").src = img(view === "original" ? S.data.source_png : view === "stretch" ? r.stretch_png : r.png);
-  $("#dimg").alt = `${view} view of ${r.name}`;
-  const svg = $("#dsvg");
-  if(!$("#boxes").checked || !design){ svg.innerHTML = ""; return; }
+  $("#dimg").alt = `${{result:"Chameleon", stretch:"Naive stretch", original:"Original"}[view]} view of ${r.name}`;
+  const svg = $("#dsvg"), legend = $("#legend");
+  if(!$("#boxes").checked || !design){ svg.innerHTML = ""; legend.hidden = true; return; }
   const roles = {}; r.report.roles.forEach(ro => ro.elements.forEach(e => roles[e] = ro.role));
   svg.setAttribute("viewBox", `0 0 ${design.canvas.width} ${design.canvas.height}`);
   svg.setAttribute("preserveAspectRatio", "none");
   const sw = Math.max(design.canvas.width, design.canvas.height) / 300;
-  svg.innerHTML = design.elements.filter(e => !["background"].includes(roles[e.id])).map(e => {
+  const shown = design.elements.filter(e => !["background"].includes(roles[e.id]));
+  svg.innerHTML = shown.map(e => {
     const c = ROLE_COLORS[roles[e.id]] || "#fff", hid = (e.opacity ?? 1) === 0;
     const t = e.rotation ? ` transform="rotate(${e.rotation} ${e.x + e.width / 2} ${e.y + e.height / 2})"` : "";
     return `<rect x="${e.x}" y="${e.y}" width="${e.width}" height="${e.height}" fill="${c}" fill-opacity="${hid ? 0 : .12}" stroke="${c}" stroke-width="${sw}" stroke-dasharray="${hid ? sw * 3 : 0}"${t}/>`;
   }).join("");
+  const used = [...new Set(shown.map(e => roles[e.id]).filter(Boolean))];
+  legend.innerHTML = used.map(ro => `<span><i style="background:${ROLE_COLORS[ro] || "#fff"}"></i>${esc(roleName(ro))}</span>`).join("");
+  legend.hidden = false;
 }
 
 function drawDetail(){
@@ -329,31 +533,37 @@ function drawDetail(){
   const cand = rep.candidates.find(c => c.name === r.sel);
   const hidden = Object.entries(cand.hidden);
   const blocks = rep.roles.filter(x => x.role !== "background");
+  const best = Math.max(...rep.candidates.map(c => c.score), 1e-6);
+  const top = rep.candidates.slice(0, 6), rest = rep.candidates.slice(6);
+  const row = c => `<div class="cand ${c.name === r.sel ? "sel" : ""}">
+      <span class="nm"><b>${esc(c.name)}</b>${c.name === rep.chosen ? `<small>Engine's pick</small>` : ""}${c.overflow ? `<small>Overflows its canvas</small>` : ""}${c.problems.length ? `<small>${c.problems.length} rule issue${c.problems.length === 1 ? "" : "s"}</small>` : ""}</span>
+      <div class="bar" aria-hidden="true"><i style="width:${Math.max(0, c.score / best) * 100}%"></i></div>
+      <span class="num">${Math.round(Math.max(0, c.score) * 100)}</span>
+      ${c.name === r.sel ? `<span class="pill ok">Showing</span>` : `<button class="btn" type="button" data-use="${esc(c.name)}" aria-label="Use layout ${esc(c.name)}">Use</button>`}</div>`;
+  $("#dlg-title").innerHTML = `${esc(r.name)}<span>${r.width} × ${r.height} px</span>`;
   $("#dright").innerHTML = `
-    <h3 id="dlg-title">${esc(r.name)} · ${r.width}×${r.height}</h3>
-    <p style="margin:0;color:var(--muted)">${esc(cand.description)}</p>
-    <div class="section"><h2>Score breakdown (${cand.score.toFixed(3)})</h2>
-      <div class="parts">${Object.entries(cand.parts).map(([k, v]) => `<span>${k}</span><div class="bar" role="img" aria-label="${k} ${Math.round(v * 100)}%"><i style="width:${v * 100}%"></i></div><span>${Math.round(v * 100)}</span>`).join("")}</div>
-      <p class="hint">Our own measurable proxies for the brief's criteria, weighted ${Object.entries(rep.weights).map(([k, v]) => `${k} ${v}`).join(", ")}. Not Adobe's scorer.</p>
-    </div>
-    <div class="section"><h2>Layouts considered (${rep.candidates.length})</h2>
-      ${rep.candidates.map(c => `<div class="cand ${c.name === r.sel ? "sel" : ""}"><span><b>${esc(c.name)}</b>${c.name === rep.chosen ? " · engine's pick" : ""}${c.overflow ? " · overflows" : ""}</span>
-        <div class="bar" role="img" aria-label="score ${c.score.toFixed(3)}"><i style="width:${Math.max(0, c.score) * 100}%"></i></div>
-        ${c.name === r.sel ? `<span class="pill ok">showing</span>` : `<button class="btn" type="button" data-use="${esc(c.name)}">Use</button>`}</div>`).join("")}
-    </div>
-    <div class="section"><h2>What the engine saw</h2>
-      ${blocks.map(b => `<div class="role"><span class="sw" style="background:${ROLE_COLORS[b.role] || "#fff"}"></span><b>${esc(b.role)}</b><span>${esc(b.reason)}<br><code>${b.elements.map(esc).join(", ")}</code></span></div>`).join("")}
-      ${rep.notes.map(n => `<p class="hint">${esc(n)}</p>`).join("")}
-    </div>
-    ${hidden.length ? `<div class="section"><h2>Dropped (still in the JSON, opacity 0)</h2>${hidden.map(([id, why]) => `<div class="role"><span></span><code>${esc(id)}</code><span>${esc(why)}</span></div>`).join("")}</div>` : ""}
-    <div class="section"><h2>Hard-rule checks</h2>
-      ${cand.problems.length ? cand.problems.map(p => `<p class="hint" style="color:var(--warn)">${esc(p)}</p>`).join("") : `<p class="hint" style="color:var(--ok)">Same ids, nothing off-canvas, images in proportion, fonts and copy unchanged, text fits its box.</p>`}
-    </div>
-    <div class="section"><button class="btn" type="button" id="dl">Download this layout's JSON</button></div>`;
+    <p class="lede">${esc(cand.description)}</p>
+    ${cand.problems.length
+      ? `<div class="verdict warn" role="status"><span class="ic" aria-hidden="true">!</span><div><b>Hard-rule checks: ${cand.problems.length} issue${cand.problems.length === 1 ? "" : "s"}</b>${cand.problems.map(p => `<span class="hint">${esc(p)}</span>`).join("<br>")}</div></div>`
+      : `<div class="verdict ok" role="status"><span class="ic" aria-hidden="true">✓</span><div><b>Hard-rule checks pass</b><span class="hint">Same ids, nothing off-canvas, images in proportion, fonts and copy unchanged, text fits its box.</span></div></div>`}
+    <section class="section" aria-labelledby="h-lay"><h2 id="h-lay">Layouts considered <small>${rep.candidates.length}, best score first</small></h2>
+      ${top.map(row).join("")}
+      ${rest.length ? `<details class="more"${rest.some(c => c.name === r.sel) ? " open" : ""}><summary>${rest.length} more</summary>${rest.map(row).join("")}</details>` : ""}
+    </section>
+    <section class="section" aria-labelledby="h-score"><h2 id="h-score">Score breakdown <small>${Math.round(cand.score * 100)} overall</small></h2>
+      <div class="parts">${Object.entries(cand.parts).map(([k, v]) => `<span>${esc(PART_NAMES[k] || k)}</span><div class="bar" aria-hidden="true"><i style="width:${v * 100}%"></i></div><span class="v">${Math.round(v * 100)}</span>`).join("")}</div>
+      <p class="hint">Our own measurable proxies for the brief's criteria, not Adobe's scorer. Weights: ${Object.entries(rep.weights).map(([k, v]) => `${esc((PART_NAMES[k] || k).toLowerCase())} ${v}`).join(", ")}.</p>
+    </section>
+    <section class="section" aria-labelledby="h-saw"><h2 id="h-saw">What the engine saw <small>no labels in the input</small></h2>
+      ${blocks.map(b => `<div class="role"><span class="sw" style="background:${ROLE_COLORS[b.role] || "#fff"}"></span><b>${esc(roleName(b.role))}</b><span>${esc(b.reason)}<code>${b.elements.map(esc).join(", ")}</code></span></div>`).join("")}
+      ${rep.notes.map(n => `<p class="hint" style="margin-top:8px">${esc(n)}</p>`).join("")}
+    </section>
+    ${hidden.length ? `<section class="section" aria-labelledby="h-skip"><h2 id="h-skip">Not drawn <small>still in the JSON</small></h2>${hidden.map(([id, why]) => `<div class="role"><span></span><b>${isMissing(why) ? "Missing asset" : "Dropped"}</b><span>${esc(why)}<code>${esc(id)}</code></span></div>`).join("")}</section>` : ""}`;
   document.querySelectorAll("[data-use]").forEach(b => b.onclick = () => useCandidate(b.dataset.use, b));
   $("#dl").onclick = () => {
     const blob = new Blob([JSON.stringify(cand.design, null, 2)], {type:"application/json"});
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `chameleon_${r.width}x${r.height}_${r.sel}.json`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
   drawStage();
 }
@@ -366,16 +576,20 @@ async function useCandidate(name, btn){
     const {png} = await api("/api/render", {design: c.design});
     r.png = png; r.sel = name; view = "result";
     document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === "result"));
+    const scroll = $("#dright").scrollTop;
     drawDetail(); renderResults();
-  }catch(err){ btn.disabled = false; btn.textContent = "Retry"; alert(err.message); }
+    $("#dright").scrollTop = scroll;
+    $("#dlg-close").focus();
+  }catch(err){ btn.disabled = false; btn.textContent = "Retry"; btn.title = err.message; }
 }
 
+showEmpty();
 (async () => {
   try{
     S.meta = await api("/api/meta");
     S.sample = (S.meta.samples.find(s => s.key.includes("level3")) || S.meta.samples[0] || {}).key;
     renderSamples(); renderChips();
-  }catch(err){ $("#main").innerHTML = `<div class="banner err" role="alert">Can't reach the Studio server: ${esc(err.message)}</div>`; }
+  }catch(err){ showError("Can't reach the Studio server", err.message); }
 })();
 </script>
 </body>
