@@ -122,7 +122,8 @@ def main() -> None:
                               "result": enc(f"output/eval/{stem}__{k}.png")} for k, *_ in FORMATS},
             })
         data["pipe"] = pipeline(tmp)
-    body = Path("site/template.html").read_text().replace("__DATA__", json.dumps(data))
+    body = Path("site/template.html").read_text().replace("__CSS__", "\n" + Path("site/style.css").read_text().split("\n", 1)[1])
+    body = body.replace("__DATA__", json.dumps(data))
     body = body.replace("__CARD__", enc("docs/how-it-works.png", 1600, 900))
     logo = "data:image/svg+xml;base64," + base64.b64encode(Path("docs/logo.svg").read_bytes()).decode()
     body = body.replace("__LOGO__", logo)

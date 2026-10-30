@@ -342,8 +342,8 @@ The v0.9 design schema (`chameleon_design_schema_v0.9.json`): `text`, `image` an
 | `engine/main.py` | Starter batch runner, unchanged |
 | `tests/test_engine.py` | Hard rules × samples × formats, random designs, malformed input |
 | `tools/` | Format catalogue, rule checks, batch evaluator, stress generator, site builder, animation (`make_gif.py`) and card source (`how_it_works.html`) |
-| `studio/` | Local demo UI (stdlib server + one HTML file) |
-| `site/` | Landing page template and build |
+| `studio/` | Local demo UI: stdlib server, `index.html` and `style.css` |
+| `site/` | Landing page: `template.html`, `style.css`, `i18n.json`; built into `index.html` |
 | `samples/extra/` | Four designs the engine was not tuned on |
 | `docs/` | Contact sheets, Studio screenshots, the animation, the How it works card, logo |
 | `CHALLENGE_NOTES.md`, `BUILD_PLAN.md`, `SUBMISSION.md` | Brief analysis, plan, pitch and demo pack |
