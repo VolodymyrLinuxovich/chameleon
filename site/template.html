@@ -29,7 +29,12 @@ em{white-space:nowrap;font:italic 400 1.06em/1 var(--serif);letter-spacing:-.01e
 .skip:focus{top:12px}
 
 /* header */
-header{border-bottom:1px solid var(--rule)}
+header{border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:50;background:rgba(10,11,11,.82);-webkit-backdrop-filter:saturate(1.4) blur(12px);backdrop-filter:saturate(1.4) blur(12px)}
+.hdr-r{display:flex;align-items:center;gap:14px}
+.lang{display:flex;gap:2px;padding:3px;border:1px solid var(--rule-2);border-radius:999px}
+.lang button{font:600 .75rem/1 var(--sans);letter-spacing:.02em;color:var(--ink-2);background:transparent;border:0;border-radius:999px;padding:7px 10px;min-height:30px;cursor:pointer}
+.lang button:hover{color:var(--ink)}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
 header .wrap{display:flex;justify-content:space-between;align-items:center;height:60px}
 .brand{font-weight:600;letter-spacing:-.01em;display:flex;gap:10px;align-items:center;text-decoration:none;color:inherit}
 .brand img{width:26px;height:26px;display:block;border-radius:6px}
@@ -39,7 +44,7 @@ nav a{font-size:var(--t-s);color:var(--ink-2);text-decoration:none;padding:7px 1
 nav a:hover{color:var(--ink);background:var(--raise)}
 
 /* sections: centred head, then the visual in its own band below */
-section{padding-block:var(--sec);scroll-margin-top:0}
+section{padding-block:var(--sec);scroll-margin-top:60px}
 section + section > .wrap::before{content:"";display:block;height:1px;background:var(--rule);margin-top:calc(-1 * var(--sec));margin-bottom:var(--sec)}
 .head{text-align:center;max-width:720px;margin:0 auto}
 h2{font-size:var(--t-h2);line-height:1.05;letter-spacing:-.035em}
@@ -190,7 +195,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:10px 32px;flex-wrap:
 <header>
   <div class="wrap">
     <a class="brand" href="#top"><img src="__LOGO__" alt="" width="26" height="26">Chameleon</a>
-    <nav aria-label="Sections"><a href="#problem">Problem</a><a href="#compare">Solution</a><a href="#how">How it works</a><a href="#run">Run it</a></nav>
+    <div class="hdr-r"><nav aria-label="Sections"><a href="#problem">Problem</a><a href="#compare">Solution</a><a href="#how">How it works</a><a href="#vs">Compare</a><a href="#run">Run it</a></nav><div class="lang" role="group" aria-label="Language"><button type="button" lang="en" data-lang="en" aria-label="English">EN</button><button type="button" lang="es" data-lang="es" aria-label="Español">ES</button><button type="button" lang="fr" data-lang="fr" aria-label="Français">FR</button></div></div>
   </div>
 </header>
 
@@ -352,12 +357,34 @@ const $ = id => document.getElementById(id);
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const fmt = k => DATA.formats.find(x => x.key === k);
 
+/* Language: EN / ES / FR. The page is written in English; each translatable
+   element keeps its English HTML in data-en and is swapped from I18N. */
+const I18N = __I18N__;
+let LANG = "en";
+const onLang = [];
+const t = en => (I18N[LANG] || {})[en] || (I18N.en || {})[en] || en;
+const DESIGN_NAMES = {advanced: "Level 3 · Advanced", core: "Level 2 · Core", event: "Event poster"};
+const dl = d => t(DESIGN_NAMES[d.key] || d.label);
+const T_SEL = "nav a, h1 span, h1 em, .intro .lead, .actions a, section h2, section .lead, .steps h3, .steps p, figcaption, .nums span, .vs th, .vs td, .vs-note, .term .hint, .tabs button, #copy, .limits li, footer span, .tag, [data-t]";
+function applyLang(lang){
+  LANG = I18N[lang] || lang === "en" ? lang : "en";
+  document.documentElement.lang = LANG;
+  document.querySelectorAll(T_SEL).forEach(el => {
+    if(el.dataset.en === undefined) el.dataset.en = el.innerHTML.trim();
+    el.innerHTML = t(el.dataset.en);
+  });
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === LANG));
+  onLang.forEach(f => f());
+  try { localStorage.setItem("lang", LANG); } catch(e) {}
+}
+document.querySelectorAll(".lang button").forEach(b => b.onclick = () => applyLang(b.dataset.lang));
+
 /* Hero: fade out, reshape the frame, fade the real result in. */
 (() => {
   // Rotate through every design, not just one poster: each design shows
   // its original, then two very different canvases.
   const plan = {advanced: ["ig_story", "li_banner"], core: ["yt_thumb", "leaderboard"], event: ["skyscraper", "billboard"]};
-  const seq = DATA.designs.flatMap(d => [{name:`${d.label} · original`, w:d.canvas.width, h:d.canvas.height, src:d.original}]
+  const seq = DATA.designs.flatMap(d => [{name:() => `${dl(d)} · ${t("original")}`, w:d.canvas.width, h:d.canvas.height, src:d.original}]
     .concat((plan[d.key] || ["ig_story", "li_banner"]).map(k => {
       const f = fmt(k); return {name:f.name, w:f.w, h:f.h, src:d.pairs[k].result};
     })));
@@ -369,7 +396,8 @@ const fmt = k => DATA.formats.find(x => x.key === k);
     const s = Math.min(bw / w, bh / h); return [Math.round(w * s), Math.round(h * s)];
   };
   const size = it => { const [w, h] = fit(it.w, it.h); art.style.width = w + "px"; art.style.height = h + "px"; };
-  const label = it => { $("dim").textContent = `${it.w} × ${it.h}`; $("fmt").textContent = it.name; };
+  const label = it => { $("dim").textContent = `${it.w} × ${it.h}`; $("fmt").textContent = typeof it.name === "function" ? it.name() : it.name; };
+  onLang.push(() => label(seq[i]));
   function show(k){
     const it = seq[k];
     art.classList.add("swap");
@@ -392,10 +420,10 @@ const fmt = k => DATA.formats.find(x => x.key === k);
     ["ig_story", "Shapes lose their proportions", "The product and the logo are pulled tall. Round things stop being round."],
     ["leaderboard", "Nothing can be read", "On a thin banner every line collapses into a stripe. The message and the button disappear."],
   ];
-  $("trio").innerHTML = items.map(([k, t, p], n) => { const f = fmt(k); return `
+  $("trio").innerHTML = items.map(([k, h, p], n) => { const f = fmt(k); return `
     <article class="rv" style="--i:${n}">
       <div class="pic"><span class="size">${f.w} × ${f.h}</span><img src="${d.pairs[k].stretch}" alt="${d.label} stretched to ${f.name}, ${f.w} by ${f.h}"></div>
-      <h3>${t}</h3><p>${p}</p>
+      <h3 data-t>${h}</h3><p data-t>${p}</p>
     </article>`; }).join("");
 })();
 
@@ -411,11 +439,12 @@ const fmt = k => DATA.formats.find(x => x.key === k);
     $("cr").onload = () => frame.classList.remove("load");
     $("cs").src = p.stretch; $("cr").src = p.result;
     $("cs").alt = `${d.label} stretched to ${f.w} by ${f.h}`; $("cr").alt = `${d.label} rebuilt for ${f.w} by ${f.h}`;
-    $("dims").innerHTML = `<b>${d.label}</b> on a <b>${f.name}</b>, ${f.w} × ${f.h}. Stretch on the left, Chameleon on the right.`;
+    $("dims").innerHTML = t("dims").replace("{d}", `<b>${dl(d)}</b>`).replace("{f}", `<b>${f.name}</b>`).replace("{w}", f.w).replace("{h}", f.h);
     document.querySelectorAll("#designs button").forEach((b, i) => b.setAttribute("aria-pressed", i === cd));
     document.querySelectorAll("#formats button").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === cf));
   }
-  DATA.designs.forEach((d, i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = d.label; b.title = d.desc; b.onclick = () => { cd = i; draw(); }; $("designs").appendChild(b); });
+  DATA.designs.forEach((d, i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = dl(d); b.title = d.desc; b.onclick = () => { cd = i; draw(); }; $("designs").appendChild(b); });
+  onLang.push(() => { document.querySelectorAll("#designs button").forEach((b, i) => b.textContent = dl(DATA.designs[i])); draw(); });
   fkeys.forEach(k => { const f = fmt(k); const b = document.createElement("button"); b.type = "button"; b.dataset.k = k; b.textContent = `${f.w}×${f.h}`; b.title = f.name; b.setAttribute("aria-label", `${f.name}, ${f.w} by ${f.h}`); b.onclick = () => { cf = k; draw(); }; $("formats").appendChild(b); });
   let drag = false;
   const at = e => { const r = frame.getBoundingClientRect(); set((e.clientX - r.left) / r.width * 100); };
@@ -449,9 +478,9 @@ const fmt = k => DATA.formats.find(x => x.key === k);
     const pre = document.querySelector('[role="tabpanel"]:not([hidden]) pre');
     const text = [...pre.childNodes].filter(n => !(n.classList && (n.classList.contains("p") || n.classList.contains("c"))))
       .map(n => n.textContent).join("").replace(/ +\n/g, "\n").trim();
-    try { await navigator.clipboard.writeText(text); $("copy").textContent = "Copied"; }
+    try { await navigator.clipboard.writeText(text); $("copy").textContent = t("Copied"); }
     catch { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $("copy").textContent = "Selected"; }
-    setTimeout(() => $("copy").textContent = "Copy", 1600);
+    setTimeout(() => $("copy").textContent = t("Copy"), 1600);
   });
 })();
 
@@ -475,5 +504,13 @@ const fmt = k => DATA.formats.find(x => x.key === k);
     const t = document.querySelector(a.getAttribute("href")); if(!t) return;
     t.querySelectorAll(".rv.pre").forEach(el => { el.style.transition = "none"; el.classList.remove("pre"); io.unobserve(el); void el.offsetHeight; el.style.transition = ""; });
   }));
+})();
+
+/* Pick the saved language, or the browser's if it is Spanish or French. */
+(() => {
+  let saved = null;
+  try { saved = localStorage.getItem("lang"); } catch(e) {}
+  const nav = (navigator.language || "en").slice(0, 2);
+  applyLang(saved || (["es", "fr"].includes(nav) ? nav : "en"));
 })();
 </script>

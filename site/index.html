@@ -35,7 +35,12 @@ em{white-space:nowrap;font:italic 400 1.06em/1 var(--serif);letter-spacing:-.01e
 .skip:focus{top:12px}
 
 /* header */
-header{border-bottom:1px solid var(--rule)}
+header{border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:50;background:rgba(10,11,11,.82);-webkit-backdrop-filter:saturate(1.4) blur(12px);backdrop-filter:saturate(1.4) blur(12px)}
+.hdr-r{display:flex;align-items:center;gap:14px}
+.lang{display:flex;gap:2px;padding:3px;border:1px solid var(--rule-2);border-radius:999px}
+.lang button{font:600 .75rem/1 var(--sans);letter-spacing:.02em;color:var(--ink-2);background:transparent;border:0;border-radius:999px;padding:7px 10px;min-height:30px;cursor:pointer}
+.lang button:hover{color:var(--ink)}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
 header .wrap{display:flex;justify-content:space-between;align-items:center;height:60px}
 .brand{font-weight:600;letter-spacing:-.01em;display:flex;gap:10px;align-items:center;text-decoration:none;color:inherit}
 .brand img{width:26px;height:26px;display:block;border-radius:6px}
@@ -45,7 +50,7 @@ nav a{font-size:var(--t-s);color:var(--ink-2);text-decoration:none;padding:7px 1
 nav a:hover{color:var(--ink);background:var(--raise)}
 
 /* sections: centred head, then the visual in its own band below */
-section{padding-block:var(--sec);scroll-margin-top:0}
+section{padding-block:var(--sec);scroll-margin-top:60px}
 section + section > .wrap::before{content:"";display:block;height:1px;background:var(--rule);margin-top:calc(-1 * var(--sec));margin-bottom:var(--sec)}
 .head{text-align:center;max-width:720px;margin:0 auto}
 h2{font-size:var(--t-h2);line-height:1.05;letter-spacing:-.035em}
@@ -199,7 +204,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:10px 32px;flex-wrap:
 <header>
   <div class="wrap">
     <a class="brand" href="#top"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIiB2aWV3Qm94PSIwIDAgMjQwIDI0MCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJDaGFtZWxlb24gbG9nbyI+CiAgPHJlY3Qgd2lkdGg9IjI0MCIgaGVpZ2h0PSIyNDAiIHJ4PSI1MiIgZmlsbD0iIzFFMUEyMiIvPgogIDwhLS0gT25lIGRlc2lnbiwgdGhyZWUgY2FudmFzZXM6IHBvcnRyYWl0LCBzcXVhcmUsIGJhbm5lciAtLT4KICA8cmVjdCB4PSI2MiIgeT0iNDAiIHdpZHRoPSI3MiIgaGVpZ2h0PSIxMjgiIHJ4PSIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRjA3MDNGIiBzdHJva2Utd2lkdGg9IjgiIG9wYWNpdHk9Ii40NSIvPgogIDxyZWN0IHg9Ijc4IiB5PSI3OCIgd2lkdGg9IjEwNCIgaGVpZ2h0PSIxMDQiIHJ4PSIxMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRjA3MDNGIiBzdHJva2Utd2lkdGg9IjgiIG9wYWNpdHk9Ii43NSIvPgogIDxyZWN0IHg9IjQwIiB5PSIxNTAiIHdpZHRoPSIxNjAiIGhlaWdodD0iNTAiIHJ4PSIxMCIgZmlsbD0iI0YwNzAzRiIvPgogIDxyZWN0IHg9IjU2IiB5PSIxNjYiIHdpZHRoPSI1OCIgaGVpZ2h0PSI4IiByeD0iNCIgZmlsbD0iIzFFMUEyMiIvPgogIDxyZWN0IHg9IjU2IiB5PSIxODAiIHdpZHRoPSIzNiIgaGVpZ2h0PSI2IiByeD0iMyIgZmlsbD0iIzFFMUEyMiIgb3BhY2l0eT0iLjYiLz4KICA8cmVjdCB4PSIxNTAiIHk9IjE2NCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjIyIiByeD0iNiIgZmlsbD0iIzFFMUEyMiIvPgo8L3N2Zz4K" alt="" width="26" height="26">Chameleon</a>
-    <nav aria-label="Sections"><a href="#problem">Problem</a><a href="#compare">Solution</a><a href="#how">How it works</a><a href="#run">Run it</a></nav>
+    <div class="hdr-r"><nav aria-label="Sections"><a href="#problem">Problem</a><a href="#compare">Solution</a><a href="#how">How it works</a><a href="#vs">Compare</a><a href="#run">Run it</a></nav><div class="lang" role="group" aria-label="Language"><button type="button" lang="en" data-lang="en" aria-label="English">EN</button><button type="button" lang="es" data-lang="es" aria-label="Español">ES</button><button type="button" lang="fr" data-lang="fr" aria-label="Français">FR</button></div></div>
   </div>
 </header>
 
@@ -361,12 +366,194 @@ const $ = id => document.getElementById(id);
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const fmt = k => DATA.formats.find(x => x.key === k);
 
+/* Language: EN / ES / FR. The page is written in English; each translatable
+   element keeps its English HTML in data-en and is swapped from I18N. */
+const I18N = {
+ "en": {
+  "dims": "{d} on a {f}, {w} × {h}. Stretch on the left, Chameleon on the right."
+ },
+ "es": {
+  "Problem": "Problema",
+  "Solution": "Solución",
+  "How it works": "Cómo funciona",
+  "Compare": "Comparar",
+  "Run it": "Ejecutar",
+  "Same design.": "El mismo diseño.",
+  "Every canvas.": "Cualquier lienzo.",
+  "Chameleon rebuilds a finished design for any size. It moves the furniture instead of stretching the photo.": "Chameleon reconstruye un diseño terminado para cualquier tamaño. Mueve los muebles en lugar de estirar la foto.",
+  "Try the comparison": "Ver la comparación",
+  "Run it <span aria-hidden=\"true\">→</span>": "Ejecutar <span aria-hidden=\"true\">→</span>",
+  "Stretching a design <em>breaks it</em>": "Estirar un diseño <em>lo rompe</em>",
+  "A plain resize scales every element to the new shape. Here is one poster, stretched to three common sizes.": "Un redimensionado simple escala cada elemento a la nueva forma. Aquí tienes un cartel estirado a tres tamaños habituales.",
+  "Type gets squashed": "El texto se aplasta",
+  "Letters are pulled wide and short. The headline stops looking like the brand's font.": "Las letras quedan anchas y bajas. El titular deja de parecer la tipografía de la marca.",
+  "Shapes lose their proportions": "Las formas pierden sus proporciones",
+  "The product and the logo are pulled tall. Round things stop being round.": "El producto y el logo se alargan. Lo redondo deja de ser redondo.",
+  "Nothing can be read": "No se puede leer nada",
+  "On a thin banner every line collapses into a stripe. The message and the button disappear.": "En un banner fino cada línea se convierte en una raya. El mensaje y el botón desaparecen.",
+  "Chameleon <em>rebuilds it</em><br>for the new canvas": "Chameleon <em>lo reconstruye</em><br>para el nuevo lienzo",
+  "Drag across the image. The left side is what a plain resize does. The right side is Chameleon: same elements, same copy, laid out again for the new shape.": "Arrastra sobre la imagen. A la izquierda, lo que hace un redimensionado simple. A la derecha, Chameleon: los mismos elementos y el mismo texto, colocados de nuevo para la nueva forma.",
+  "Stretch": "Estirado",
+  "Chameleon": "Chameleon",
+  "Read the design. <em>Rebuild it.</em>": "Lee el diseño. <em>Reconstrúyelo.</em>",
+  "Read the structure": "Lee la estructura",
+  "The input has no labels. Size, position and grouping tell it which piece is the headline, logo, product and button.": "La entrada no tiene etiquetas. El tamaño, la posición y los grupos le dicen qué pieza es el titular, el logo, el producto y el botón.",
+  "Try real layouts": "Prueba diseños reales",
+  "A column, a side-by-side split, three columns or a single row, each in the original reading order.": "Una columna, dos lados, tres columnas o una sola fila, siempre en el orden de lectura original.",
+  "Measure and score": "Mide y puntúa",
+  "Text is measured with the official renderer's fonts. Each layout is scored on readability, hierarchy, collisions and space.": "El texto se mide con las fuentes del renderizador oficial. Cada diseño se puntúa por legibilidad, jerarquía, choques y espacio.",
+  "Pick and explain": "Elige y explica",
+  "The best layout wins, and every decision is recorded so you can see why.": "Gana el mejor diseño, y cada decisión queda registrada para que veas por qué.",
+  "The Studio in use, recorded live: adapt one design to seven canvases, hold to compare with stretch, then see why each layout won.": "El Studio en uso, grabado en vivo: adapta un diseño a siete lienzos, mantén pulsado para compararlo con el estirado y mira por qué ganó cada diseño.",
+  "Tested on designs <em>it never saw</em>": "Probado con diseños <em>que nunca vio</em>",
+  "resizes of 150 random realistic designs": "redimensionados de 150 diseños realistas aleatorios",
+  "structural rule problems in those runs": "problemas de reglas estructurales en esas pruebas",
+  "automated tests passing": "pruebas automáticas superadas",
+  "platform formats, 1080×1920 down to 320×50": "formatos de plataforma, de 1080×1920 a 320×50",
+  "Why not just <em>use a resize tool</em>": "¿Por qué no <em>usar un redimensionador</em>?",
+  "<span class=\"sr\">Tool</span>": "<span class=\"sr\">Herramienta</span>",
+  "Keeps proportions": "Mantiene proporciones",
+  "Rearranges for the new shape": "Reorganiza para la nueva forma",
+  "Every element kept": "Conserva todos los elementos",
+  "Explains each choice": "Explica cada decisión",
+  "No setup per design": "Sin configurar cada diseño",
+  "Offline and open": "Sin conexión y abierto",
+  "Stretch to the new size": "Estirar al nuevo tamaño",
+  "No": "No",
+  "Yes": "Sí",
+  "Fit or crop": "Ajustar o recortar",
+  "Canva Magic Switch": "Canva Magic Switch",
+  "Partly": "En parte",
+  "Not stated": "No indicado",
+  "Adobe Express Resize": "Adobe Express Resize",
+  "Figma constraints": "Restricciones de Figma",
+  "Once set up": "Tras configurarlo",
+  "Yes, scored": "Sí, puntuado",
+  "Yes, tested": "Sí, probado",
+  "Canva and Adobe Express move elements automatically but don't publish how. The challenge brief calls resizing in Express an unsolved problem. Other rows come from public product pages as of October 2026. This compares features, not results.": "Canva y Adobe Express mueven elementos automáticamente, pero no publican cómo. El enunciado del reto llama al redimensionado en Express un problema sin resolver. Las demás filas salen de páginas públicas de producto a octubre de 2026. Esto compara funciones, no resultados.",
+  "Stage one runs every entry in the starter's Python Docker image. Run it the same way, or from a virtual environment.": "La primera fase ejecuta cada propuesta en la imagen Docker de Python del kit inicial. Ejecútalo igual, o desde un entorno virtual.",
+  "Docker": "Docker",
+  "Python": "Python",
+  "Copy": "Copiar",
+  "Copied": "Copiado",
+  "Offline, with no network, like stage one.": "Sin conexión, sin red, como en la primera fase.",
+  "Python 3.10 or newer, inside the starter repo.": "Python 3.10 o posterior, dentro del repositorio inicial.",
+  "Limits": "Límites",
+  "<b>Long copy stays small</b>Every element stays visible and copy is never rewritten, so very long copy gets small type on tiny banners.": "<b>El texto largo queda pequeño</b>Todo elemento sigue visible y el texto nunca se reescribe, así que un texto muy largo sale con letra pequeña en banners diminutos.",
+  "<b>Roles are inferred</b>The engine reads roles from size and position. An unusual design can be misread, and the result is then plainer.": "<b>Los roles se deducen</b>El motor deduce los roles por tamaño y posición. Un diseño poco común puede leerse mal, y el resultado es más simple.",
+  "<b>Our numbers</b>The figures above come from our own checks, not Adobe's scorer.": "<b>Nuestras cifras</b>Las cifras de arriba vienen de nuestras propias pruebas, no del evaluador de Adobe.",
+  "Independent student entry for the Project CHAMELEON challenge. Not affiliated with or endorsed by Adobe.": "Propuesta estudiantil independiente para el reto Project CHAMELEON. Sin vínculo ni respaldo de Adobe.",
+  "Renders by the official cr-renderer": "Imágenes del cr-renderer oficial",
+  "original": "original",
+  "Level 3 · Advanced": "Nivel 3 · Avanzado",
+  "Level 2 · Core": "Nivel 2 · Básico",
+  "Event poster": "Cartel de evento",
+  "dims": "{d} en un {f}, {w} × {h}. Estirado a la izquierda, Chameleon a la derecha."
+ },
+ "fr": {
+  "Problem": "Problème",
+  "Solution": "Solution",
+  "How it works": "Fonctionnement",
+  "Compare": "Comparer",
+  "Run it": "Lancer",
+  "Same design.": "Le même design.",
+  "Every canvas.": "Tous les formats.",
+  "Chameleon rebuilds a finished design for any size. It moves the furniture instead of stretching the photo.": "Chameleon reconstruit un design fini pour n'importe quelle taille. Il déplace les meubles au lieu d'étirer la photo.",
+  "Try the comparison": "Voir la comparaison",
+  "Run it <span aria-hidden=\"true\">→</span>": "Lancer <span aria-hidden=\"true\">→</span>",
+  "Stretching a design <em>breaks it</em>": "Étirer un design <em>le casse</em>",
+  "A plain resize scales every element to the new shape. Here is one poster, stretched to three common sizes.": "Un simple redimensionnement étire chaque élément vers la nouvelle forme. Voici une affiche étirée à trois tailles courantes.",
+  "Type gets squashed": "Le texte s'écrase",
+  "Letters are pulled wide and short. The headline stops looking like the brand's font.": "Les lettres deviennent larges et basses. Le titre ne ressemble plus à la police de la marque.",
+  "Shapes lose their proportions": "Les formes perdent leurs proportions",
+  "The product and the logo are pulled tall. Round things stop being round.": "Le produit et le logo sont étirés en hauteur. Ce qui est rond ne l'est plus.",
+  "Nothing can be read": "Plus rien n'est lisible",
+  "On a thin banner every line collapses into a stripe. The message and the button disappear.": "Sur une bannière fine, chaque ligne devient un trait. Le message et le bouton disparaissent.",
+  "Chameleon <em>rebuilds it</em><br>for the new canvas": "Chameleon <em>le reconstruit</em><br>pour le nouveau format",
+  "Drag across the image. The left side is what a plain resize does. The right side is Chameleon: same elements, same copy, laid out again for the new shape.": "Faites glisser sur l'image. À gauche, ce que fait un simple redimensionnement. À droite, Chameleon : les mêmes éléments, le même texte, remis en page pour la nouvelle forme.",
+  "Stretch": "Étiré",
+  "Chameleon": "Chameleon",
+  "Read the design. <em>Rebuild it.</em>": "Lire le design. <em>Le reconstruire.</em>",
+  "Read the structure": "Lire la structure",
+  "The input has no labels. Size, position and grouping tell it which piece is the headline, logo, product and button.": "L'entrée n'a aucune étiquette. La taille, la position et les groupes lui indiquent le titre, le logo, le produit et le bouton.",
+  "Try real layouts": "Essayer de vraies mises en page",
+  "A column, a side-by-side split, three columns or a single row, each in the original reading order.": "Une colonne, deux côtés, trois colonnes ou une seule ligne, toujours dans l'ordre de lecture d'origine.",
+  "Measure and score": "Mesurer et noter",
+  "Text is measured with the official renderer's fonts. Each layout is scored on readability, hierarchy, collisions and space.": "Le texte est mesuré avec les polices du moteur de rendu officiel. Chaque mise en page est notée sur la lisibilité, la hiérarchie, les chevauchements et l'espace.",
+  "Pick and explain": "Choisir et expliquer",
+  "The best layout wins, and every decision is recorded so you can see why.": "La meilleure mise en page gagne, et chaque décision est notée pour que vous voyiez pourquoi.",
+  "The Studio in use, recorded live: adapt one design to seven canvases, hold to compare with stretch, then see why each layout won.": "Le Studio en action, enregistré en direct : adapter un design à sept formats, maintenir pour comparer avec l'étirement, puis voir pourquoi chaque mise en page a gagné.",
+  "Tested on designs <em>it never saw</em>": "Testé sur des designs <em>jamais vus</em>",
+  "resizes of 150 random realistic designs": "redimensionnements de 150 designs réalistes aléatoires",
+  "structural rule problems in those runs": "problèmes de règles structurelles sur ces essais",
+  "automated tests passing": "tests automatisés réussis",
+  "platform formats, 1080×1920 down to 320×50": "formats de plateforme, de 1080×1920 à 320×50",
+  "Why not just <em>use a resize tool</em>": "Pourquoi pas <em>un simple outil de redimensionnement</em>",
+  "<span class=\"sr\">Tool</span>": "<span class=\"sr\">Outil</span>",
+  "Keeps proportions": "Garde les proportions",
+  "Rearranges for the new shape": "Réorganise pour la nouvelle forme",
+  "Every element kept": "Garde chaque élément",
+  "Explains each choice": "Explique chaque choix",
+  "No setup per design": "Aucun réglage par design",
+  "Offline and open": "Hors ligne et ouvert",
+  "Stretch to the new size": "Étirer à la nouvelle taille",
+  "No": "Non",
+  "Yes": "Oui",
+  "Fit or crop": "Ajuster ou recadrer",
+  "Canva Magic Switch": "Canva Magic Switch",
+  "Partly": "En partie",
+  "Not stated": "Non indiqué",
+  "Adobe Express Resize": "Adobe Express Resize",
+  "Figma constraints": "Contraintes Figma",
+  "Once set up": "Une fois réglé",
+  "Yes, scored": "Oui, noté",
+  "Yes, tested": "Oui, testé",
+  "Canva and Adobe Express move elements automatically but don't publish how. The challenge brief calls resizing in Express an unsolved problem. Other rows come from public product pages as of October 2026. This compares features, not results.": "Canva et Adobe Express déplacent les éléments automatiquement, sans publier comment. L'énoncé du défi qualifie le redimensionnement dans Express de problème non résolu. Les autres lignes viennent des pages produit publiques en octobre 2026. On compare des fonctions, pas des résultats.",
+  "Stage one runs every entry in the starter's Python Docker image. Run it the same way, or from a virtual environment.": "La première étape lance chaque projet dans l'image Docker Python du kit de départ. Lancez-le de la même façon, ou depuis un environnement virtuel.",
+  "Docker": "Docker",
+  "Python": "Python",
+  "Copy": "Copier",
+  "Copied": "Copié",
+  "Offline, with no network, like stage one.": "Hors ligne, sans réseau, comme à la première étape.",
+  "Python 3.10 or newer, inside the starter repo.": "Python 3.10 ou plus récent, dans le dépôt de départ.",
+  "Limits": "Limites",
+  "<b>Long copy stays small</b>Every element stays visible and copy is never rewritten, so very long copy gets small type on tiny banners.": "<b>Le texte long reste petit</b>Chaque élément reste visible et le texte n'est jamais réécrit, donc un texte très long devient petit sur les bannières minuscules.",
+  "<b>Roles are inferred</b>The engine reads roles from size and position. An unusual design can be misread, and the result is then plainer.": "<b>Les rôles sont déduits</b>Le moteur déduit les rôles de la taille et de la position. Un design inhabituel peut être mal lu, et le résultat est alors plus simple.",
+  "<b>Our numbers</b>The figures above come from our own checks, not Adobe's scorer.": "<b>Nos chiffres</b>Les chiffres ci-dessus viennent de nos propres vérifications, pas de l'évaluateur d'Adobe.",
+  "Independent student entry for the Project CHAMELEON challenge. Not affiliated with or endorsed by Adobe.": "Projet étudiant indépendant pour le défi Project CHAMELEON. Ni affilié à Adobe ni approuvé par Adobe.",
+  "Renders by the official cr-renderer": "Rendus par le cr-renderer officiel",
+  "original": "original",
+  "Level 3 · Advanced": "Niveau 3 · Avancé",
+  "Level 2 · Core": "Niveau 2 · Essentiel",
+  "Event poster": "Affiche d'événement",
+  "dims": "{d} sur un format {f}, {w} × {h}. Étiré à gauche, Chameleon à droite."
+ }
+};
+let LANG = "en";
+const onLang = [];
+const t = en => (I18N[LANG] || {})[en] || (I18N.en || {})[en] || en;
+const DESIGN_NAMES = {advanced: "Level 3 · Advanced", core: "Level 2 · Core", event: "Event poster"};
+const dl = d => t(DESIGN_NAMES[d.key] || d.label);
+const T_SEL = "nav a, h1 span, h1 em, .intro .lead, .actions a, section h2, section .lead, .steps h3, .steps p, figcaption, .nums span, .vs th, .vs td, .vs-note, .term .hint, .tabs button, #copy, .limits li, footer span, .tag, [data-t]";
+function applyLang(lang){
+  LANG = I18N[lang] || lang === "en" ? lang : "en";
+  document.documentElement.lang = LANG;
+  document.querySelectorAll(T_SEL).forEach(el => {
+    if(el.dataset.en === undefined) el.dataset.en = el.innerHTML.trim();
+    el.innerHTML = t(el.dataset.en);
+  });
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === LANG));
+  onLang.forEach(f => f());
+  try { localStorage.setItem("lang", LANG); } catch(e) {}
+}
+document.querySelectorAll(".lang button").forEach(b => b.onclick = () => applyLang(b.dataset.lang));
+
 /* Hero: fade out, reshape the frame, fade the real result in. */
 (() => {
   // Rotate through every design, not just one poster: each design shows
   // its original, then two very different canvases.
   const plan = {advanced: ["ig_story", "li_banner"], core: ["yt_thumb", "leaderboard"], event: ["skyscraper", "billboard"]};
-  const seq = DATA.designs.flatMap(d => [{name:`${d.label} · original`, w:d.canvas.width, h:d.canvas.height, src:d.original}]
+  const seq = DATA.designs.flatMap(d => [{name:() => `${dl(d)} · ${t("original")}`, w:d.canvas.width, h:d.canvas.height, src:d.original}]
     .concat((plan[d.key] || ["ig_story", "li_banner"]).map(k => {
       const f = fmt(k); return {name:f.name, w:f.w, h:f.h, src:d.pairs[k].result};
     })));
@@ -378,7 +565,8 @@ const fmt = k => DATA.formats.find(x => x.key === k);
     const s = Math.min(bw / w, bh / h); return [Math.round(w * s), Math.round(h * s)];
   };
   const size = it => { const [w, h] = fit(it.w, it.h); art.style.width = w + "px"; art.style.height = h + "px"; };
-  const label = it => { $("dim").textContent = `${it.w} × ${it.h}`; $("fmt").textContent = it.name; };
+  const label = it => { $("dim").textContent = `${it.w} × ${it.h}`; $("fmt").textContent = typeof it.name === "function" ? it.name() : it.name; };
+  onLang.push(() => label(seq[i]));
   function show(k){
     const it = seq[k];
     art.classList.add("swap");
@@ -401,10 +589,10 @@ const fmt = k => DATA.formats.find(x => x.key === k);
     ["ig_story", "Shapes lose their proportions", "The product and the logo are pulled tall. Round things stop being round."],
     ["leaderboard", "Nothing can be read", "On a thin banner every line collapses into a stripe. The message and the button disappear."],
   ];
-  $("trio").innerHTML = items.map(([k, t, p], n) => { const f = fmt(k); return `
+  $("trio").innerHTML = items.map(([k, h, p], n) => { const f = fmt(k); return `
     <article class="rv" style="--i:${n}">
       <div class="pic"><span class="size">${f.w} × ${f.h}</span><img src="${d.pairs[k].stretch}" alt="${d.label} stretched to ${f.name}, ${f.w} by ${f.h}"></div>
-      <h3>${t}</h3><p>${p}</p>
+      <h3 data-t>${h}</h3><p data-t>${p}</p>
     </article>`; }).join("");
 })();
 
@@ -420,11 +608,12 @@ const fmt = k => DATA.formats.find(x => x.key === k);
     $("cr").onload = () => frame.classList.remove("load");
     $("cs").src = p.stretch; $("cr").src = p.result;
     $("cs").alt = `${d.label} stretched to ${f.w} by ${f.h}`; $("cr").alt = `${d.label} rebuilt for ${f.w} by ${f.h}`;
-    $("dims").innerHTML = `<b>${d.label}</b> on a <b>${f.name}</b>, ${f.w} × ${f.h}. Stretch on the left, Chameleon on the right.`;
+    $("dims").innerHTML = t("dims").replace("{d}", `<b>${dl(d)}</b>`).replace("{f}", `<b>${f.name}</b>`).replace("{w}", f.w).replace("{h}", f.h);
     document.querySelectorAll("#designs button").forEach((b, i) => b.setAttribute("aria-pressed", i === cd));
     document.querySelectorAll("#formats button").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === cf));
   }
-  DATA.designs.forEach((d, i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = d.label; b.title = d.desc; b.onclick = () => { cd = i; draw(); }; $("designs").appendChild(b); });
+  DATA.designs.forEach((d, i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = dl(d); b.title = d.desc; b.onclick = () => { cd = i; draw(); }; $("designs").appendChild(b); });
+  onLang.push(() => { document.querySelectorAll("#designs button").forEach((b, i) => b.textContent = dl(DATA.designs[i])); draw(); });
   fkeys.forEach(k => { const f = fmt(k); const b = document.createElement("button"); b.type = "button"; b.dataset.k = k; b.textContent = `${f.w}×${f.h}`; b.title = f.name; b.setAttribute("aria-label", `${f.name}, ${f.w} by ${f.h}`); b.onclick = () => { cf = k; draw(); }; $("formats").appendChild(b); });
   let drag = false;
   const at = e => { const r = frame.getBoundingClientRect(); set((e.clientX - r.left) / r.width * 100); };
@@ -458,9 +647,9 @@ const fmt = k => DATA.formats.find(x => x.key === k);
     const pre = document.querySelector('[role="tabpanel"]:not([hidden]) pre');
     const text = [...pre.childNodes].filter(n => !(n.classList && (n.classList.contains("p") || n.classList.contains("c"))))
       .map(n => n.textContent).join("").replace(/ +\n/g, "\n").trim();
-    try { await navigator.clipboard.writeText(text); $("copy").textContent = "Copied"; }
+    try { await navigator.clipboard.writeText(text); $("copy").textContent = t("Copied"); }
     catch { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $("copy").textContent = "Selected"; }
-    setTimeout(() => $("copy").textContent = "Copy", 1600);
+    setTimeout(() => $("copy").textContent = t("Copy"), 1600);
   });
 })();
 
@@ -484,6 +673,14 @@ const fmt = k => DATA.formats.find(x => x.key === k);
     const t = document.querySelector(a.getAttribute("href")); if(!t) return;
     t.querySelectorAll(".rv.pre").forEach(el => { el.style.transition = "none"; el.classList.remove("pre"); io.unobserve(el); void el.offsetHeight; el.style.transition = ""; });
   }));
+})();
+
+/* Pick the saved language, or the browser's if it is Spanish or French. */
+(() => {
+  let saved = null;
+  try { saved = localStorage.getItem("lang"); } catch(e) {}
+  const nav = (navigator.language || "en").slice(0, 2);
+  applyLang(saved || (["es", "fr"].includes(nav) ? nav : "en"));
 })();
 </script>
 

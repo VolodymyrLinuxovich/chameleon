@@ -63,6 +63,7 @@ def main() -> None:
     body = body.replace("__CARD__", enc("docs/how-it-works.png", 1600, 900))
     logo = "data:image/svg+xml;base64," + base64.b64encode(Path("docs/logo.svg").read_bytes()).decode()
     body = body.replace("__LOGO__", logo)
+    body = body.replace("__I18N__", Path("site/i18n.json").read_text())
     shutil.copyfile("docs/studio.gif", "site/studio.gif")
     title_end = body.index("</style>") + len("</style>")
     page = HEAD + body[:title_end] + "\n</head>\n<body>\n" + body[title_end:] + "\n</body>\n</html>\n"
