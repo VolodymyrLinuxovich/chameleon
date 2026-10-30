@@ -63,26 +63,39 @@ def samples() -> list[dict[str, Any]]:
 
 
 def validate_source(src: Any) -> str | None:
+    """A plain-English reason the design can't be adapted, or None if it can."""
     if not isinstance(src, dict):
         return "Expected a JSON object with 'canvas' and 'elements' (or a task with 'source')."
     c = src.get("canvas")
-    if not isinstance(c, dict) or not all(isinstance(c.get(k), (int, float)) and c.get(k, 0) > 0 for k in ("width", "height")):
-        return "Design needs a canvas with positive numeric width and height."
+    if not isinstance(c, dict):
+        return "The design has no canvas. Add \"canvas\": {\"width\": ..., \"height\": ...} with its size in pixels."
+    for k in ("width", "height"):
+        v = c.get(k)
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or v <= 0:
+            return f"The canvas {k} must be a positive number of pixels (got {json.dumps(v)})."
     els = src.get("elements")
     if not isinstance(els, list) or not els:
-        return "Design has no elements."
+        return "The design has no elements to lay out."
     if len(els) > MAX_ELEMENTS:
-        return f"Design has {len(els)} elements; the Studio accepts up to {MAX_ELEMENTS}."
-    bad = [i for i, e in enumerate(els) if not isinstance(e, dict) or "id" not in e or e.get("type") not in ("text", "image", "shape")]
-    if bad:
-        return f"Element #{bad[0]} needs an 'id' and a type of text, image or shape."
-    ids = [e["id"] for e in els]
-    if len(set(ids)) != len(ids):
-        return "Element ids must be unique."
+        return f"The design has {len(els)} elements; the Studio accepts up to {MAX_ELEMENTS}."
+    for i, e in enumerate(els, 1):
+        if not isinstance(e, dict):
+            return f"Element {i} is not a JSON object."
+        if "id" not in e:
+            return f"Element {i} has no 'id'."
+        if e.get("type") not in ("text", "image", "shape"):
+            return f"Element {i} ('{e['id']}') has type {json.dumps(e.get('type'))}; use text, image or shape."
+    seen: set[Any] = set()
+    for e in els:
+        if e["id"] in seen:
+            return f"Element id '{e['id']}' is used more than once; ids must be unique."
+        seen.add(e["id"])
     return None
 
 
 def handle_adapt(body: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(body, dict):
+        raise ValueError("Expected a JSON object in the request.")
     if body.get("sample"):
         p = INPUT / f"{Path(str(body['sample'])).name}.json"
         if not p.is_file():
@@ -100,10 +113,15 @@ def handle_adapt(body: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Pick at least one canvas size.")
     if len(targets) > MAX_TARGETS:
         raise ValueError(f"Pick at most {MAX_TARGETS} sizes at once.")
+    if not isinstance(targets, list) or not all(isinstance(t, dict) for t in targets):
+        raise ValueError("Targets must be a list of {\"width\": ..., \"height\": ...} objects.")
     allow_hide = bool(body.get("allow_hide", False))
     results = []
     for t in targets:
-        w, h = int(t.get("width", 0)), int(t.get("height", 0))
+        try:
+            w, h = int(t.get("width", 0)), int(t.get("height", 0))
+        except (TypeError, ValueError):
+            raise ValueError(f"Canvas size {json.dumps(t)} needs whole-number width and height.") from None
         if not (16 <= w <= 8000 and 16 <= h <= 8000):
             raise ValueError(f"Canvas {w}x{h} is out of range (16 to 8000 px per side).")
         tc = {"width": w, "height": h}
@@ -149,16 +167,17 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             body = json.loads(self.rfile.read(n) or b"{}")
-        except json.JSONDecodeError:
-            self._json(400, {"error": "That file isn't valid JSON."})
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            self._json(400, {"error": "The request isn't valid JSON."})
             return
         try:
             if self.path == "/api/adapt":
                 self._json(200, handle_adapt(body))
             elif self.path == "/api/render":
-                d = body.get("design")
-                if not isinstance(d, dict) or validate_source(d):
-                    raise ValueError("Invalid design.")
+                d = body.get("design") if isinstance(body, dict) else None
+                err = validate_source(d)
+                if err:
+                    raise ValueError(f"Can't render this layout: {err}")
                 self._json(200, {"png": render_b64(d)})
             else:
                 self._json(404, {"error": "not found"})
