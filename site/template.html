@@ -343,6 +343,15 @@ footer .wrap{display:flex;justify-content:space-between;gap:10px 32px;flex-wrap:
 </footer>
 
 <script>
+/* Always open at the top: drop a leftover #section from the URL and don't
+   restore the last scroll position on reload. In-page links still work. */
+if("scrollRestoration" in history) history.scrollRestoration = "manual";
+if(location.hash) history.replaceState(null, "", location.pathname + location.search);
+// "instant": html has scroll-behavior:smooth, which would let the restore win.
+const toTop = () => scrollTo({top: 0, left: 0, behavior: "instant"});
+toTop();
+addEventListener("load", toTop);
+addEventListener("pageshow", e => { if(e.persisted) toTop(); });
 const DATA = __DATA__;
 const $ = id => document.getElementById(id);
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
