@@ -21,8 +21,8 @@ from .score import WEIGHTS, score
 from .textfit import BACKEND, fits
 
 
-# Readability score a layout must reach before dropping content is even
-# considered (only possible with hiding enabled).
+# Dropping content is only considered when no layout that keeps every
+# element reaches this readability score (and only with hiding enabled).
 READABLE = 0.8
 
 

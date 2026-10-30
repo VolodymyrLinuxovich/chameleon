@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64
 import json
+import math
 import os
 import sys
 import tempfile
@@ -71,7 +72,7 @@ def validate_source(src: Any) -> str | None:
         return "The design has no canvas. Add \"canvas\": {\"width\": ..., \"height\": ...} with its size in pixels."
     for k in ("width", "height"):
         v = c.get(k)
-        if isinstance(v, bool) or not isinstance(v, (int, float)) or v <= 0:
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v <= 0:
             return f"The canvas {k} must be a positive number of pixels (got {json.dumps(v)})."
     els = src.get("elements")
     if not isinstance(els, list) or not els:
@@ -83,6 +84,8 @@ def validate_source(src: Any) -> str | None:
             return f"Element {i} is not a JSON object."
         if "id" not in e:
             return f"Element {i} has no 'id'."
+        if not isinstance(e["id"], (str, int)) or isinstance(e["id"], bool):
+            return f"Element {i} has id {json.dumps(e['id'])}; ids must be text or a number."
         if e.get("type") not in ("text", "image", "shape"):
             return f"Element {i} ('{e['id']}') has type {json.dumps(e.get('type'))}; use text, image or shape."
     seen: set[Any] = set()
@@ -109,18 +112,18 @@ def handle_adapt(body: dict[str, Any]) -> dict[str, Any]:
     if err:
         raise ValueError(err)
     targets = body.get("targets") or []
+    if not isinstance(targets, list) or not all(isinstance(t, dict) for t in targets):
+        raise ValueError("Targets must be a list of {\"width\": ..., \"height\": ...} objects.")
     if not targets:
         raise ValueError("Pick at least one canvas size.")
     if len(targets) > MAX_TARGETS:
         raise ValueError(f"Pick at most {MAX_TARGETS} sizes at once.")
-    if not isinstance(targets, list) or not all(isinstance(t, dict) for t in targets):
-        raise ValueError("Targets must be a list of {\"width\": ..., \"height\": ...} objects.")
     allow_hide = bool(body.get("allow_hide", False))
     results = []
     for t in targets:
         try:
             w, h = int(t.get("width", 0)), int(t.get("height", 0))
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             raise ValueError(f"Canvas size {json.dumps(t)} needs whole-number width and height.") from None
         if not (16 <= w <= 8000 and 16 <= h <= 8000):
             raise ValueError(f"Canvas {w}x{h} is out of range (16 to 8000 px per side).")

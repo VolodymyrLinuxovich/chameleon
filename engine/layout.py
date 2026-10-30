@@ -236,7 +236,7 @@ def stack(ctx: Ctx, blocks: list[Block], box: Box, s_cap: float | None = None,
     overflow = False
     if total > box.h:
         # Too tall: binary search the largest scale that fits. 28 halvings
-        # take the scale interval below 1e-8, far finer than one pixel.
+        # shrink the scale interval by about 2.7e8 times, far finer than one pixel.
         lo, hi = 1e-3, s_cap
         fs_lo, total_lo, gap_lo = attempt(lo)
         if total_lo > box.h:
@@ -853,7 +853,12 @@ def candidates(ctx: Ctx) -> list[Layout]:
                     out.append(strat_strip(ctx, d, share, demote=dm))
                     if ctx.H < 80:
                         out.append(strat_strip(ctx, d, share, cta_floor=True, demote=dm))
-        if ctx.H < 80:  # banner-ad heights: let the headline lead
+        # Banner-ad heights let the headline lead. Up to 120 px tall
+        # (leaderboards) only a long headline needs it: a short one already
+        # reads well in a normal row, next to its eyebrow and date.
+        head = next((b for b in ctx.a.flow if b.role == "headline" and b.is_text), None)
+        long_head = head is not None and len(str(head.elements[0].get("content", ""))) > 60
+        if ctx.H < 80 or (ctx.H < 120 and long_head):
             for hs in (0.6, 0.7, 0.8):
                 for minor in (0.12, 0.18):
                     out.append(strat_focus(ctx, hs, minor))

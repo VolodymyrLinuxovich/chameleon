@@ -236,3 +236,17 @@ def test_banner_headline_stays_readable_and_largest():
             fonts = {e["id"]: e["font_size"] for e in design["elements"] if e["type"] == "text"}
             assert fonts[head] >= 8, (p.stem, f["key"], fonts[head])
             assert fonts[head] == max(fonts.values()), (p.stem, f["key"], fonts)
+
+
+def test_leaderboard_long_headline_leads():
+    # Level 3's own target is a 728x90 leaderboard with a 140-character
+    # headline. The headline-first row keeps it at 14px or more (it was 9px
+    # in a three-column layout), and nothing else is hidden.
+    t = load("input/chameleon_sample_level3_advanced.json")
+    design, rep = adapt(t["source"], t["target_canvas"])
+    el = {e["id"]: e for e in design["elements"]}
+    assert rep["chosen"].startswith("focus"), rep["chosen"]
+    assert el["headline"]["font_size"] >= 14, el["headline"]["font_size"]
+    # Only the image whose asset file is missing may be skipped.
+    assert set(rep["hidden"]) <= {"holiday_watermark"}, rep["hidden"]
+    assert all(e.get("opacity", 1) > 0 for e in design["elements"] if e["id"] not in rep["hidden"])
