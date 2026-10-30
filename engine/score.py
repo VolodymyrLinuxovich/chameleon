@@ -2,6 +2,10 @@
 (PDF §2.5): no unwanted collisions, readable text, hierarchy kept, looks
 intentional (consistent scale, balanced, uses the space), nothing lost.
 
+Third step of the pipeline: analyze -> layout candidates -> score -> pick
+-> report. chameleon.py builds every candidate into output elements and
+calls score() on each; the highest total wins.
+
 These are our own measurable proxies, not Adobe's scorer.
 """
 
@@ -13,6 +17,10 @@ from typing import Any
 from .analyze import Analysis, num, rotated_aabb
 from .textfit import fits
 
+# Each part is in [0, 1]; the total is their weighted sum (weights add up
+# to 1). Readability and use of space carry the most, since small text and
+# a small layout lost in an empty canvas are the most visible failures.
+# Fidelity and balance are small and mostly break ties.
 WEIGHTS = {
     "readability": 0.25,
     "hierarchy": 0.15,
@@ -26,6 +34,7 @@ WEIGHTS = {
 
 
 def _aabb(el: dict[str, Any]) -> tuple[float, float, float, float]:
+    """(x0, y0, x1, y1) of an output element, expanded for rotation."""
     w, h = num(el.get("width")), num(el.get("height"))
     aw, ah = rotated_aabb(w, h, num(el.get("rotation")))
     cx, cy = num(el.get("x")) + w / 2, num(el.get("y")) + h / 2
@@ -33,6 +42,7 @@ def _aabb(el: dict[str, Any]) -> tuple[float, float, float, float]:
 
 
 def _ov(a: tuple[float, ...], b: tuple[float, ...]) -> float:
+    """Overlap area of two (x0, y0, x1, y1) boxes."""
     w = min(a[2], b[2]) - max(a[0], b[0])
     h = min(a[3], b[3]) - max(a[1], b[1])
     return w * h if w > 0 and h > 0 else 0.0
@@ -40,6 +50,11 @@ def _ov(a: tuple[float, ...], b: tuple[float, ...]) -> float:
 
 def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
           W: float, H: float, overflow: bool) -> tuple[float, dict[str, float]]:
+    """Score one built candidate. `out` maps element id to its output
+    element, `hidden` holds the ids the layout leaves undrawn.
+
+    Returns (total, parts): the weighted total, minus 0.3 if the layout
+    overflowed, and each part rounded for the report."""
     src = {el["id"]: el for b in a.all_blocks() for el in b.elements}
     block_of = {el["id"]: b for b in a.all_blocks() for el in b.elements}
     content = [b for b in a.flow + a.floating]
@@ -50,7 +65,7 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
     texts = [e for b in visible for e in b.elements if e.get("type") == "text"]
     for el in texts:
         f = num(out[el["id"]].get("font_size"), 1)
-        wt = block_of[el["id"]].priority + 10
+        wt = block_of[el["id"]].priority + 10  # +10 so zero-priority text still counts a little
         # Full credit from 12px, little below 7px, but still a gradient so a
         # 9px headline beats a 4px one when nothing can be fully readable.
         rs += wt * min(1.0, 0.85 * max(0.0, (f - 7) / 5) + 0.15 * min(1.0, f / 12))
@@ -64,6 +79,7 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
                         + 0.15 * min(1.0, num(out[e["id"]].get("font_size"), 1) / 12)) for e in key)
         readability = 0.6 * readability + 0.4 * worst
     # Text that no longer fits its own box will be cut off or overflow.
+    # 5% height tolerance, the same as the final fit check in chameleon.build.
     bad_fit = sum(1 for el in texts if not fits(out[el["id"]], int(num(out[el["id"]].get("font_size"), 1)),
                                                  num(out[el["id"]].get("width")), num(out[el["id"]].get("height")) * 1.05))
     if texts:
@@ -96,7 +112,8 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
     hierarchy = 0.6 * order + 0.4 * lead
 
     # Space: how big the content is vs an area-preserving scale, and how much
-    # of the canvas it spans in each direction.
+    # of the canvas it spans in each direction. Spanning 85% of the width and
+    # 80% of the height counts as full, so margins aren't penalised.
     scales = []
     for b in visible:
         e = b.elements[0]
@@ -116,7 +133,9 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
         off = math.hypot((x0 + x1) / 2 - W / 2, (y0 + y1) / 2 - H / 2) / math.hypot(W / 2, H / 2)
     else:
         cover, off = 0.0, 1.0
+    # sqrt: partial coverage is penalised less than linearly.
     space = 0.5 * size_term + 0.5 * math.sqrt(cover)
+    # Content centre vs canvas centre; drops to 0 halfway to a corner.
     balance = max(0.0, 1 - 2 * off)
 
     # Consistency: blocks keep similar scale to each other ("same design").
@@ -124,6 +143,8 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
         logs = [math.log(max(1e-6, s)) for s in scales]
         mu = sum(logs) / len(logs)
         sd = math.sqrt(sum((v - mu) ** 2 for v in logs) / len(logs))
+        # Spread of log scales: a spread of 0 scores 1, and one block twice
+        # the scale of another already costs noticeably.
         consistency = math.exp(-1.2 * sd)
     else:
         consistency = 1.0
@@ -136,12 +157,15 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
         for ib, bb in vis_boxes[i + 1:]:
             if ia != ib:
                 ov += _ov(ba, bb)
+    # Overlap counted 6x: overlapping 1/6 of the total content area already
+    # scores 0, because even a small overlap of copy is very visible.
     collisions = max(0.0, 1 - 6 * ov / total)
 
     # Completeness: priority-weighted share of content still visible.
     # Text drawn below 6px is present in the JSON but lost to the eye, so it
     # counts as missing here (otherwise 1px "kept" badges beat a clean drop).
     def legible(b) -> bool:
+        # Images shorter than 12px are just as lost as tiny text.
         if any(e.get("type") == "image" and num(out[e["id"]].get("height")) < 12 for e in b.elements):
             return False
         return all(num(out[e["id"]].get("font_size"), 1) >= 6 for e in b.elements if e.get("type") == "text")
@@ -152,17 +176,20 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
     # Fidelity: content still reads in the original order (top-to-bottom
     # may become left-to-right), and floating pieces keep their corner.
     def centre(b):
+        # Centre of a block in the output, from its elements' boxes.
         bx = [_aabb(out[e["id"]]) for e in b.elements]
         return (min(v[0] for v in bx) + max(v[2] for v in bx)) / 2, (min(v[1] for v in bx) + max(v[3] for v in bx)) / 2
     flow_vis = [b for b in visible if b in a.flow]
     fp, fk = 0, 0
     for i, p in enumerate(flow_vis):
         for q in flow_vis[i + 1:]:
+            # Blocks on the same source line have no top-to-bottom order.
             if abs(p.center[1] - q.center[1]) < 0.05 * a.canvas[1]:
                 continue
             first, second = (p, q) if p.center[1] < q.center[1] else (q, p)
             (fx, fy), (sx, sy) = centre(first), centre(second)
             fp += 1
+            # Order is kept if the earlier block is still above or to the left.
             fk += fy < sy - 1 or fx < sx - 1
     for b in visible:
         if b in a.floating:
@@ -178,5 +205,6 @@ def score(a: Analysis, out: dict[str, dict[str, Any]], hidden: set[str],
     }
     total_score = sum(WEIGHTS[k] * v for k, v in parts.items())
     if overflow:
+        # Heavy penalty: an overflowing layout wins only if nothing else fits.
         total_score -= 0.3
     return total_score, {k: round(v, 3) for k, v in parts.items()}

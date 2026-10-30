@@ -1,5 +1,10 @@
 """Orchestrates analyse -> candidate layouts -> score -> pick, and keeps an
-explanation of every decision."""
+explanation of every decision.
+
+adapt() is the entry point: engine/resize.py calls it for the official
+run, and the Studio and tools/ call it for the report. build() turns a
+candidate layout into output elements; safe_fit() is the fallback when
+anything goes wrong."""
 
 from __future__ import annotations
 
@@ -16,14 +21,19 @@ from .score import WEIGHTS, score
 from .textfit import BACKEND, fits
 
 
+# Readability score a layout must reach before dropping content is even
+# considered (only possible with hiding enabled).
 READABLE = 0.8
 
 
 def _allow_hide() -> bool:
+    """Hiding is off unless CHAMELEON_ALLOW_HIDE is set: the organisers
+    asked for every element to stay visible."""
     return os.environ.get("CHAMELEON_ALLOW_HIDE", "0") not in ("0", "false", "no")
 
 
 def _r(v: float) -> float:
+    """Round output geometry to 4 decimals, so JSON stays short and stable."""
     return round(float(v), 4)
 
 
@@ -32,6 +42,7 @@ def _clamp(el: dict[str, Any], W: float, H: float) -> None:
     w, h = max(0.0, num(el.get("width"))), max(0.0, num(el.get("height")))
     rot = num(el.get("rotation"))
     aw, ah = rotated_aabb(w, h, rot)
+    # First shrink anything larger than the canvas, keeping its centre.
     k = min(1.0, W / aw if aw > 0 else 1.0, H / ah if ah > 0 else 1.0)
     if k < 1.0:
         cx, cy = num(el.get("x")) + w / 2, num(el.get("y")) + h / 2
@@ -52,6 +63,7 @@ def _clamp(el: dict[str, Any], W: float, H: float) -> None:
 
 
 def _transparent(color: str) -> str:
+    """`color` with alpha 0, keeping its RGB (or transparent black)."""
     m = re.match(r"\s*rgba?\(([^)]*)\)", color)
     if m:
         parts = [p.strip() for p in m.group(1).split(",")][:3]
@@ -61,6 +73,8 @@ def _transparent(color: str) -> str:
 
 
 def _proportional(el: dict[str, Any], a: Analysis, W: float, H: float) -> dict[str, Any]:
+    """`el` placed as in a uniform contain-scale of the whole design. Used
+    for hidden elements and as the safety net for ids no layout placed."""
     s = min(W / a.canvas[0], H / a.canvas[1])
     ox, oy = (W - a.canvas[0] * s) / 2, (H - a.canvas[1] * s) / 2
     n = dict(el)
@@ -72,11 +86,13 @@ def _proportional(el: dict[str, Any], a: Analysis, W: float, H: float) -> dict[s
 
 
 def _box(n: dict[str, Any]) -> tuple[float, float, float, float]:
+    """(x0, y0, x1, y1) of an element, ignoring rotation."""
     x, y = num(n.get("x")), num(n.get("y"))
     return x, y, x + num(n.get("width")), y + num(n.get("height"))
 
 
 def _hits(a: tuple[float, ...], b: tuple[float, ...]) -> bool:
+    """True if two boxes overlap by more than an edge."""
     return min(a[2], b[2]) > max(a[0], b[0]) and min(a[3], b[3]) > max(a[1], b[1])
 
 
@@ -99,6 +115,8 @@ def _clear_text(a: Analysis, out: dict[str, dict[str, Any]], W: float, H: float)
             x0, y0, x1, y1 = _box(n)
             ax = 0.0 if (x0 + x1) / 2 < W / 2 else W   # corner it shrinks toward
             ay = 0.0 if (y0 + y1) / 2 < H / 2 else H
+            # Shrink in steps toward the corner, down to 22% of the size, so
+            # a decoration gets smaller but never disappears.
             for k in (0.85, 0.7, 0.55, 0.4, 0.3, 0.22):
                 if not any(_hits(_box(n), t) for t in texts):
                     break
@@ -107,6 +125,12 @@ def _clear_text(a: Analysis, out: dict[str, dict[str, Any]], W: float, H: float)
 
 
 def build(a: Analysis, lay: Layout, W: float, H: float) -> dict[str, dict[str, Any]]:
+    """Turn a candidate layout into output elements, keyed by id.
+
+    Backgrounds fill the canvas, decorations keep their corner, the layout
+    places the rest, and every element is then clamped into the canvas
+    with its text shrunk until it fits its box. Every source id is present
+    in the result."""
     out: dict[str, dict[str, Any]] = {}
     for b in a.background:
         for el in b.elements:
@@ -151,6 +175,8 @@ def build(a: Analysis, lay: Layout, W: float, H: float) -> dict[str, dict[str, A
     for n in out.values():
         _clamp(n, W, H)
         if n.get("type") == "text" and n["id"] not in lay.hidden:
+            # Clamping may have shrunk the box. Same 5% height tolerance
+            # as the scorer, so a box a hair too short doesn't cost a size.
             while n["font_size"] > 1 and not fits(n, n["font_size"], n["width"], n["height"] * 1.05):
                 n["font_size"] -= 1
     return out
@@ -158,7 +184,12 @@ def build(a: Analysis, lay: Layout, W: float, H: float) -> dict[str, dict[str, A
 
 def adapt(source: dict[str, Any], target_canvas: dict[str, Any],
           allow_hide: bool | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Return (resized_design, report)."""
+    """Return (resized_design, report).
+
+    Builds and scores every candidate from layout.candidates(), then picks
+    the best one that keeps all text inside its box. The report holds the
+    roles, every candidate with its score parts, and the per-element
+    changes; the Studio's "Why" panel is drawn from it."""
     t0 = time.perf_counter()
     W = max(1, int(num((target_canvas or {}).get("width"), 1)))
     H = max(1, int(num((target_canvas or {}).get("height"), 1)))

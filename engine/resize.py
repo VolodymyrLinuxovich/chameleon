@@ -1,6 +1,12 @@
 """
 THIS IS THE FILE YOU IMPLEMENT.
 
+Chameleon: resize() is the starter's entry point, called by engine/main.py
+for every task. It hands the work to engine.chameleon.adapt() (analyze ->
+layout candidates -> score -> pick -> report) and falls back to safe_fit()
+if that raises. stretch() is the starter's original baseline, kept so the
+Studio can show it side by side.
+
 Everything else in this repo (input loading, output writing, rendering,
 the Dockerfile) is plumbing so you can focus on exactly one function:
 `resize()`. See RULES.md and the design schema for the full contract.
