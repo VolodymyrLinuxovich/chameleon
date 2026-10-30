@@ -150,6 +150,11 @@ h2{font-size:var(--t-h2);line-height:1.05;letter-spacing:-.035em}
 .anim-steps button.on,.anim-steps button.done{color:var(--ink)}
 .anim-steps button:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:4px}
 
+.studio-head{text-align:center;max-width:640px;margin:clamp(64px,8vw,104px) auto 0}
+.studio-head h3{font-size:var(--t-h2);letter-spacing:-.025em;line-height:1.15;margin:0 0 12px}
+.studio-head p{color:var(--ink-2);margin:0 0 16px}
+.studio-head code{display:inline-block;font:500 .875rem/1 var(--mono);color:var(--ink);background:var(--raise);border:1px solid var(--rule-2);border-radius:8px;padding:9px 12px}
+.fig-studio{margin-top:28px}
 /* figures and comparison */
 .fig{margin:clamp(36px,5vw,56px) auto 0;max-width:1120px}
 .fig img{display:block;width:100%;height:auto;border:1px solid var(--rule);border-radius:16px}
@@ -292,7 +297,12 @@ footer .wrap{display:flex;justify-content:space-between;gap:10px 32px;flex-wrap:
       <div class="head"><h2 class="rv">Read the design. <em>Rebuild it.</em></h2></div>
       <p class="lead rv pipe-lead" style="--i:1">The Level 3 poster becoming a 1584 × 396 LinkedIn banner. Real engine output at every step.</p>
       <div class="band" id="pipe"></div>
-      <figure class="fig rv">
+      <div class="studio-head rv">
+        <h3>Try it in the Studio</h3>
+        <p>The same engine with a screen around it: adapt one design to many canvases, compare with stretch, and see why each layout won.</p>
+        <code>python -m studio.server</code>
+      </div>
+      <figure class="fig fig-studio rv">
         <img src="studio.gif" width="1200" height="750" loading="lazy" alt="Studio walkthrough: pick Level 3, press Adapt design, seven canvases appear, hold for stretch to compare, open Why, show what the engine saw, use another layout">
         <figcaption>The Studio in use, recorded live: adapt one design to seven canvases, hold to compare with stretch, then see why each layout won.</figcaption>
       </figure>
@@ -396,7 +406,7 @@ const onLang = [];
 const t = en => (I18N[LANG] || {})[en] || (I18N.en || {})[en] || en;
 const DESIGN_NAMES = {advanced: "Level 3 · Advanced", core: "Level 2 · Core", event: "Event poster"};
 const dl = d => t(DESIGN_NAMES[d.key] || d.label);
-const T_SEL = "nav a, h1 span, h1 em, .intro .lead, .actions a, section h2, section .lead, .steps h3, .steps p, figcaption, .nums span, .vs th, .vs td, .vs-note, .term .hint, .tabs button, #copy, .limits li, footer span, .tag, [data-t]";
+const T_SEL = ".studio-head h3, .studio-head p, nav a, h1 span, h1 em, .intro .lead, .actions a, section h2, section .lead, .steps h3, .steps p, figcaption, .nums span, .vs th, .vs td, .vs-note, .term .hint, .tabs button, #copy, .limits li, footer span, .tag, [data-t]";
 function applyLang(lang){
   LANG = I18N[lang] || lang === "en" ? lang : "en";
   document.documentElement.lang = LANG;

@@ -134,7 +134,9 @@
   "All hard rules pass": "Todas las reglas se cumplen",
   "The Level 3 poster becoming a 1584 × 396 LinkedIn banner. Real engine output at every step.": "El cartel del nivel 3 convertido en un banner de LinkedIn de 1584 × 396. Salida real del motor en cada paso.",
   "Tries real layouts, scores each one.": "Prueba diseños reales y puntúa cada uno.",
-  "Keeps the best. Every hard rule is checked.": "Se queda con el mejor. Se comprueba cada regla."
+  "Keeps the best. Every hard rule is checked.": "Se queda con el mejor. Se comprueba cada regla.",
+  "Try it in the Studio": "Pruébalo en el Studio",
+  "The same engine with a screen around it: adapt one design to many canvases, compare with stretch, and see why each layout won.": "El mismo motor con una pantalla alrededor: adapta un diseño a muchos lienzos, compáralo con el estirado y mira por qué ganó cada diseño."
  },
  "fr": {
   "Problem": "Problème",
@@ -268,6 +270,8 @@
   "All hard rules pass": "Toutes les règles sont respectées",
   "The Level 3 poster becoming a 1584 × 396 LinkedIn banner. Real engine output at every step.": "L'affiche du niveau 3 devient une bannière LinkedIn de 1584 × 396. Sortie réelle du moteur à chaque étape.",
   "Tries real layouts, scores each one.": "Essaie de vraies mises en page et note chacune.",
-  "Keeps the best. Every hard rule is checked.": "Garde la meilleure. Chaque règle est vérifiée."
+  "Keeps the best. Every hard rule is checked.": "Garde la meilleure. Chaque règle est vérifiée.",
+  "Try it in the Studio": "Essayez-le dans le Studio",
+  "The same engine with a screen around it: adapt one design to many canvases, compare with stretch, and see why each layout won.": "Le même moteur avec un écran autour : adaptez un design à de nombreux formats, comparez avec l'étirement et voyez pourquoi chaque mise en page a gagné."
  }
 }
