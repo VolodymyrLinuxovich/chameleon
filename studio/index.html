@@ -27,7 +27,7 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-html,body{overflow-x:hidden}
+html,body{overflow-x:clip}
 body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -36,7 +36,7 @@ h1,h2,h3,p{margin:0}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* header */
-header{display:flex;align-items:center;gap:14px;padding:14px 28px;border-bottom:1px solid var(--line);background:var(--paper)}
+header{display:flex;align-items:center;gap:14px;padding:14px 28px;border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:5;height:57px;box-sizing:border-box}
 .brand{display:flex;align-items:center;gap:10px}
 .brand i{width:14px;height:14px;border:2px solid var(--accent);border-radius:3px}
 header h1{font-size:17px;font-weight:650;letter-spacing:-.01em}
@@ -44,7 +44,7 @@ header p{color:var(--muted);font-size:14px}
 
 /* layout */
 .wrap{display:grid;grid-template-columns:330px minmax(0,1fr);min-height:calc(100vh - 57px)}
-aside{border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:auto}
+aside{border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:57px;height:calc(100vh - 57px);overflow:auto}
 .panel{padding:22px 22px 12px;display:flex;flex-direction:column;gap:26px;flex:1}
 main{padding:24px 28px 48px;min-width:0}
 h2{font-size:15px;font-weight:650;margin-bottom:10px}
@@ -196,7 +196,7 @@ dialog::backdrop{background:rgba(10,8,12,.6)}
   .panel{padding:18px 16px 4px}
   .go{position:static;padding:16px;background:none}
   main{padding:18px 16px 40px}
-  header{padding:12px 16px;flex-wrap:wrap;gap:4px 12px}
+  header{padding:12px 16px;flex-wrap:wrap;gap:4px 12px;height:auto;position:static}
   dialog{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0;border:0}
   .dlg{grid-template-columns:minmax(0,1fr);height:calc(100dvh - 70px);overflow:auto;display:block}
   .dlg .left{padding:12px}
@@ -251,7 +251,7 @@ dialog::backdrop{background:rgba(10,8,12,.6)}
         <h2>Options</h2>
         <label class="toggle"><input type="checkbox" id="hide">
           <span>Let low-priority elements drop away when they can't be read
-            <small>Off by default: the brief asks for every element to stay visible. When on, it applies only if no layout that keeps everything is readable, and never to the headline, logo or button.</small></span>
+            <small>Off by default: the brief asks for every element to stay visible. When on, it applies only if no layout that keeps everything is readable, and never to the headline, logo or button. On banners under 80 px tall the product image may also step aside.</small></span>
         </label>
       </section>
     </div>
@@ -546,7 +546,7 @@ function drawDetail(){
     ${cand.problems.length
       ? `<div class="verdict warn" role="status"><span class="ic" aria-hidden="true">!</span><div><b>Hard-rule checks: ${cand.problems.length} issue${cand.problems.length === 1 ? "" : "s"}</b>${cand.problems.map(p => `<span class="hint">${esc(p)}</span>`).join("<br>")}</div></div>`
       : `<div class="verdict ok" role="status"><span class="ic" aria-hidden="true">✓</span><div><b>Hard-rule checks pass</b><span class="hint">Same ids, nothing off-canvas, images in proportion, fonts and copy unchanged, text fits its box.</span></div></div>`}
-    <section class="section" aria-labelledby="h-lay"><h2 id="h-lay">Layouts considered <small>${rep.candidates.length}, best score first</small></h2>
+    <section class="section" aria-labelledby="h-lay"><h2 id="h-lay">Layouts considered <small>${rep.candidates.length}, in the engine's ranking</small></h2>
       ${top.map(row).join("")}
       ${rest.length ? `<details class="more"${rest.some(c => c.name === r.sel) ? " open" : ""}><summary>${rest.length} more</summary>${rest.map(row).join("")}</details>` : ""}
     </section>
