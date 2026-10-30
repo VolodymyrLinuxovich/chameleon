@@ -5,45 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chameleon Studio</title>
 <style>
-/* Dark first, after the Kedy agent UI (near-black panels, soft bottom glows, pill
-   controls, one primary), in the brand palette shared with the landing page:
-   plum-black, ink and Solstice orange. Light uses the same tokens. */
+/* Light and flat: warm paper, ink, and the brand's Solstice orange for the
+   primary action. No glows. Render previews sit in dark wells so the designs
+   read as they will be drawn. A flat dark set is kept behind data-theme="dark". */
 :root{
-  --bg:#0B0A0D; --side:#0E0C10; --card:#151318; --raise:#19171C; --row:#1E1B23; --row-hover:#18161C;
-  --line:#221F27; --line-2:#2D2933; --text:#F2EEF5; --muted:#A49CAE; --faint:#716A7B;
-  --accent:#F0703F; --accent-hi:#F4865A; --on-accent:#1B0E08; --ok:#5BD69A; --err:#F2A46B; --warn:#F2B441;
-  --stage:#08070A; --focus:#F4A37F;
-  --glow-warm:rgba(240,112,63,.42); --glow-plum:rgba(110,60,130,.34);
-  --side-warm:rgba(240,112,63,.34); --side-plum:rgba(90,50,110,.30);
-  --ok-soft:rgba(91,214,154,.08); --err-soft:rgba(242,164,107,.08);
-  color-scheme:dark;
-}
-@media (prefers-color-scheme: light){
-  :root:not([data-theme="dark"]){
-    --bg:#F4F1EC; --side:#FAF8F4; --card:#FFFFFF; --raise:#EFEBE4; --row:#E9E4DC; --row-hover:#F0ECE5;
-    --line:#E2DCD3; --line-2:#D6CFC4; --text:#1E1A22; --muted:#5F5866; --faint:#8C8593;
-    --accent:#C2461F; --accent-hi:#A93B18; --on-accent:#FFFFFF; --ok:#1F7A4D; --err:#A4501A; --warn:#8A5A00;
-    --stage:#1E1A22; --focus:#C2461F;
-    --glow-warm:rgba(240,112,63,.20); --glow-plum:rgba(120,80,140,.12);
-    --side-warm:rgba(240,112,63,.16); --side-plum:rgba(120,80,140,.08);
-    --ok-soft:rgba(31,122,77,.08); --err-soft:rgba(164,80,26,.08);
-    color-scheme:light;
-  }
-}
-:root[data-theme="light"]{
-  --bg:#F4F1EC; --side:#FAF8F4; --card:#FFFFFF; --raise:#EFEBE4; --row:#E9E4DC; --row-hover:#F0ECE5;
-  --line:#E2DCD3; --line-2:#D6CFC4; --text:#1E1A22; --muted:#5F5866; --faint:#8C8593;
+  --bg:#F6F3EE; --side:#FBF9F5; --card:#FFFFFF; --raise:#EFEBE4; --row:#E9E4DC; --row-hover:#F1EDE6;
+  --line:#E4DED5; --line-2:#D5CEC3; --text:#1B181E; --muted:#5C5563; --faint:#8A8390;
   --accent:#C2461F; --accent-hi:#A93B18; --on-accent:#FFFFFF; --ok:#1F7A4D; --err:#A4501A; --warn:#8A5A00;
   --stage:#1E1A22; --focus:#C2461F;
-  --glow-warm:rgba(240,112,63,.20); --glow-plum:rgba(120,80,140,.12);
-  --side-warm:rgba(240,112,63,.16); --side-plum:rgba(120,80,140,.08);
   --ok-soft:rgba(31,122,77,.08); --err-soft:rgba(164,80,26,.08);
   color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#141216; --side:#141216; --card:#1B181E; --raise:#211E25; --row:#26222B; --row-hover:#1F1C23;
+  --line:#2A2630; --line-2:#36313D; --text:#F2EEF5; --muted:#A49CAE; --faint:#716A7B;
+  --accent:#F0703F; --accent-hi:#F4865A; --on-accent:#1B0E08; --ok:#5BD69A; --err:#F2A46B; --warn:#F2B441;
+  --stage:#0E0C10; --focus:#F4A37F;
+  --ok-soft:rgba(91,214,154,.08); --err-soft:rgba(242,164,107,.08);
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{overflow-x:hidden}
 body{margin:0;min-height:100vh;color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;
-  background:radial-gradient(125% 30% at 60% 108%,var(--glow-warm),transparent 72%),radial-gradient(75% 45% at 60% 100%,var(--glow-plum),transparent 72%),var(--bg);background-attachment:fixed}
+  background:var(--bg)}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:0;padding:0}
 h1,h2,h3,p{margin:0}
@@ -53,7 +37,7 @@ h1,h2,h3,p{margin:0}
 /* layout */
 .wrap{display:grid;grid-template-columns:300px minmax(0,1fr);min-height:100vh}
 aside{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;border-right:1px solid var(--line);
-  background:radial-gradient(150% 40% at 30% 110%,var(--side-warm),transparent 72%),radial-gradient(120% 60% at 0% 100%,var(--side-plum),transparent 70%),var(--side)}
+  background:var(--side)}
 .side-top{display:flex;align-items:center;gap:11px;padding:30px 22px 18px}
 .mark{width:30px;height:30px;flex:none;display:block}
 
@@ -160,7 +144,7 @@ label.toggle small{display:block;color:var(--muted);font-size:12.5px;margin-top:
 
 /* explanation dialog: a panel like the agent's settings sheet */
 dialog{width:min(1240px,96vw);max-height:94vh;border:1px solid var(--line-2);border-radius:20px;padding:0;background:var(--side);color:var(--text);overflow:hidden}
-dialog::backdrop{background:rgba(0,0,0,.65)}
+dialog::backdrop{background:rgba(27,24,30,.45)}
 .dhead{display:flex;align-items:center;gap:10px;padding:14px 16px 14px 22px;border-bottom:1px solid var(--line)}
 .dhead h2{font-size:18px;font-weight:500;color:var(--text);margin:0;padding:0;flex:1;min-width:0;display:block}
 .dhead h2 span{color:var(--muted);font-weight:400;font-size:14px;margin-left:8px;font-variant-numeric:tabular-nums}
@@ -215,7 +199,6 @@ dialog::backdrop{background:rgba(0,0,0,.65)}
 .more[open] summary::before{transform:rotate(90deg)}
 
 @media (max-width:900px){
-  body{background-attachment:scroll}
   .wrap{grid-template-columns:minmax(0,1fr)}
   aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}
   .side-top{padding:20px 18px 12px}

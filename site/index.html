@@ -10,9 +10,9 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap">
 <style>
 :root{
-  /* Brand palette: the plum-black, ink and Solstice orange of the logo, the How it works card and the GIF */
-  --bg:#0B0A0D; --raise:#151318; --ink:#F2EEF5; --ink-2:#A49CAE; --ink-3:#716A7B; --rule:#221F27; --rule-2:#2D2933;
-  --accent:#F0703F; --on-accent:#1B0E08; --bad:#F0703F;
+  /* Light and flat: warm paper, ink, and the brand's Solstice orange used sparingly. No glows. */
+  --bg:#F6F3EE; --raise:#FFFFFF; --ink:#1B181E; --ink-2:#5C5563; --ink-3:#8A8390; --rule:#E4DED5; --rule-2:#D5CEC3;
+  --accent:#C2461F; --on-accent:#FFFFFF; --bad:#C2461F;
   --sans:"Geist","Helvetica Neue","Segoe UI",system-ui,sans-serif;
   --serif:"Instrument Serif",Georgia,serif;
   --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace;
@@ -20,7 +20,7 @@
   --t-xs:.8125rem; --t-s:.9375rem; --t-lead:clamp(1.0625rem,1.45vw,1.1875rem); --t-h3:1.125rem;
   --t-h2:clamp(2rem,4.2vw,3.25rem); --t-h1:clamp(3rem,8.4vw,6.75rem); --t-num:clamp(2.75rem,5.6vw,4.5rem);
   --gutter:clamp(16px,4vw,40px); --sec:clamp(88px,11vw,148px); --gap:clamp(20px,2.6vw,32px);
-  color-scheme:dark;
+  color-scheme:light;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -68,7 +68,7 @@ h2{font-size:var(--t-h2);line-height:1.05;letter-spacing:-.035em}
 
 /* hero canvas: frame reshapes, then the real render fades in (never stretched mid-move) */
 .board{position:relative;margin-top:clamp(56px,7vw,88px);height:clamp(360px,48vw,580px);border:1px solid var(--rule);border-radius:16px;background:var(--raise);display:grid;place-items:center;overflow:hidden}
-.art{position:relative;width:300px;height:375px;margin-bottom:44px;border-radius:4px;transition:width .7s var(--ease),height .7s var(--ease);box-shadow:0 0 0 1px rgba(242,238,245,.08),0 30px 70px -30px #000;background:#1E1A22;overflow:hidden}
+.art{position:relative;width:300px;height:375px;margin-bottom:44px;border-radius:4px;transition:width .7s var(--ease),height .7s var(--ease);box-shadow:0 0 0 1px rgba(27,24,30,.08),0 18px 40px -24px rgba(27,24,30,.35);background:#1E1A22;overflow:hidden}
 .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .35s ease}
 .art.swap img{opacity:0}
 .readout{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:center;gap:10px;padding:14px;font-size:var(--t-xs);color:var(--ink-2);border-top:1px solid var(--rule);background:var(--raise)}
@@ -93,16 +93,16 @@ h2{font-size:var(--t-h2);line-height:1.05;letter-spacing:-.035em}
 .chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .chips.f button{font-variant-numeric:tabular-nums}
 .stage{margin-top:24px;border:1px solid var(--rule);border-radius:16px;background:var(--raise);padding:clamp(16px,3vw,40px);display:grid;place-items:center;min-height:clamp(220px,32vw,460px)}
-.frame{position:relative;max-width:100%;min-width:0;line-height:0;cursor:ew-resize;touch-action:pan-y;border-radius:3px;box-shadow:0 0 0 1px rgba(242,238,245,.08),0 30px 70px -30px #000;transition:opacity .25s}
+.frame{position:relative;max-width:100%;min-width:0;line-height:0;cursor:ew-resize;touch-action:pan-y;border-radius:3px;box-shadow:0 0 0 1px rgba(27,24,30,.08),0 18px 40px -24px rgba(27,24,30,.35);transition:opacity .25s}
 .frame.load{opacity:.3}
 .stage:has(#cut:focus-visible){outline:2px solid var(--accent);outline-offset:3px}
 .frame img{display:block;max-width:100%;max-height:min(64vh,620px);width:auto;height:auto;user-select:none;-webkit-user-drag:none}
 .frame .over{position:absolute;inset:0;clip-path:inset(0 0 0 var(--cut,50%))}
 .frame .over img{width:100%;height:100%;max-height:none}
-.tag{position:absolute;top:10px;font:500 .6875rem/1 var(--sans);letter-spacing:.02em;padding:6px 9px;border-radius:999px;background:rgba(11,10,13,.82);color:var(--ink);pointer-events:none}
-.tag.l{left:10px}.tag.r{right:10px;color:var(--accent)}
+.tag{position:absolute;top:10px;font:500 .6875rem/1 var(--sans);letter-spacing:.02em;padding:6px 9px;border-radius:999px;background:rgba(11,10,13,.82);color:#F2EEF5;pointer-events:none}
+.tag.l{left:10px}.tag.r{right:10px;color:#F0703F}
 .bar{position:absolute;top:-12px;bottom:-12px;left:var(--cut,50%);width:2px;margin-left:-1px;background:var(--ink);pointer-events:none}
-.bar::after{content:"";position:absolute;top:50%;left:50%;width:34px;height:34px;transform:translate(-50%,-50%);border-radius:50%;background:var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%230B0A0D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 5 3 9l4 4M11 5l4 4-4 4'/%3E%3C/svg%3E") center no-repeat;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.bar::after{content:"";position:absolute;top:50%;left:50%;width:34px;height:34px;transform:translate(-50%,-50%);border-radius:50%;background:var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%23F6F3EE' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 5 3 9l4 4M11 5l4 4-4 4'/%3E%3C/svg%3E") center no-repeat;box-shadow:0 4px 16px rgba(0,0,0,.5)}
 
 /* how it works */
 .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap);margin:0;padding:0;list-style:none}
