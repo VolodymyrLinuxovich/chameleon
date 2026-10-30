@@ -95,7 +95,7 @@ def pipeline(tmp: str) -> dict:
         p = Path(tmp) / f"pipe_{fam}.png"
         render_design_to_png(c["design"], "brand_kit/assets", str(p))
         cands.append({"name": fam_names.get(fam, fam), "score": round(c["score"] * 100, 1),
-                      "win": c["name"] == rep["chosen"], "img": enc(p, 1000, 300)})
+                      "win": c["name"] == rep["chosen"], "img": enc(p, 1600, 400)})
     win = next(c for c in rep["candidates"] if c["name"] == rep["chosen"])
     part_names = {"readability": "Readability", "hierarchy": "Hierarchy", "space": "Use of space",
                   "consistency": "Consistency", "collisions": "No collisions", "completeness": "Completeness",
@@ -103,7 +103,7 @@ def pipeline(tmp: str) -> dict:
     out = Path(tmp) / "pipe_out.png"
     render_design_to_png(design, "brand_kit/assets", str(out))
     return {"w": W, "h": H, "n": len(src["elements"]), "ms": round(rep["ms"]), "tried": len(rep["candidates"]),
-            "orig": enc(orig, 600, 750), "roles": enc(roles_png, 600, 750), "found": found, "cands": cands,
+            "orig": enc(orig, 1000, 1250), "roles": enc(roles_png, 1000, 1250), "found": found, "cands": cands,
             "parts": [{"name": part_names.get(k2, k2), "v": round(v * 100)} for k2, v in win["parts"].items()],
             "score": round(win["score"] * 100, 1), "out": enc(out, 1584, 396)}
 
@@ -124,7 +124,6 @@ def main() -> None:
         data["pipe"] = pipeline(tmp)
     body = Path("site/template.html").read_text().replace("__CSS__", "\n" + Path("site/style.css").read_text().split("\n", 1)[1])
     body = body.replace("__DATA__", json.dumps(data))
-    body = body.replace("__CARD__", enc("docs/how-it-works.png", 1600, 900))
     logo = "data:image/svg+xml;base64," + base64.b64encode(Path("docs/logo.svg").read_bytes()).decode()
     body = body.replace("__LOGO__", logo)
     body = body.replace("__I18N__", Path("site/i18n.json").read_text())

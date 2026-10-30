@@ -42,7 +42,7 @@ Stage one adds hard rules on top. Every element id comes back, nothing leaves th
 
 ## How it works
 
-![One real resize, animated: the Level 3 poster, the roles the engine found, four real layouts for a 1584 by 396 LinkedIn banner with their scores counting up, and the result with every hard rule passing](docs/how-it-works.gif)
+![One real resize, animated: the Level 3 poster, the roles the engine found, four real layouts for a 1584 by 396 LinkedIn banner with their scores counting up, and the result with every hard rule passing](docs/how-it-works.webp)
 
 *One real resize: the Level 3 poster becomes a 1584×396 LinkedIn banner. Every frame is the engine's own output.*
 
