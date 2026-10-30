@@ -1,118 +1,98 @@
 <div align="center">
 
-<img src="docs/logo.svg" alt="Chameleon logo" width="120"/>
+<img src="docs/logo.svg" alt="Chameleon logo" width="110"/>
 
 # Chameleon
-
-**Rearrange, don't stretch.** Chameleon takes one finished design and lays it out again for any canvas. It reads the
-design's structure from **geometry alone**, builds **several real layouts** for the new shape, measures each one with the
-**official renderer's own font metrics**, and keeps the one that stays readable. **Every element comes back. Copy and
-fonts never change.**
-
-<br/>
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Pillow](https://img.shields.io/badge/Pillow-11557C?style=for-the-badge&logoColor=white)
 ![Skia](https://img.shields.io/badge/Skia-F2A900?style=for-the-badge&logoColor=white)
 ![pytest](https://img.shields.io/badge/pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
-
-<br/>
-
-<img src="docs/resize.gif" alt="One design swept through canvas sizes from an Instagram story to a 320 by 50 banner. Left: naive stretch distorts it. Right: Chameleon rearranges it into a column, image beside text, or one row" width="820"/>
-
-<sub>One design, swept through every size from a story to a 320×50 banner. Every frame is a real engine result drawn by
-the official renderer. Left: stretch. Right: Chameleon. Made by <code>python -m tools.make_gif</code>.</sub>
 
 </div>
 
----
+Live at [chameleon-resize.vercel.app](https://chameleon-resize.vercel.app).
 
-**Hackathon:** Adobe University Hackathon, North America 2026 (Oct 5 to 30, 2026)<br/>
-**Challenge:** Project CHAMELEON, intelligent resizing for Adobe Express<br/>
-**Team:** Volodymyr Borysenko · Mert Özkardeş<br/>
-**Landing page:** [chameleon-resize.vercel.app](https://chameleon-resize.vercel.app)<br/>
-**Runs:** offline, deterministic, 1 to 230 ms per resize, in the unchanged starter Docker image
+**A designer finishes one poster, and marketing needs it as a story, a square, a YouTube thumbnail and a 728×90 banner. Chameleon rebuilds it for each canvas instead of stretching it. It works out what every piece of the design is from geometry alone, builds several real layouts for the new shape, measures each one with the official renderer's own fonts, and keeps the most readable. Every element comes back, and copy and fonts never change.**
 
-| Where | What you'll find |
-|-------|------------------|
-| [`engine/`](engine/) | The scored engine. `resize.py` is the required entry point |
-| [Studio](#run-it) (`python -m studio.server`) | Local demo: many canvases at once, hold to compare with stretch, why each layout won, pick another layout |
-| [Landing page](https://chameleon-resize.vercel.app) | The idea in one page, with renders from the real engine |
-| [`SUBMISSION.md`](SUBMISSION.md) | Pitch, 75 second demo script, how each judging criterion is met |
-| [`docs/`](docs/) | Contact sheets for all three samples and Studio screenshots |
+![One design swept through every size from an Instagram story to a 320 by 50 banner. Left: stretch distorts it. Right: Chameleon rearranges it](docs/resize.gif)
 
----
+*One design swept through every canvas from a story to a 320×50 banner. Left: what a plain resize does. Right: Chameleon. Every frame is a real engine result drawn by the official renderer.*
 
-## The Problem
+On the same 2,250 resizes of 150 random designs across 15 formats:
 
-Marketing makes one poster. Then it needs a story, a square post, a YouTube thumbnail, a LinkedIn banner and a 728×90
-leaderboard. Resize tools do one of two things:
+| | Stretch | Chameleon |
+| --- | --- | --- |
+| Every hard rule passes | 68 of 2,250 (**3%**) | 2,250 of 2,250 (**100%**) |
+| Images keep their shape | 172 (**8%**) | 2,250 (**100%**) |
+| Headline at 9 px or more | 1,790 (**80%**) | 2,228 (**99%**) |
+| Headline and button both readable (6 px or more) | 1,519 (**68%**) | 2,188 (**97%**) |
 
-- **Stretch.** Letters get pulled wide and short. Round products stop being round. The logo looks off brand.
-- **Crop.** The logo, the button or the fine print falls off the edge.
+**Team:** Volodymyr Borysenko and Mert Özkardeş, for Project CHAMELEON at the Adobe University Hackathon, North America 2026.
 
-A designer doesn't do either. They **rearrange**: the headline moves beside the product, the badges become a row, the
-button stays big enough to tap. That takes judgement about what each piece *is*, and the input has **no labels** at all.
-It is a flat list of text, images and shapes with positions.
+## The problem
 
-Stage one adds hard rules on top: same element ids, everything on canvas, images keep their proportions, copy and fonts
-never change, and **every input element stays visible** (confirmed by the organisers on Oct 22).
+Resize tools do one of two things. They **stretch** the design, so letters get pulled wide and short, round products stop being round and the logo looks off brand. Or they **crop** it, and the logo, the button or the fine print falls off the edge. The challenge brief puts it plainly: in Adobe Express this is "a real, currently unsolved problem inside the product".
 
-**Chameleon does that rearranging automatically**, in milliseconds, and explains every decision it makes.
+A designer does neither. They **rearrange**: the headline moves beside the product, the badges become one row, the button stays big enough to tap. That takes knowing what each piece *is*, and the input file says nothing about that. It is a flat list of text, images and shapes with positions.
 
----
+Stage one adds hard rules on top. Every element id comes back, nothing leaves the canvas, images keep their proportions, copy and fonts never change, and every element stays visible. The organisers confirmed the last one on October 22.
 
-## Why Not Just Use a Resize Tool
+## How it works
 
-| | Keeps proportions | Rearranges for the new shape | Every element kept | Explains each choice | No setup per design | Offline and open |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| Stretch to the new size | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ |
-| Fit or crop | ✓ | ✗ | ✗ crop cuts, fit leaves bands | ✗ | ✓ | ✓ |
-| Canva Magic Switch | ✓ | Partly ¹ | Not stated | ✗ | ✓ | ✗ Pro plan, cloud |
-| Adobe Express Resize | ✓ | Partly ¹ | Not stated | ✗ | ✓ | ✗ Premium plan, cloud |
-| Figma constraints and auto layout | ✓ | ✓ once set up | ✓ | ✗ | ✗ set by hand per frame | ✗ |
-| **Chameleon** | **✓** | **✓ 6 layout families, scored** | **✓ by rule, tested** | **✓ report per element** | **✓** | **✓ no model, no network** |
+![One real resize, animated: the Level 3 poster, the roles the engine found, four real layouts for a 1584 by 396 LinkedIn banner with their scores counting up, and the result with every hard rule passing](docs/how-it-works.gif)
 
-<sub>¹ Both resize and move elements automatically, but neither publishes how, and the challenge brief calls resizing in
-Adobe Express "a real, currently unsolved problem inside the product". Rows other than Chameleon come from public product
-pages as of Oct 2026 (<a href="https://www.canva.com/pro/magic-switch/">Canva</a>,
-<a href="https://helpx.adobe.com/express/web/organize-your-designs/arrange-layers-and-pages/change-page-size.html">Adobe Express</a>).
-This is a feature comparison, not a benchmark.</sub>
+*One real resize: the Level 3 poster becomes a 1584×396 LinkedIn banner. Every frame is the engine's own output.*
 
-What Chameleon adds on top of a good resize:
+### 1. Read the design
 
-- **It knows what each piece is.** Headline, logo, product, button, badges and fine print are found from geometry, with a
-  reason recorded for each.
-- **Text sizes are exact.** Text is measured with the official renderer's fonts and wrap, so "fits" in the JSON means
-  fits in the PNG.
-- **Every choice can be checked.** The report lists every layout tried, its score on each term, and why the winner won.
-  In the Studio you can pick a different one.
+The input has no labels, so `engine/analyze.py` reads roles from size, position and grouping. The largest type is the headline. A wide, small image near the top is the logo, and the largest image is the product. The biggest button-like group is the call to action; smaller ones are badges, and badges on one line become one row. A rotated group is a sticker. Small text near an edge is fine print. Every decision records its reason, so the report can say why the engine thought a piece was the logo.
 
----
+### 2. Measure text the way the renderer draws it
 
-## Built With
+`engine/textfit.py` loads the brand fonts through the renderer's own Skia loader and wraps text with the same greedy rule. When the engine says a line fits, it fits in the PNG. Font sizes are whole pixels because the renderer truncates them.
 
-| Area | Stack |
-|------|-------|
-| **Engine** | Python 3.10+, standard library only. No model, no weights, no network, no GPU |
-| **Text measuring** | The renderer's own Skia brand font loader, glyph widths and greedy wrap. Falls back to a built-in width estimate if the import fails |
-| **Rendering** | The starter's `cr-renderer` and Pillow, unchanged (`requirements.txt`) |
-| **Checks and tests** | pytest and jsonschema (`requirements-dev.txt`), our own hard-rule checker (`tools/checks.py`) |
-| **Studio** | Standard library HTTP server plus one HTML file. No framework, no build step |
-| **Landing page** | Static HTML built from current renders by `tools/build_site.py`, hosted on Vercel |
-| **Packaging** | The starter `Dockerfile`, unchanged. We add no dependencies |
+### 3. Build real layouts for the new shape
 
----
+`engine/layout.py` builds a candidate for every layout that suits the shape. Images, buttons and badge rows scale uniformly, so nothing distorts. Text reflows at a new width with the same copy and font.
 
-## Architecture at a Glance
+| Layout | When it's tried | What it does |
+| --- | --- | --- |
+| One column (`stack`) | Every shape | Source reading order top to bottom, at the largest common scale that fits. Tall canvases grow the column until it fills the height |
+| Image beside text (`split`) | Landscape | Product on one side, the message stacked beside it |
+| Three columns (`columns`) | Wide | Product, message and actions side by side |
+| One row (`strip`) | Very wide | Everything in a row. On banners, long body copy and fine print get a small cell of their own |
+| Headline-first row (`focus`) | Banner ads | Logo, product, headline and button in one row, with most of the width for the headline. Everything else stacks small at the end |
+| Scaled as is (`proportional`) | Shapes close to the source | A uniform fit, offered only where it won't leave wide empty bands |
 
-<img src="docs/how-it-works.gif" alt="Animation of one real resize: the Level 3 poster appears, the engine draws a box around each role it found, four real layouts for a 1584 by 396 LinkedIn banner flash by with their scores counting up (three columns wins at 96.5), and the final banner appears with every hard rule passing" width="100%"/>
+On small canvases each layout also runs in a text-first variant. On banners there are variants that draw secondary copy smaller so the headline and button get the room. Nothing is ever hidden.
 
-<sub>One real resize, animated: input, the roles the engine found, the layouts it tried with their scores, and the
-result. Every frame is the engine's own output. Also on the <a href="https://chameleon-resize.vercel.app/#how">landing page</a>.</sub>
+<details>
+<summary>Every layout rule in detail</summary>
+
+- `stack` keeps top and bottom anchors and finds the largest common scale by binary search.
+- On canvases much taller and narrower than the source, `stack` raises the common scale toward 86% of the height. It stops once free text would hit its size cap or change rank, so the headline stays the largest text and images never outgrow the copy. Spare height goes to the product image.
+- `split-{left|right}-{40|50}` gives the product 40% or 50% of the width.
+- `proportional` is offered only when the target's aspect ratio is within 30% of the source's.
+- On canvases under 640 px on the short side, each layout also runs as a text-first variant with images and buttons at 65%.
+- On banner heights (under 200 px), variants draw long body copy, fine print and badge rows at half size, and a column may grow past the area-based cap while it has spare height, under the same rank rules.
+- `focus` is offered under 80 px tall, or under 120 px when the headline is longer than 60 characters. Where it is offered, three columns is not. Leaderboards (80 px and up) also try giving the headline only 45-50% of the row, so the product and button keep their size.
+- Under 80 px tall, strips shrink pictures before the button, keep the logo at least 45% of the strip height, and let small button labels grow up to 1.3x to fill their box.
+- In one-row layouts, consecutive text pieces (eyebrow, headline, date) share one cell at one scale instead of sitting in narrow columns.
+- Decorations keep their distance to the nearest corner and shrink away from text and buttons. An overlap that existed in the source is kept as intentional layering. Stickers and tags go back to their corner, or the nearest free one.
+- A layout whose text can't fit its box even at the smallest size is never chosen while a clean layout exists.
+
+</details>
+
+### 4. Score each layout and keep the best
+
+`engine/score.py` scores every candidate on eight measurable terms: readability, hierarchy, use of space, scale consistency, collisions, completeness, reading order and balance. A headline or button label under 6 px costs a flat penalty, so the engine prefers a layout where both key messages can be read. The weights are in `WEIGHTS`. These are our stand-in for the brief's criteria. Adobe's own scorer isn't public.
+
+### 5. Check every hard rule
+
+`engine/chameleon.py` clamps rotated bounds inside the canvas, re-fits any text whose box changed and keeps every id in source order. If anything throws, `resize()` falls back to a plain uniform fit that still passes every hard rule. `adapt()` also returns a report: the roles with their reasons, every candidate with its score breakdown, and before and after for each element.
 
 ```mermaid
 flowchart TB
@@ -133,244 +113,161 @@ flowchart TB
     FN -.anything throws.-> SF[resize.py<br/>safe_fit fallback] --> JS
 ```
 
-### One resize, start to finish
-
-```mermaid
-%%{init: {'sequence': {'actorMargin': 40, 'width': 120, 'messageMargin': 30}}}%%
-sequenceDiagram
-    participant U as Caller
-    participant R as resize.py
-    participant A as analyze
-    participant L as layout
-    participant S as score
-
-    U->>R: design + canvas
-    R->>A: what is each piece?
-    A-->>R: roles + reasons
-    R->>L: build layouts
-    L->>L: measure text
-    L-->>R: candidates
-    R->>S: score each
-    S-->>R: 8-term scores
-    R->>R: keep best
-    R-->>U: design + report
-```
-
----
-
-## How It Works
-
-1. **Analyze** (`engine/analyze.py`). The input has no semantic labels, so roles come from geometry.
-   - The *background* is a cover image spanning the canvas.
-   - *Decoration* is a translucent or free-standing shape.
-   - *Groups* come from `group_id`, plus text sitting on a shape.
-   - The *headline* is the largest type. *Fine print* is at most about 30% of the headline size and sits near an edge.
-   - The *logo* is a wide, small image near the top. The *hero* is the largest image.
-   - The *CTA* is the biggest button-like group. *Badges* are smaller ones, and badges sharing a row become one row block.
-   - A *tag* is a badge hugging a corner. A *sticker* is a rotated group. An *unavailable* image is one whose asset isn't in the brand kit.
-   - Each role has a priority, and every decision records a reason.
-2. **Measure** (`engine/textfit.py`). This uses the renderer's own brand-font loader, Skia glyph widths and greedy wrap. When the engine says text fits, it fits in the PNG. Font sizes are whole numbers because the renderer truncates them.
-3. **Lay out** (`engine/layout.py`). Rigid blocks (images, buttons, badge rows) scale uniformly, so proportions hold. Text reflows: same font family and copy, new width, measured size.
-   - `stack`: one column in source reading order. Top and bottom anchors are kept, and the largest common scale is found by binary search.
-   - `split-{left|right}-{40|50}`: hero on one side, message stacked beside it.
-   - `columns`: hero | message | actions, for wide banners.
-   - `strip-*`: one row for leaderboards. On canvases under 200 px tall, variants give fine print and long body copy their own narrow cell at a small size, so the headline gets the room.
-   - `proportional`: uniform contain-scale. Only offered when the target's aspect ratio is within 30% of the source's, because on a very different shape it leaves wide empty bands.
-   - On canvases much taller and narrower than the source (stories, skyscrapers), `stack` raises the common scale until the column fills about 86% of the height. It stops as soon as text would hit its size cap or change rank, so the headline stays the largest text and images never outgrow the copy. Spare height after that goes to the product image.
-   - On canvases under 640 px on the short side, each strategy also runs as a *text-first* variant (images and buttons at 65%). On banner heights (under 200 px) there are also variants that draw long body copy, fine print and badge rows at half size, so the headline and button get the room. Nothing is hidden.
-   - On banner heights, a column may also grow past the area-based size cap while it has spare height, under the same rules as tall canvases (text keeps its rank, images never outgrow the copy).
-   - `focus`: on banner-ad heights (under 80 px, or under 120 px when the headline is longer than 60 characters), a headline-first row. Where it is offered, three columns is not, and leaderboards also try giving the headline only 45-50% of the row so the product and button keep their size. Logo, product, headline and button share one row with most of the width going to the headline. Secondary copy, badges and stickers stack small in an end column. Nothing is hidden.
-   - A layout whose visible text can't fit its box even at the smallest size is never chosen while a clean layout exists.
-   - Banner heights (under 80 px tall) get extra care. Strips shrink pictures before the CTA and keep the logo at least 45% of the strip height. Small button labels may grow up to 1.3x to fill their box.
-   - The scorer treats text under 5 px and images under 12 px as lost: they are in the JSON but nobody can see them.
-   - **Every element stays visible.** The organisers confirmed this at the Oct 22 info session. The only element ever skipped is an image whose asset file is missing, which the brief allows.
-   - In one-row layouts, consecutive text pieces (eyebrow, headline, date, subtitle) stack into one text cell at a shared scale, instead of sitting side by side in narrow columns.
-   - After layout, decorations keep their distance to their nearest corner and shrink away from text and buttons, with a small margin. An overlap that already existed in the source is kept as intentional layering. Stickers and tags go back to their original corner, or the nearest free one.
-4. **Score** (`engine/score.py`). Readability, hierarchy kept, use of space, scale consistency, collisions, completeness, reading-order fidelity, and balance. A headline or button label under 6 px costs a flat penalty, so the engine prefers a layout where both key messages can be read. These are our proxies for the brief's §2.5 criteria. Weights are in `WEIGHTS`.
-5. **Finalize** (`engine/chameleon.py`). Clamp rotated bounds inside the canvas, re-fit any text whose box changed, and keep every id in source order. If anything throws, `resize()` falls back to a uniform contain-fit that is still valid (`safe_fit`).
-
-`adapt()` also returns a report: roles with reasons, every candidate with its score breakdown and design, and before→after for each element. The Studio shows this report.
-
-<div align="center">
-
-<img src="docs/studio.gif" alt="Studio walkthrough: pick Level 3, press Adapt design, seven canvases appear, hold for stretch to compare, open Why, show what the engine saw, use another layout" width="100%"/>
-
-<sub>The Studio in use, recorded live (25 s): pick a design, adapt it to seven canvases, hold to see the naive stretch,
-open <b>Why</b>, show the roles the engine found, and switch to another layout.</sub>
-
-<br/><br/>
-
-<img src="docs/studio_results.png" alt="Studio: one design adapted to seven canvases at once" width="100%"/>
-
-<sub>One design, seven canvases, every hard-rule check passing.</sub>
-
-<br/><br/>
-
-<img src="docs/studio_explain.png" alt="Studio: why this layout won, with the roles the engine found, the layouts it considered and the score breakdown" width="100%"/>
-
-<sub>Why this layout won: the roles the engine found (coloured boxes), every layout it tried with its score, and the
-score breakdown.</sub>
-
-</div>
-
-**Who decides what**
-
 | Decision | Made by | Why |
-|----------|---------|-----|
+| --- | --- | --- |
 | What each element is | Geometry rules in `analyze.py` | The input has no labels. Size, position and grouping are all there is |
 | How big text can be | The renderer's own fonts in `textfit.py` | If our measure differs from the renderer's, text overflows in the PNG |
-| Which layouts to try | The canvas shape | A leaderboard needs a row, a story needs a column. No size is special-cased |
+| Which layouts to try | The canvas shape | A banner needs a row, a story needs a column. No size is special-cased |
 | Which layout wins | The score in `score.py` | Eight measurable terms, so every choice can be explained and checked |
-| What to drop | Nothing | Every input element stays visible. Only an image with a missing asset file is skipped |
-| What to do on an error | `safe_fit` | A plain uniform fit that still passes every hard rule beats a crash |
+| What to drop | Nothing | Every element stays visible. Only an image whose asset file is missing is skipped |
+| What to do on an error | `safe_fit` | A plain fit that passes every hard rule beats a crash |
 
----
+## Try it
+
+| What | How | Who it's for |
+| --- | --- | --- |
+| Landing page | [chameleon-resize.vercel.app](https://chameleon-resize.vercel.app) | Anyone. Drag across stretch and Chameleon, and watch one resize step by step. English, Spanish and French |
+| Studio | `python -m studio.server`, then http://127.0.0.1:8765 | Designers and judges. Adapt one design to many canvases, hold to compare with stretch, open **Why** |
+| The scored engine | `docker run` below | Judges. Exactly how stage one runs it, offline |
+| Every check | `python -m pytest -q` and `python -m tools.evaluate` | Anyone who wants to verify the numbers |
+
+![The Studio in use: pick Level 3, adapt it to seven canvases, hold for stretch, open Why, show what the engine saw, use another layout](docs/studio.gif)
+
+*The Studio, recorded live: adapt one design to seven canvases, hold to compare with stretch, open Why, show the roles the engine found, and switch to another layout.*
+
+<table><tr>
+<td><img src="docs/studio_results.png" alt="Studio: one design adapted to seven canvases at once"/></td>
+<td><img src="docs/studio_explain.png" alt="Studio: why this layout won, with the roles the engine found, the layouts it considered and the score breakdown"/></td>
+</tr></table>
 
 ## Results
 
+### Against a plain stretch
+
+The table at the top compares Chameleon with the starter's stretch on 150 random designs from `tools/stress.py`, each resized to 15 formats from 1080×1920 down to 320×50. The random designs vary headline length, alignment, logo position, the number of images, badges, ribbons and decorations. "Hard rules" are the checks in `tools/checks.py`: same ids, valid schema, boxes and rotated bounds on canvas, images within 5% of their proportions, copy and fonts unchanged, and visible text that fits its box.
+
 ### On the starter samples
 
-`python -m tools.evaluate` runs 3 samples × (task target + 15 formats) = **48 resizes**. It reports **0 hard-rule
-problems** under our checks (`tools/checks.py`):
+`python -m tools.evaluate` runs the 3 samples on their own targets and 15 formats, 48 resizes. **0 hard-rule problems.** The slowest resize took under 100 ms.
 
-- Schema valid, same ids
-- Box and rotated bounds on-canvas
-- Image aspect within 5%
-- Font family and copy unchanged
-- Visible text fits its box at its font size
+![Stretch on top, Chameleon below: the Level 3 sample across 16 formats](docs/sheet_level3_advanced.png)
 
-The slowest run took about **230 ms** (the 320×50 banner tries the most variants).
+*The Level 3 sample across 16 formats. Stretch on top, Chameleon below, both drawn by the official renderer.*
 
-<img src="docs/sheet_level3_advanced.png" alt="Stretch vs Chameleon: the Level 3 sample across 16 formats" width="100%"/>
-
-<sub>The Level 3 sample across 16 formats. Naive stretch on top, Chameleon below. Both rendered by the official renderer.</sub>
-
-<table align="center"><tr>
-<td align="center"><img src="docs/sheet_level1_warmup.png" alt="Level 1 sample across formats" width="400"/></td>
-<td align="center"><img src="docs/sheet_level2_core.png" alt="Level 2 sample across formats" width="400"/></td>
+<table><tr>
+<td><img src="docs/sheet_level1_warmup.png" alt="Level 1 sample across formats"/></td>
+<td><img src="docs/sheet_level2_core.png" alt="Level 2 sample across formats"/></td>
 </tr></table>
 
-### Stress and unseen designs
+Level 3 is the hardest: 17 elements and a 140-character headline. On its own 728×90 target it now gets a 13 px headline and a 12 px button, up from 9 px and 8 px.
 
-- **Random designs.** `python -m tools.stress --n 150` generates 150 random but realistic designs: varied headline
-  lengths, left or centred text, logo top, bottom or corner, one or two images, badges, ribbons and decorations. It runs
-  each through 15 formats, **2,250 resizes** in all, with **0** structural problems. The weakest results are all 320×50
-  banners with very long headlines.
-- **Designs we didn't tune on.** `samples/extra/` holds four designs we wrote to test structures the official samples
-  lack: a landscape web hero with left-aligned copy, an editorial page with two images and a bottom logo, a text-only
-  event poster on a solid shape, and a sale post with text overlapping the product. They gave **64** more runs with
-  **0** hard-rule problems. They also exposed three bugs, now fixed: body copy misread as fine print, a bottom-corner
-  logo not recognised, and left-aligned columns breaking apart.
-- **Tests.** `python -m pytest -q`: **200 passed**. Hard rules × samples × formats, random designs, malformed input.
-- **Docker.** `docker build --platform linux/amd64` and `docker run --network none` succeed on an Apple Silicon Mac
-  (Colima, amd64 emulation), and all three outputs pass every hard rule inside the container. Levels 1 and 2 are
-  **identical** to the macOS run. Level 3 picks the same layout and font sizes, but its headline box is a few pixels
-  wider, because the image ships Skia 144.1 and our Mac setup has 144.0, and text is measured with that Skia. Last
-  verified **Oct 29**.
+### On designs we never tuned on
 
-The scores we print are our own proxy, **not** Adobe's scorer.
+`samples/extra/` holds four designs we wrote to test structures the samples lack: a landscape web hero with left-aligned copy, an editorial page with two images and a bottom logo, a text-only event poster, and a sale post with text over the product. They gave 64 more resizes with **0 hard-rule problems**. They also exposed three bugs, now fixed: body copy read as fine print, a bottom-corner logo not recognised, and left-aligned columns breaking apart.
 
----
+### In the scoring container
 
-## Path to the Finale
+`docker build --platform linux/amd64` and `docker run --network none` succeed with the unchanged starter Dockerfile, and all three samples pass every hard rule inside the container. Levels 1 and 2 match the macOS run byte for byte. Level 3 picks the same layout and font sizes, but its headline box is a few pixels wider. The image ships Skia 144.1 and our Mac setup has 144.0, and text is measured with that Skia.
 
-- **Adobe Express add-on.** The engine already returns a full report, so the add-on is a thin layer: send the current
-  page, get every canvas back, let the designer pick a different candidate per canvas. Not started yet.
-- **Shorter copy for tiny canvases.** Stage one forbids rewriting copy. On a 320×50 banner, a shorter approved headline
-  would beat any layout. This is the first thing we'd add.
-- **Designer in the loop.** The Studio already lets you swap the winning layout for any other candidate. The next step
-  is learning from those swaps which score weights designers actually prefer.
-- **Any size.** The engine has no list of sizes inside it. `tools/formats.py` is only our test catalogue.
+**200 tests** pass (`python -m pytest -q`): hard rules on every sample and format, random designs, and malformed input.
 
----
+## How we meet the brief
 
-## Run It
+The brief lists what the scoring rewards (PDF §2.5), plus speed and reliability (`RULES.md`). No weights were published.
+
+| Brief criterion | What we built | Evidence |
+| --- | --- | --- |
+| Rearrange, don't stretch | Six layout families that re-place blocks. Text reflows, rigid blocks scale uniformly | `engine/layout.py`, `docs/sheet_*.png` |
+| No unwanted collisions | Columns and rows can't overlap by construction. Stickers find a free corner, decorations shrink away from text, and collisions are scored | `test_no_collisions_between_visible_content` |
+| Everything readable, nothing cut off | Text measured with the renderer's fonts and wrap. Readability is scored, with a floor for the headline and button. Nothing is hidden | `engine/textfit.py`, `tools/checks.py` |
+| On brand | Font family, copy, colours, assets, z-order and groups unchanged. The logo keeps its proportions | `tools/checks.py` |
+| Looks intentional | Shared margins and gaps, source reading order, the headline keeps its lead, consistent scale | `engine/score.py` |
+| Holds up everywhere | Only generic rules, never keyed to a size or a design | 200 tests, 2,250 random resizes |
+| Valid, honest JSON | Same ids, required fields, schema validation, rotated bounds on canvas | `tools/checks.py` |
+| Speed and reliability | Deterministic, under 100 ms per resize, no model or network, a safe fallback | `python -m tools.evaluate` |
+
+## Next to other resize tools
+
+| | Keeps proportions | Rearranges for the new shape | Every element kept | Explains each choice | No setup per design | Offline and open |
+| --- | :---: | :---: | :---: | :---: | :---: | :---: |
+| Stretch to the new size | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ |
+| Fit or crop | ✓ | ✗ | ✗ | ✗ | ✓ | ✓ |
+| Canva Magic Switch | ✓ | Partly ¹ | Not stated | ✗ | ✓ | ✗ |
+| Adobe Express Resize | ✓ | Partly ¹ | Not stated | ✗ | ✓ | ✗ |
+| Figma constraints and auto layout | ✓ | Once set up | ✓ | ✗ | ✗ | ✗ |
+| **Chameleon** | **✓** | **✓** | **✓** | **✓** | **✓** | **✓** |
+
+¹ Both move elements automatically but don't publish how. Rows other than ours come from public product pages as of October 2026 ([Canva](https://www.canva.com/pro/magic-switch/), [Adobe Express](https://helpx.adobe.com/express/web/organize-your-designs/arrange-layers-and-pages/change-page-size.html)). This compares features, not results.
+
+## What we learned
+
+- **"Fits" has to mean fits in the renderer.** The renderer truncates font sizes, so 13.7 px draws as 13 px, and its wrap decides the line breaks. We measure with its own Skia fonts, wrap and whole-pixel sizes, so a line that fits in the JSON fits in the PNG.
+- **A score can win by a hair and still look wrong.** On banners, three columns beat the headline-first row by about 0.01 while drawing the headline smaller than the button. Rather than nudging weights until it flipped, we stopped offering three columns where the headline-first row exists.
+- **Penalties should be steps, not slopes.** A gradual penalty for small text traded 2 px of headline to move a button from 2 px to 4 px, which is still unreadable. A flat penalty below 6 px only trades when both messages become readable. On 320×50 banners, designs with both readable went from 34 to 91 of 128.
+- **Hiding is the easy way out.** Dropping low-priority copy made tiny banners look clean, but the organisers asked for every element to stay. Squeezing secondary copy into a small end cell kept everything and still let the headline lead.
+- **Check inside the container.** Docker ships a different Skia build than our Mac, which moved one headline by a few pixels. Every engine change now runs through the hard-rule checks inside the scoring image.
+
+## Limits
+
+- **Very dense copy on tiny canvases gets small type.** Copy can't be rewritten in stage one and nothing may be hidden. Level 3's 140-character headline is 8 px on 320×50 and its button text 3 px. Simpler designs stay readable at those sizes.
+- **Roles are inferred.** An unusual design, such as two equally large headlines, can be misread. Every candidate still obeys the hard rules, but the result can be plainer than a designer's.
+- **Not done:** no copy rewriting or font changes (stage-one rules forbid them), no cropping beyond `fit: cover` backgrounds, and no learned model.
+- **One exception to "nothing hidden":** an image whose asset file is missing (Level 3's `holiday_watermark`) is skipped, as the brief allows. `CHAMELEON_ALLOW_HIDE=1` turns on an old opt-in mode that may hide unreadable low-priority items. It is off by default.
+
+## What's next
+
+- **An Adobe Express add-on.** The report already has everything a designer needs, so the add-on sends the page, gets every canvas back and lets the designer pick another candidate per canvas.
+- **Shorter approved copy for tiny canvases.** On a 320×50 banner a shorter headline beats any layout. Stage one forbids it, so it's first on the list after.
+- **Learning from the designer.** The Studio already lets you swap the winning layout. Those swaps can tell us which score weights designers actually prefer.
+
+## Run it
 
 ```bash
 python3.11 -m venv .venv && source .venv/bin/activate   # Python 3.10+
-pip install -r requirements.txt                          # starter deps (Pillow + cr-renderer)
+pip install -r requirements.txt                          # the starter's deps: Pillow and cr-renderer
 python -m engine.main                                    # input/*.json -> output/*_output.{json,png}
 ```
 
-Docker, exactly as stage one scores it (the starter Dockerfile is unchanged and we add no dependencies):
+Docker, exactly as stage one runs it. The starter Dockerfile is unchanged and we add no dependencies.
 
 ```bash
 docker build --platform linux/amd64 -t chameleon-engine .
 docker run --rm --network none -v $(pwd)/input:/app/input -v $(pwd)/output:/app/output chameleon-engine
 ```
 
-Extras (not part of the scored engine):
+Checks and extras, not part of the scored engine:
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest -q                 # 200 tests
-python -m tools.evaluate --render   # every sample x 15 platform formats, contact sheets in output/eval/
-python -m tools.evaluate --input samples/extra   # 4 extra designs the engine was not tuned on
-python -m tools.stress --n 150      # 150 random realistic designs x 15 formats (2,250 runs)
-python -m studio.server             # demo UI at http://127.0.0.1:8765
-python -m tools.build_site          # rebuild the landing page (site/index.html) from current renders
+python -m pytest -q                              # 200 tests
+python -m tools.evaluate --render                # every sample x 15 formats, contact sheets in output/eval/
+python -m tools.evaluate --input samples/extra   # 4 designs the engine was not tuned on
+python -m tools.stress --n 150                   # 150 random designs x 15 formats (2,250 resizes)
+python -m studio.server                          # the Studio at http://127.0.0.1:8765
+python -m tools.build_site                       # rebuild the landing page from current renders
 ```
 
-The landing page is static, built from `site/template.html` by `tools/build_site.py`, and deployed with
-`cd site && vercel deploy --prod`.
+- **No model, no weights, no network, no GPU.** The engine is rule-based and scored. It uses the Python standard library plus the renderer's Skia font loader, and falls back to a built-in width estimate if that import fails.
+- **Run-time materials:** `brand_kit/fonts` for text metrics and `brand_kit/assets` to know which images exist. The Dockerfile already copies both.
+- **Input:** the v0.9 schema (`chameleon_design_schema_v0.9.json`), as a task file (`{source, target_canvas}`) or a bare design. Bad input degrades gracefully: missing fields, non-numeric values, unknown types, zero-size elements, missing assets and empty element lists.
 
-### Models and dependencies
-
-- **No ML model and no weights.** The engine is rule-based and scored, so there is nothing to download, host or fine-tune. Nothing runs on a GPU.
-- **Runtime dependencies** are the starter's only: `Pillow` and `cr-renderer` (see `requirements.txt`). The engine itself uses the Python standard library, plus the renderer's Skia font loader to measure text. If that import fails, it falls back to a built-in width estimate.
-- **Fixed materials used at run time:** `brand_kit/fonts` (for text metrics) and `brand_kit/assets` (to know which images exist). The Dockerfile already copies both.
-- **Dev only:** `requirements-dev.txt` (pytest, jsonschema) for tests and tools.
-- **Hardware:** any CPU. Runs offline with `--network none`.
-- **Switch:** `CHAMELEON_ALLOW_HIDE=1` re-enables the old opt-in mode that may hide unreadable low-priority items (off by default, see Limits).
-
-### Supported input
-
-The v0.9 design schema (`chameleon_design_schema_v0.9.json`): `text`, `image` and `shape` elements with geometry, `rotation`, `opacity`, `z_index`, `group_id` and the type-specific fields. You can pass a task file (`{source, target_canvas}`) or a bare design. Bad input degrades gracefully instead of crashing: missing fields, non-numeric values, unknown types, zero-size elements, missing assets, and empty element lists.
-
----
-
-## Code Map
+## Code map
 
 | Path | What |
-|------|------|
-| `engine/resize.py` | The required entry point; calls `adapt()`, falls back to `safe_fit()` |
+| --- | --- |
+| `engine/resize.py` | The required entry point. Calls `adapt()` and falls back to `safe_fit()` |
 | `engine/analyze.py` | Roles, groups and reading order from geometry |
 | `engine/textfit.py` | Text measuring with the renderer's fonts |
-| `engine/layout.py` | Candidate layouts: stack, split, columns, strip, focus, proportional |
+| `engine/layout.py` | The candidate layouts |
 | `engine/score.py` | The eight score terms and their `WEIGHTS` |
-| `engine/chameleon.py` | `adapt()`: runs the pipeline, finalizes, builds the report |
-| `engine/main.py` | Starter batch runner, unchanged |
-| `tests/test_engine.py` | Hard rules × samples × formats, random designs, malformed input |
-| `tools/` | Format catalogue, rule checks, batch evaluator, stress generator, site builder, animation (`make_gif.py`) and card source (`how_it_works.html`) |
-| `studio/` | Local demo UI: stdlib server, `index.html` and `style.css` |
-| `site/` | Landing page: `template.html`, `style.css`, `i18n.json`; built into `index.html` |
+| `engine/chameleon.py` | `adapt()`: runs the pipeline, finalizes and builds the report |
+| `engine/main.py` | The starter's batch runner, unchanged |
+| `tests/test_engine.py` | Hard rules on every sample and format, random designs, malformed input |
+| `tools/` | Format catalogue, rule checks, evaluator, stress generator, site builder, animation (`make_gif.py`) |
+| `studio/` | The Studio: a standard-library server, `index.html` and `style.css` |
+| `site/` | The landing page: `template.html`, `style.css` and `i18n.json`, built into `index.html` |
 | `samples/extra/` | Four designs the engine was not tuned on |
-| `docs/` | Contact sheets, Studio screenshots, the animation, the How it works card, logo |
-| `CHALLENGE_NOTES.md`, `BUILD_PLAN.md`, `SUBMISSION.md` | Brief analysis, plan, pitch and demo pack |
-| `STARTER_README.md`, `RULES.md`, `FAQ.md` | Organiser-provided starter docs |
-
----
-
-## Limits
-
-- **Very dense designs on tiny canvases get small type.** Copy can't be rewritten in stage one, and nothing may be
-  hidden. So the Level 3 poster (17 elements, a 140-character headline) renders its headline at 13 px with a 12 px button on its 728×90 target
-  (up from 9 px and 8 px) and 8 px on 320×50 (up from about 4 px), with body copy and fine print much smaller in an end column. Simpler designs
-  stay readable at those sizes.
-- **Nothing is hidden.** Every input element stays visible, as the organisers asked. The one exception is an image whose
-  asset file is missing (the Level 3 `holiday_watermark`), which is skipped as the brief allows. The old opt-in hiding
-  mode (`CHAMELEON_ALLOW_HIDE=1`) gives hidden text a transparent colour too, because the official renderer ignores
-  `opacity` on text.
-- **Left-aligned columns** that share a left edge in the source keep sharing one after reflow, so text and its button
-  stay lined up.
-- **Roles are heuristics.** Unusual designs can be misread, such as two equally large headlines or a logo at the bottom.
-  Every candidate still obeys the hard rules, and scoring picks the least bad, but the result may be plainer than a
-  designer's.
-- **Not done:** no copy rewriting or font-family changes (stage-one rules forbid them), no image cropping beyond
-  `fit: cover` backgrounds, and no learned model.
-- **The target catalogue is ours.** `tools/formats.py` is our own list of common sizes, used only for tests and the
-  demo. The engine never special-cases a size.
-
----
+| `docs/` | Contact sheets, Studio recordings and screenshots, animations, logo |
+| `STARTER_README.md`, `RULES.md`, `FAQ.md` | The organisers' starter docs |
 
 Developed with AI coding assistance.
