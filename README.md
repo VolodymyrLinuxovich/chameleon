@@ -192,12 +192,23 @@ sequenceDiagram
 
 <div align="center">
 
-<table align="center"><tr>
-<td align="center"><img src="docs/studio_results.png" alt="Studio: one design adapted to seven canvases at once" width="420"/></td>
-<td align="center"><img src="docs/studio_explain.png" alt="Studio: why this layout won, with the roles the engine found and the layouts it considered" width="420"/></td>
-</tr></table>
+<img src="docs/studio.gif" alt="Studio walkthrough: pick Level 3, press Adapt design, seven canvases appear, hold for stretch to compare, open Why, show what the engine saw, use another layout" width="100%"/>
 
-<sub>The Studio. Left: one design, seven canvases. Right: what the engine saw, the layouts it tried and why one won.</sub>
+<sub>The Studio in use, recorded live (25 s): pick a design, adapt it to seven canvases, hold to see the naive stretch,
+open <b>Why</b>, show the roles the engine found, and switch to another layout.</sub>
+
+<br/><br/>
+
+<img src="docs/studio_results.png" alt="Studio: one design adapted to seven canvases at once" width="100%"/>
+
+<sub>One design, seven canvases, every hard-rule check passing.</sub>
+
+<br/><br/>
+
+<img src="docs/studio_explain.png" alt="Studio: why this layout won, with the roles the engine found, the layouts it considered and the score breakdown" width="100%"/>
+
+<sub>Why this layout won: the roles the engine found (coloured boxes), every layout it tried with its score, and the
+score breakdown.</sub>
 
 </div>
 

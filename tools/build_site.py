@@ -64,6 +64,7 @@ def main() -> None:
     logo = "data:image/svg+xml;base64," + base64.b64encode(Path("docs/logo.svg").read_bytes()).decode()
     body = body.replace("__LOGO__", logo)
     shutil.copyfile("docs/resize.gif", "site/resize.gif")
+    shutil.copyfile("docs/studio.gif", "site/studio.gif")
     title_end = body.index("</style>") + len("</style>")
     page = HEAD + body[:title_end] + "\n</head>\n<body>\n" + body[title_end:] + "\n</body>\n</html>\n"
     Path("site/index.html").write_text(page)
