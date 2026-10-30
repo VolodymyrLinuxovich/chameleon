@@ -268,6 +268,6 @@ python -m tools.build_site                       # rebuild the landing page from
 | `site/` | The landing page: `template.html`, `style.css` and `i18n.json`, built into `index.html` |
 | `samples/extra/` | Four designs the engine was not tuned on |
 | `docs/` | Contact sheets, Studio recordings and screenshots, animations, logo |
-| `STARTER_README.md`, `RULES.md`, `FAQ.md` | The organisers' starter docs |
+| `RULES.md`, `FAQ.md`, `chameleon_design_schema_v0.9.json` | The organisers' rules, FAQ and design format (the schema is reformatted and annotated; its rules are unchanged) |
 
 Developed with AI coding assistance.

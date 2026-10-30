@@ -1,18 +1,15 @@
 {
+  "$comment": "The organisers' format for one design (Project CHAMELEON starter). tools/checks.py validates every engine output against this file. $comment notes are ours; validators ignore them.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://adobe.com/chameleon/schema/v0.9/design.json",
-  "title": "CHAMELEON Design Document (v0.9 \u2014 provisional, pending Peter's sign-off)",
-  "description": "A single design: a canvas plus its list of elements. Used both for the SOURCE design the engine receives and the RESIZED design it returns \u2014 same shape, different values.",
+  "title": "CHAMELEON Design Document (v0.9, provisional, pending Peter's sign-off)",
+  "description": "One design: a canvas plus its list of elements. The engine receives the source design in this shape and returns the resized design in the same shape, with new values.",
   "type": "object",
   "required": ["canvas", "elements"],
   "additionalProperties": false,
   "properties": {
-    "canvas": { "$ref": "#/$defs/canvas" },
-    "elements": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/element" }
-    }
+    "canvas": {"$ref": "#/$defs/canvas"},
+    "elements": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/element"}}
   },
   "$defs": {
     "canvas": {
@@ -20,74 +17,132 @@
       "required": ["width", "height"],
       "additionalProperties": false,
       "properties": {
-        "width":  { "type": "integer", "minimum": 1, "description": "px" },
-        "height": { "type": "integer", "minimum": 1, "description": "px" }
+        "width": {"type": "integer", "minimum": 1, "description": "Pixels."},
+        "height": {"type": "integer", "minimum": 1, "description": "Pixels."}
       }
     },
     "element": {
+      "$comment": "Every element has id, type and geometry. The other fields depend on type; allOf at the bottom lists what each type requires.",
       "type": "object",
       "required": ["id", "type", "x", "y", "width", "height"],
       "properties": {
         "id": {
           "type": "string",
-          "description": "Stable identifier. The engine must return every input id exactly once \u2014 it cannot add, remove, or invent elements."
+          "description": "Stable identifier. The engine returns every input id exactly once. It can't add, remove or invent elements."
         },
-        "type": { "type": "string", "enum": ["text", "image", "shape"] },
-        "x": { "type": "number", "description": "Left edge, px, from canvas top-left." },
-        "y": { "type": "number", "description": "Top edge, px." },
-        "width":  { "type": "number", "minimum": 0 },
-        "height": { "type": "number", "minimum": 0 },
-        "rotation": { "type": "number", "default": 0, "description": "Degrees, clockwise, about the element's center." },
-        "opacity":  { "type": "number", "minimum": 0, "maximum": 1, "default": 1 },
-        "z_index":  { "type": "integer", "description": "Stacking order \u2014 higher paints on top." },
+        "type": {"type": "string", "enum": ["text", "image", "shape"]},
+        "x": {
+          "type": "number",
+          "description": "Left edge in px, measured from the canvas's top-left corner."
+        },
+        "y": {"type": "number", "description": "Top edge in px."},
+        "width": {"type": "number", "minimum": 0},
+        "height": {"type": "number", "minimum": 0},
+        "rotation": {
+          "type": "number",
+          "default": 0,
+          "description": "Degrees, clockwise, around the element's center."
+        },
+        "opacity": {
+          "$comment": "The official renderer ignores opacity on text elements, so hiding text this way doesn't work.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1
+        },
+        "z_index": {"type": "integer", "description": "Stacking order. Higher paints on top."},
         "group_id": {
+          "$comment": "Our engine treats a group as one block and keeps its pieces together.",
           "type": ["string", "null"],
           "default": null,
-          "description": "Elements sharing a group_id are a designer-intended unit (e.g. a button's background shape + its label). The engine is NOT told what the group means \u2014 only that these pieces are meant to travel together. This is the semantic-gap constraint made concrete."
+          "description": "Elements that share a group_id are one unit the designer meant to keep together, for example a button's background shape and its label. The engine isn't told what the group means, only that the pieces travel together."
         },
-
-        "content":        { "type": "string", "description": "text only \u2014 the literal string." },
-        "font_family":    { "type": "string", "description": "text only" },
-        "font_size":      { "type": "number", "minimum": 1, "description": "text only, px. The engine may change this to help text fit its box." },
-        "font_weight":    { "type": "string", "enum": ["regular", "bold"], "default": "regular", "description": "text only" },
-        "font_style":     { "type": "string", "enum": ["normal", "italic"], "default": "normal", "description": "text only" },
-        "color":          { "type": "string", "description": "text/shape \u2014 CSS-style rgba(), e.g. rgba(255,255,255,1)." },
-        "text_align":     { "type": "string", "enum": ["left", "center", "right"], "default": "left", "description": "text only" },
-        "line_height":    { "type": "number", "default": 1.2, "description": "text only, multiplier" },
-        "letter_spacing": { "type": "number", "default": 0, "description": "text only, px" },
-        "max_lines":      { "type": ["integer", "null"], "default": null, "description": "text only \u2014 optional cap; the renderer wraps within width/height regardless." },
+        "content": {"type": "string", "description": "Text only. The literal string to draw."},
+        "font_family": {"type": "string", "description": "Text only."},
+        "font_size": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Text only, in px. The engine may change it so the text fits its box."
+        },
+        "font_weight": {
+          "type": "string",
+          "enum": ["regular", "bold"],
+          "default": "regular",
+          "description": "Text only."
+        },
+        "font_style": {
+          "type": "string",
+          "enum": ["normal", "italic"],
+          "default": "normal",
+          "description": "Text only."
+        },
+        "color": {
+          "type": "string",
+          "description": "Text and shape. CSS-style rgba(), for example rgba(255,255,255,1)."
+        },
+        "text_align": {
+          "type": "string",
+          "enum": ["left", "center", "right"],
+          "default": "left",
+          "description": "Text only."
+        },
+        "line_height": {
+          "type": "number",
+          "default": 1.2,
+          "description": "Text only. A multiplier of the font size."
+        },
+        "letter_spacing": {"type": "number", "default": 0, "description": "Text only, in px."},
+        "max_lines": {
+          "type": ["integer", "null"],
+          "default": null,
+          "description": "Text only, optional. A cap on the number of lines. The renderer wraps within the box either way."
+        },
         "style_runs": {
           "type": "array",
-          "description": "text only, optional. Per-character overrides for things like a two-color headline. 0-based, end-exclusive indices into `content`.",
+          "description": "Text only, optional. Per-character overrides, for example a two-colour headline. Indices point into content, start at 0, and end is exclusive.",
           "items": {
             "type": "object",
             "required": ["start", "end"],
             "properties": {
-              "start": { "type": "integer", "minimum": 0 },
-              "end":   { "type": "integer", "minimum": 0 },
-              "color": { "type": "string" },
-              "font_weight": { "type": "string", "enum": ["regular", "bold"] },
-              "font_style":  { "type": "string", "enum": ["normal", "italic"] }
+              "start": {"type": "integer", "minimum": 0},
+              "end": {"type": "integer", "minimum": 0},
+              "color": {"type": "string"},
+              "font_weight": {"type": "string", "enum": ["regular", "bold"]},
+              "font_style": {"type": "string", "enum": ["normal", "italic"]}
             }
           }
         },
-
-        "asset_id": { "type": "string", "description": "image only \u2014 references a file in the design's /assets folder. The engine never invents pixels; it only repositions/resizes this asset." },
-        "fit": { "type": "string", "enum": ["contain", "cover", "fill"], "default": "contain", "description": "image only" },
-
-        "shape_type":    { "type": "string", "enum": ["rectangle", "ellipse", "line"], "description": "shape only" },
-        "fill_color":    { "type": "string", "description": "shape only" },
-        "stroke_color":  { "type": ["string", "null"], "default": null, "description": "shape only" },
-        "stroke_width":  { "type": "number", "default": 0, "description": "shape only" },
-        "corner_radius": { "type": "number", "default": 0, "description": "shape only, rectangles" }
+        "asset_id": {
+          "type": "string",
+          "description": "Image only. Names a file in brand_kit/assets. The engine never invents pixels: it only moves and resizes this asset."
+        },
+        "fit": {
+          "$comment": "cover fills the box and crops the overflow, contain fits inside it, fill stretches to it.",
+          "type": "string",
+          "enum": ["contain", "cover", "fill"],
+          "default": "contain",
+          "description": "Image only. How the picture fills its box."
+        },
+        "shape_type": {
+          "type": "string",
+          "enum": ["rectangle", "ellipse", "line"],
+          "description": "Shape only."
+        },
+        "fill_color": {"type": "string", "description": "Shape only."},
+        "stroke_color": {"type": ["string", "null"], "default": null, "description": "Shape only."},
+        "stroke_width": {"type": "number", "default": 0, "description": "Shape only."},
+        "corner_radius": {"type": "number", "default": 0, "description": "Shape only, for rectangles."}
       },
       "allOf": [
-        { "if": { "properties": { "type": { "const": "text" } } },
-          "then": { "required": ["content", "font_family", "font_size", "color"] } },
-        { "if": { "properties": { "type": { "const": "image" } } },
-          "then": { "required": ["asset_id"] } },
-        { "if": { "properties": { "type": { "const": "shape" } } },
-          "then": { "required": ["shape_type", "fill_color"] } }
+        {
+          "if": {"properties": {"type": {"const": "text"}}},
+          "then": {"required": ["content", "font_family", "font_size", "color"]}
+        },
+        {"if": {"properties": {"type": {"const": "image"}}}, "then": {"required": ["asset_id"]}},
+        {
+          "if": {"properties": {"type": {"const": "shape"}}},
+          "then": {"required": ["shape_type", "fill_color"]}
+        }
       ]
     }
   }
