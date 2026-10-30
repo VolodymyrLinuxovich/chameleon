@@ -126,7 +126,13 @@
   "Nothing off canvas": "Nada fuera del lienzo",
   "Images in proportion": "Imágenes en proporción",
   "Fonts and copy unchanged": "Fuentes y texto sin cambios",
-  "Text fits": "El texto cabe"
+  "Text fits": "El texto cabe",
+  "A finished poster, no labels.": "Un cartel terminado, sin etiquetas.",
+  "Finds what each piece is.": "Descubre qué es cada pieza.",
+  "Lay out and score": "Maquetar y puntuar",
+  "Tries real layouts, keeps the best.": "Prueba diseños reales y se queda con el mejor.",
+  "All hard rules pass": "Todas las reglas se cumplen",
+  "The Level 3 poster becoming a 1584 × 396 LinkedIn banner. Real engine output at every step.": "El cartel del nivel 3 convertido en un banner de LinkedIn de 1584 × 396. Salida real del motor en cada paso."
  },
  "fr": {
   "Problem": "Problème",
@@ -252,6 +258,12 @@
   "Nothing off canvas": "Rien hors du cadre",
   "Images in proportion": "Images proportionnées",
   "Fonts and copy unchanged": "Polices et texte inchangés",
-  "Text fits": "Le texte tient"
+  "Text fits": "Le texte tient",
+  "A finished poster, no labels.": "Une affiche finie, sans étiquettes.",
+  "Finds what each piece is.": "Trouve ce qu'est chaque pièce.",
+  "Lay out and score": "Mettre en page et noter",
+  "Tries real layouts, keeps the best.": "Essaie de vraies mises en page, garde la meilleure.",
+  "All hard rules pass": "Toutes les règles sont respectées",
+  "The Level 3 poster becoming a 1584 × 396 LinkedIn banner. Real engine output at every step.": "L'affiche du niveau 3 devient une bannière LinkedIn de 1584 × 396. Sortie réelle du moteur à chaque étape."
  }
 }
