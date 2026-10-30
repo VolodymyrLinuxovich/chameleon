@@ -1,4 +1,5 @@
 <title>Chameleon Resize Engine</title>
+<link rel="icon" type="image/svg+xml" href="__LOGO__">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap">
@@ -31,7 +32,7 @@ em{white-space:nowrap;font:italic 400 1.06em/1 var(--serif);letter-spacing:-.01e
 header{border-bottom:1px solid var(--rule)}
 header .wrap{display:flex;justify-content:space-between;align-items:center;height:60px}
 .brand{font-weight:600;letter-spacing:-.01em;display:flex;gap:10px;align-items:center;text-decoration:none;color:inherit}
-.brand i{width:14px;height:14px;border:1.5px solid var(--accent);border-radius:3px;display:inline-block;animation:breathe 6s var(--ease) infinite}
+.brand img{width:26px;height:26px;display:block;border-radius:6px}
 @keyframes breathe{0%,100%{width:14px;height:14px}33%{width:19px;height:10px}66%{width:10px;height:19px}}
 nav{display:flex;gap:2px}
 nav a{font-size:var(--t-s);color:var(--ink-2);text-decoration:none;padding:7px 12px;border-radius:8px;transition:color .15s,background .15s}
@@ -188,7 +189,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:10px 32px;flex-wrap:
 <a class="skip" href="#main">Skip to content</a>
 <header>
   <div class="wrap">
-    <a class="brand" href="#top"><i aria-hidden="true"></i>Chameleon</a>
+    <a class="brand" href="#top"><img src="__LOGO__" alt="" width="26" height="26">Chameleon</a>
     <nav aria-label="Sections"><a href="#problem">Problem</a><a href="#compare">Solution</a><a href="#how">How it works</a><a href="#run">Run it</a></nav>
   </div>
 </header>

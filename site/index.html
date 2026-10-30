@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Chameleon rebuilds a finished design for any canvas size instead of stretching it.">
 <title>Chameleon Resize Engine</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIiB2aWV3Qm94PSIwIDAgMjQwIDI0MCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJDaGFtZWxlb24gbG9nbyI+CiAgPHJlY3Qgd2lkdGg9IjI0MCIgaGVpZ2h0PSIyNDAiIHJ4PSI1MiIgZmlsbD0iIzFFMUEyMiIvPgogIDwhLS0gT25lIGRlc2lnbiwgdGhyZWUgY2FudmFzZXM6IHBvcnRyYWl0LCBzcXVhcmUsIGJhbm5lciAtLT4KICA8cmVjdCB4PSI2MiIgeT0iNDAiIHdpZHRoPSI3MiIgaGVpZ2h0PSIxMjgiIHJ4PSIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRjA3MDNGIiBzdHJva2Utd2lkdGg9IjgiIG9wYWNpdHk9Ii40NSIvPgogIDxyZWN0IHg9Ijc4IiB5PSI3OCIgd2lkdGg9IjEwNCIgaGVpZ2h0PSIxMDQiIHJ4PSIxMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRjA3MDNGIiBzdHJva2Utd2lkdGg9IjgiIG9wYWNpdHk9Ii43NSIvPgogIDxyZWN0IHg9IjQwIiB5PSIxNTAiIHdpZHRoPSIxNjAiIGhlaWdodD0iNTAiIHJ4PSIxMCIgZmlsbD0iI0YwNzAzRiIvPgogIDxyZWN0IHg9IjU2IiB5PSIxNjYiIHdpZHRoPSI1OCIgaGVpZ2h0PSI4IiByeD0iNCIgZmlsbD0iIzFFMUEyMiIvPgogIDxyZWN0IHg9IjU2IiB5PSIxODAiIHdpZHRoPSIzNiIgaGVpZ2h0PSI2IiByeD0iMyIgZmlsbD0iIzFFMUEyMiIgb3BhY2l0eT0iLjYiLz4KICA8cmVjdCB4PSIxNTAiIHk9IjE2NCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjIyIiByeD0iNiIgZmlsbD0iIzFFMUEyMiIvPgo8L3N2Zz4K">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap">
@@ -37,7 +38,7 @@ em{white-space:nowrap;font:italic 400 1.06em/1 var(--serif);letter-spacing:-.01e
 header{border-bottom:1px solid var(--rule)}
 header .wrap{display:flex;justify-content:space-between;align-items:center;height:60px}
 .brand{font-weight:600;letter-spacing:-.01em;display:flex;gap:10px;align-items:center;text-decoration:none;color:inherit}
-.brand i{width:14px;height:14px;border:1.5px solid var(--accent);border-radius:3px;display:inline-block;animation:breathe 6s var(--ease) infinite}
+.brand img{width:26px;height:26px;display:block;border-radius:6px}
 @keyframes breathe{0%,100%{width:14px;height:14px}33%{width:19px;height:10px}66%{width:10px;height:19px}}
 nav{display:flex;gap:2px}
 nav a{font-size:var(--t-s);color:var(--ink-2);text-decoration:none;padding:7px 12px;border-radius:8px;transition:color .15s,background .15s}
@@ -197,7 +198,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:10px 32px;flex-wrap:
 <a class="skip" href="#main">Skip to content</a>
 <header>
   <div class="wrap">
-    <a class="brand" href="#top"><i aria-hidden="true"></i>Chameleon</a>
+    <a class="brand" href="#top"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIiB2aWV3Qm94PSIwIDAgMjQwIDI0MCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJDaGFtZWxlb24gbG9nbyI+CiAgPHJlY3Qgd2lkdGg9IjI0MCIgaGVpZ2h0PSIyNDAiIHJ4PSI1MiIgZmlsbD0iIzFFMUEyMiIvPgogIDwhLS0gT25lIGRlc2lnbiwgdGhyZWUgY2FudmFzZXM6IHBvcnRyYWl0LCBzcXVhcmUsIGJhbm5lciAtLT4KICA8cmVjdCB4PSI2MiIgeT0iNDAiIHdpZHRoPSI3MiIgaGVpZ2h0PSIxMjgiIHJ4PSIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRjA3MDNGIiBzdHJva2Utd2lkdGg9IjgiIG9wYWNpdHk9Ii40NSIvPgogIDxyZWN0IHg9Ijc4IiB5PSI3OCIgd2lkdGg9IjEwNCIgaGVpZ2h0PSIxMDQiIHJ4PSIxMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRjA3MDNGIiBzdHJva2Utd2lkdGg9IjgiIG9wYWNpdHk9Ii43NSIvPgogIDxyZWN0IHg9IjQwIiB5PSIxNTAiIHdpZHRoPSIxNjAiIGhlaWdodD0iNTAiIHJ4PSIxMCIgZmlsbD0iI0YwNzAzRiIvPgogIDxyZWN0IHg9IjU2IiB5PSIxNjYiIHdpZHRoPSI1OCIgaGVpZ2h0PSI4IiByeD0iNCIgZmlsbD0iIzFFMUEyMiIvPgogIDxyZWN0IHg9IjU2IiB5PSIxODAiIHdpZHRoPSIzNiIgaGVpZ2h0PSI2IiByeD0iMyIgZmlsbD0iIzFFMUEyMiIgb3BhY2l0eT0iLjYiLz4KICA8cmVjdCB4PSIxNTAiIHk9IjE2NCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjIyIiByeD0iNiIgZmlsbD0iIzFFMUEyMiIvPgo8L3N2Zz4K" alt="" width="26" height="26">Chameleon</a>
     <nav aria-label="Sections"><a href="#problem">Problem</a><a href="#compare">Solution</a><a href="#how">How it works</a><a href="#run">Run it</a></nav>
   </div>
 </header>
